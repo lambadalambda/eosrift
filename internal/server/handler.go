@@ -30,6 +30,7 @@ func ConfigFromEnv() Config {
 
 func NewHandler(cfg Config) http.Handler {
 	mux := http.NewServeMux()
+	registry := NewTunnelRegistry()
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -57,7 +58,7 @@ func NewHandler(cfg Config) http.Handler {
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
 
-	mux.HandleFunc("/control", controlHandler(cfg))
+	mux.HandleFunc("/control", controlHandler(cfg, registry))
 
 	return mux
 }
