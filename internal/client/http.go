@@ -17,6 +17,7 @@ import (
 
 type HTTPTunnelOptions struct {
 	Authtoken string
+	Subdomain string
 
 	Inspector *inspect.Store
 
@@ -61,6 +62,7 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 	if err := json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: opts.Authtoken,
+		Subdomain: opts.Subdomain,
 	}); err != nil {
 		_ = ctrlStream.Close()
 		_ = session.Close()

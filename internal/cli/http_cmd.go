@@ -60,6 +60,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 
 	serverAddr := fs.String("server", serverDefault, "Server address (https://host, http://host:port, or ws(s)://host/control)")
 	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
+	subdomain := fs.String("subdomain", "", "Reserved subdomain to request (requires server-side reservation)")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector")
 	inspectAddr := fs.String("inspect-addr", inspectAddrDefault, "Inspector listen address")
 	help := fs.Bool("help", false, "Show help")
@@ -102,6 +103,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 
 	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
 		Authtoken: *authtoken,
+		Subdomain: *subdomain,
 		Inspector: store,
 	})
 	if err != nil {
