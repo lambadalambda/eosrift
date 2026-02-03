@@ -59,6 +59,7 @@ func NewHandler(cfg Config) http.Handler {
 	})
 
 	mux.HandleFunc("/control", controlHandler(cfg, registry))
+	mux.HandleFunc("/", httpTunnelProxyHandler(cfg, registry))
 
 	return mux
 }
