@@ -112,6 +112,7 @@ When running `eosrift http ...`, the client starts a local inspector by default:
 
 - `http://127.0.0.1:4040` (root page)
 - `http://127.0.0.1:4040/api/requests` (JSON list)
+- Replay: `POST http://127.0.0.1:4040/api/requests/<id>/replay`
 
 Flags:
 
@@ -120,6 +121,8 @@ Flags:
 
 Notes:
 
+- The inspector redacts sensitive headers (e.g. `Authorization`, `Cookie`) and common secret query params.
+- Replay is best-effort: it forwards to your local upstream and does not include request bodies.
 - You must point `*.tunnel.<yourdomain>` at your server (example: `*.tunnel.eosrift.com`).
 - In early versions, the host header is preserved (your local service will see `abcd1234.tunnel.<yourdomain>`).
 

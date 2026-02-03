@@ -12,13 +12,13 @@ Last updated: **2026-02-03**
 - [x] Milestone 0 — Repository + delivery scaffolding
 - [x] Milestone 1 — Control plane + TCP tunnel (end-to-end MVP)
 - [x] Milestone 2 — HTTP tunnel with host routing (alpha)
-- [ ] Milestone 3 — Local inspector (`localhost:4040` equivalent)
+- [x] Milestone 3 — Local inspector (`localhost:4040` equivalent)
 - [ ] Milestone 4 — CLI + config compatibility
 - [ ] Milestone 5 — Auth + reserved names (SQLite-backed)
 - [ ] Milestone 6 — Packaging + deployment polish
 - [ ] Milestone 7 — Hardening + observability
 
-Current focus: **Milestone 5**.
+Current focus: **Milestone 4**.
 
 ## Guiding principles
 
@@ -87,13 +87,13 @@ Current focus: **Milestone 5**.
 
 **Goal:** developer UX parity: view recent requests and replay.
 
-**Status:** in progress (2026-02-03, alpha)
+**Status:** done (2026-02-03, alpha)
 
 - [x] In-memory store + local JSON API (`/api/requests`)
 - [x] Capture request/response previews for HTTP tunnels
 - [x] Start local inspector server by default (`127.0.0.1:4040`)
-- [ ] “Replay” / “resend” support for HTTP tunnels (best-effort)
-- [ ] Optional SPA (React) talking to a local JSON API
+- [x] “Replay” / “resend” support for HTTP tunnels (best-effort)
+- [ ] Optional SPA (React) talking to a local JSON API (deferred)
 
 **Acceptance tests**
 
