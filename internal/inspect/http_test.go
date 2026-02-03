@@ -3,8 +3,10 @@ package inspect
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -89,5 +91,31 @@ func TestHandler_Replay(t *testing.T) {
 	case <-called:
 	default:
 		t.Fatalf("replay not called")
+	}
+}
+
+func TestHandler_RootServesHTML(t *testing.T) {
+	t.Parallel()
+
+	s := NewStore(StoreConfig{MaxEntries: 10})
+	ts := httptest.NewServer(Handler(s, HandlerOptions{}))
+	t.Cleanup(ts.Close)
+
+	resp, err := http.Get(ts.URL + "/")
+	if err != nil {
+		t.Fatalf("get: %v", err)
+	}
+	t.Cleanup(func() { _ = resp.Body.Close() })
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status = %d, want %d", resp.StatusCode, http.StatusOK)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "text/html") {
+		t.Fatalf("content-type = %q, want prefix %q", ct, "text/html")
+	}
+
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(bodyBytes), "EosRift Inspector") {
+		t.Fatalf("body does not contain expected title")
 	}
 }

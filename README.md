@@ -110,7 +110,7 @@ Server token management (Docker):
 
 When running `eosrift http ...`, the client starts a local inspector by default:
 
-- `http://127.0.0.1:4040` (root page)
+- `http://127.0.0.1:4040` (web UI)
 - `http://127.0.0.1:4040/api/requests` (JSON list)
 - Replay: `POST http://127.0.0.1:4040/api/requests/<id>/replay`
 

@@ -93,7 +93,7 @@ Current focus: **Milestone 4**.
 - [x] Capture request/response previews for HTTP tunnels
 - [x] Start local inspector server by default (`127.0.0.1:4040`)
 - [x] “Replay” / “resend” support for HTTP tunnels (best-effort)
-- [ ] Optional SPA (React) talking to a local JSON API (deferred)
+- [x] Inspector web UI (single-page) talking to the local JSON API
 
 **Acceptance tests**
 

@@ -16,7 +16,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
 - Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.
-- Local inspector (alpha): capture HTTP exchanges, redact common secrets, serve `/api/requests`, and support best-effort replay.
+- Local inspector (alpha): capture HTTP exchanges, redact common secrets, serve a web UI at `/`, expose `/api/requests`, and support best-effort replay.
 - Docker Compose-based integration test harness.
 - GitHub Actions CI (unit tests + integration tests).
 
