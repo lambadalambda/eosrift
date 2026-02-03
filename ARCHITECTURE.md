@@ -60,6 +60,11 @@ Control messages cover:
 - heartbeats / keepalive
 - server → client “open stream for inbound connection” notifications (if needed)
 
+Current implementation notes:
+
+- Auth is a shared token passed in the initial control request (`authtoken`) and (when configured)
+  enforced server-side via `EOSRIFT_AUTH_TOKEN`.
+
 ### Data plane (proxied traffic)
 
 All proxied connections run as **multiplexed streams** over the session:
@@ -75,7 +80,7 @@ This keeps the data plane simple and makes TCP tunnels natural.
 ### HTTP/HTTPS tunnel
 
 1. User runs: `client http 8080`
-2. Client connects to `wss://<base-domain>/control`, authenticates, requests an HTTP tunnel.
+2. Client connects to `wss://<base-domain>/control`, authenticates (authtoken), requests an HTTP tunnel.
 3. Server allocates `<id>.tunnel.<base-domain>` and returns the public URL to the client.
 4. Internet request arrives: `https://<id>.tunnel.<base-domain>/path`
 5. Caddy terminates TLS and reverse-proxies to server over plain HTTP.

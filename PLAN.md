@@ -18,7 +18,7 @@ Last updated: **2026-02-03**
 - [ ] Milestone 6 — Packaging + deployment polish
 - [ ] Milestone 7 — Hardening + observability
 
-Current focus: **Milestone 3**.
+Current focus: **Milestone 5**.
 
 ## Guiding principles
 
@@ -50,7 +50,7 @@ Current focus: **Milestone 3**.
 
 **Goal:** a working tunnel for raw TCP with automated tests.
 
-**Status:** done (2026-02-03, alpha; unauthenticated)
+**Status:** done (2026-02-03, alpha)
 
 - Client establishes a **single outbound control connection** to the server (WSS in prod)
 - Multiplex streams over that connection (e.g., yamux)
@@ -68,7 +68,7 @@ Current focus: **Milestone 3**.
 
 **Goal:** `http 8080` yields a stable public URL on a wildcard domain.
 
-**Status:** done (2026-02-03, alpha; missing auth + websocket coverage)
+**Status:** done (2026-02-03, alpha; websocket coverage TODO)
 
 - Subdomain allocator: `https://<id>.<tunnel-domain>` (example: `https://abcd1234.tunnel.eosrift.com`)
 - Host-based routing on the server (map `<id>` → active tunnel)
@@ -113,10 +113,13 @@ Current focus: **Milestone 3**.
 
 **Goal:** multi-user support with durable configuration.
 
-- SQLite schema + migrations
-- Authtokens stored/validated server-side
-- Reserved subdomains and/or custom domains (admin-managed)
-- Resource limits and basic rate limiting
+**Status:** in progress (2026-02-03, alpha)
+
+- [x] Control plane auth token (`EOSRIFT_AUTH_TOKEN` + `--authtoken` / `EOSRIFT_AUTHTOKEN`)
+- [ ] SQLite schema + migrations
+- [ ] Authtokens stored/validated server-side (SQLite-backed)
+- [ ] Reserved subdomains and/or custom domains (admin-managed)
+- [ ] Resource limits and basic rate limiting
 
 ## Milestone 6 — Packaging + deployment polish
 

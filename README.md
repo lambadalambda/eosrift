@@ -61,13 +61,14 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 ### Server (Docker)
 
 - `cp .env.example .env` (edit for your domain)
+- Set `EOSRIFT_AUTH_TOKEN` in `.env` (recommended)
 - `docker compose up -d --build`
 - `curl -fsS http://127.0.0.1:8080/healthz`
 
 Notes:
 
 - TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
-- `/control` is currently **unauthenticated** (not safe for multi-tenant/public use yet).
+- Set `EOSRIFT_AUTH_TOKEN` to protect `/control` (recommended). If unset, `/control` is unauthenticated.
 
 ### Client (build)
 
@@ -91,6 +92,13 @@ Expose a local HTTP port through the server:
 - `./bin/eosrift http 8080 --server wss://<yourdomain>/control`
 
 The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
+
+### Auth (alpha)
+
+If the server has `EOSRIFT_AUTH_TOKEN` set, pass the same token from the client:
+
+- flag: `--authtoken <token>`
+- env: `EOSRIFT_AUTHTOKEN=<token>`
 
 ### Inspector (alpha)
 
