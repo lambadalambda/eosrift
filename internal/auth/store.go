@@ -237,6 +237,23 @@ func (s *Store) ensureSchema(ctx context.Context) error {
 		return err
 	}
 
+	if _, err := s.db.ExecContext(ctx, `
+		CREATE TABLE IF NOT EXISTS reserved_subdomains (
+			subdomain TEXT PRIMARY KEY,
+			token_id INTEGER NOT NULL,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY(token_id) REFERENCES authtokens(id) ON DELETE CASCADE
+		);
+	`); err != nil {
+		return err
+	}
+
+	if _, err := s.db.ExecContext(ctx, `
+		CREATE INDEX IF NOT EXISTS reserved_subdomains_token_id ON reserved_subdomains(token_id);
+	`); err != nil {
+		return err
+	}
+
 	return nil
 }
 
