@@ -18,6 +18,10 @@ type Config struct {
 	TCPPortRangeStart int
 	TCPPortRangeEnd   int
 
+	// MaxTunnelsPerToken caps concurrent tunnels per authtoken.
+	// Zero means unlimited.
+	MaxTunnelsPerToken int
+
 	// DBPath is the path to the SQLite database.
 	DBPath string
 
@@ -33,6 +37,8 @@ func ConfigFromEnv() Config {
 
 		TCPPortRangeStart: getenvInt("EOSRIFT_TCP_PORT_RANGE_START", 20000),
 		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
+
+		MaxTunnelsPerToken: getenvInt("EOSRIFT_MAX_TUNNELS_PER_TOKEN", 0),
 
 		DBPath: strings.TrimSpace(os.Getenv("EOSRIFT_DB_PATH")),
 
@@ -62,6 +68,7 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 	mux := http.NewServeMux()
 	registry := NewTunnelRegistry()
 	tunnelProxy := httpTunnelProxyHandler(cfg, registry)
+	limiter := newTokenTunnelLimiter()
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -89,7 +96,7 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
 
-	mux.HandleFunc("/control", controlHandler(cfg, registry, deps))
+	mux.HandleFunc("/control", controlHandler(cfg, registry, deps, limiter))
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/style.css" {
 			serveLandingStyle(w, r)

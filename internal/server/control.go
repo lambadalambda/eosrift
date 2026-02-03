@@ -41,7 +41,7 @@ type baseRequest struct {
 	Subdomain  string `json:"subdomain,omitempty"`
 }
 
-func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies) http.HandlerFunc {
+func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -120,20 +120,57 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies) htt
 			return
 		}
 
+		var tokenID int64
+		if deps.TokenResolver != nil {
+			id, ok, err := deps.TokenResolver.TokenID(ctx, req.Authtoken)
+			if err != nil {
+				switch reqType {
+				case "tcp":
+					_ = writeControlTCPError(ctrlStream, "auth error")
+				case "http":
+					_ = writeControlHTTPError(ctrlStream, "auth error")
+				default:
+					_ = writeControlTCPError(ctrlStream, "auth error")
+				}
+				_ = ctrlStream.Close()
+				return
+			}
+			if ok {
+				tokenID = id
+			}
+		}
+
+		if cfg.MaxTunnelsPerToken > 0 && limiter != nil && tokenID > 0 {
+			release, ok := limiter.TryAcquire(tokenID, cfg.MaxTunnelsPerToken)
+			if !ok {
+				switch reqType {
+				case "tcp":
+					_ = writeControlTCPError(ctrlStream, "too many active tunnels")
+				case "http":
+					_ = writeControlHTTPError(ctrlStream, "too many active tunnels")
+				default:
+					_ = writeControlTCPError(ctrlStream, "too many active tunnels")
+				}
+				_ = ctrlStream.Close()
+				return
+			}
+			defer release()
+		}
+
 		switch reqType {
 		case "tcp":
 			handleTCPControl(ctx, conn, session, ctrlStream, control.CreateTCPTunnelRequest{
 				Type:       "tcp",
 				Authtoken:  req.Authtoken,
-			RemotePort: req.RemotePort,
-		}, cfg)
+				RemotePort: req.RemotePort,
+			}, cfg)
 			return
 		case "http":
 			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
 				Type:      "http",
 				Authtoken: req.Authtoken,
 				Subdomain: req.Subdomain,
-			}, cfg, registry, deps)
+			}, cfg, registry, deps, tokenID)
 			return
 		default:
 			_ = writeControlTCPError(ctrlStream, "unsupported tunnel type")
@@ -193,7 +230,7 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 	}
 }
 
-func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry, deps Dependencies) {
+func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry, deps Dependencies, tokenID int64) {
 	id, err := func() (string, error) {
 		if strings.TrimSpace(req.Subdomain) == "" {
 			id, err := registry.AllocateID()
@@ -203,16 +240,8 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 			return id, nil
 		}
 
-		if deps.TokenResolver == nil || deps.Reservations == nil {
+		if tokenID <= 0 || deps.Reservations == nil {
 			return "", errors.New("custom subdomains not supported")
-		}
-
-		tokenID, ok, err := deps.TokenResolver.TokenID(ctx, req.Authtoken)
-		if err != nil {
-			return "", errors.New("auth error")
-		}
-		if !ok {
-			return "", errors.New("unauthorized")
 		}
 
 		reservedTokenID, reserved, err := deps.Reservations.ReservedSubdomainTokenID(ctx, req.Subdomain)
