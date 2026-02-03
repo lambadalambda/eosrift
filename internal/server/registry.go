@@ -10,12 +10,12 @@ import (
 )
 
 type TunnelRegistry struct {
-	mu         sync.RWMutex
+	mu          sync.RWMutex
 	httpTunnels map[string]httpTunnelEntry
 }
 
 type httpTunnelEntry struct {
-	session   streamSession
+	session streamSession
 }
 
 // streamSession is intentionally minimal and only supports opening a stream.
@@ -48,7 +48,7 @@ func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession) er
 	}
 
 	r.httpTunnels[id] = httpTunnelEntry{
-		session:   session,
+		session: session,
 	}
 	return nil
 }

@@ -24,4 +24,3 @@ func TestStore_AddAndList_RetainsNewestFirst(t *testing.T) {
 		t.Fatalf("expected IDs to be assigned")
 	}
 }
-

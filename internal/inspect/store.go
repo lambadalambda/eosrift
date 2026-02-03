@@ -1,15 +1,31 @@
 package inspect
 
 import (
+	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 type Entry struct {
 	ID string `json:"id"`
 
+	StartedAt  time.Time `json:"started_at"`
+	DurationMs int64     `json:"duration_ms"`
+
+	TunnelID string `json:"tunnel_id,omitempty"`
+
 	Method string `json:"method"`
 	Path   string `json:"path"`
+	Host   string `json:"host,omitempty"`
+
+	StatusCode int `json:"status_code,omitempty"`
+
+	BytesIn  int64 `json:"bytes_in,omitempty"`
+	BytesOut int64 `json:"bytes_out,omitempty"`
+
+	RequestHeaders  http.Header `json:"request_headers,omitempty"`
+	ResponseHeaders http.Header `json:"response_headers,omitempty"`
 }
 
 type StoreConfig struct {
@@ -41,6 +57,9 @@ func (s *Store) Add(e Entry) Entry {
 
 	s.nextID++
 	e.ID = strconv.FormatUint(s.nextID, 10)
+	if e.StartedAt.IsZero() {
+		e.StartedAt = time.Now().UTC()
+	}
 
 	s.entries = append(s.entries, e)
 	if len(s.entries) > s.maxEntries {
@@ -64,4 +83,3 @@ func (s *Store) List() []Entry {
 
 	return out
 }
-

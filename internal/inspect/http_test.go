@@ -42,4 +42,3 @@ func TestHandler_ListRequests(t *testing.T) {
 		t.Fatalf("paths = %q, %q, want /b,/a", body.Requests[0].Path, body.Requests[1].Path)
 	}
 }
-

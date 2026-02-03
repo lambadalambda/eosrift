@@ -25,4 +25,3 @@ func dialControl(ctx context.Context, controlURL string) (*websocket.Conn, *yamu
 
 	return ws, session, nil
 }
-

@@ -6,11 +6,21 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"time"
 
 	"eosrift.com/eosrift/internal/control"
+	"eosrift.com/eosrift/internal/inspect"
 	"github.com/hashicorp/yamux"
 	"nhooyr.io/websocket"
 )
+
+type HTTPTunnelOptions struct {
+	Inspector *inspect.Store
+
+	// CaptureBytes is the maximum number of bytes to keep for request and response
+	// previews (used by the local inspector). If zero, a sensible default is used.
+	CaptureBytes int
+}
 
 type HTTPTunnel struct {
 	ID  string
@@ -19,12 +29,19 @@ type HTTPTunnel struct {
 	localAddr string
 	ws        *websocket.Conn
 	session   *yamux.Session
+	inspector *inspect.Store
+
+	captureBytes int
 
 	closeOnce sync.Once
 	done      chan error
 }
 
 func StartHTTPTunnel(ctx context.Context, controlURL, localAddr string) (*HTTPTunnel, error) {
+	return StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, HTTPTunnelOptions{})
+}
+
+func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts HTTPTunnelOptions) (*HTTPTunnel, error) {
 	ws, session, err := dialControl(ctx, controlURL)
 	if err != nil {
 		return nil, err
@@ -72,7 +89,14 @@ func StartHTTPTunnel(ctx context.Context, controlURL, localAddr string) (*HTTPTu
 		localAddr: localAddr,
 		ws:        ws,
 		session:   session,
-		done:      make(chan error, 1),
+		inspector: opts.Inspector,
+		captureBytes: func() int {
+			if opts.CaptureBytes > 0 {
+				return opts.CaptureBytes
+			}
+			return 64 * 1024
+		}(),
+		done: make(chan error, 1),
 	}
 
 	go func() {
@@ -135,6 +159,35 @@ func (t *HTTPTunnel) handleStream(ctx context.Context, stream net.Conn) {
 	}
 	defer upstream.Close()
 
-	_ = proxyBidirectional(ctx, upstream, stream)
-}
+	if t.inspector == nil {
+		_ = proxyBidirectional(ctx, upstream, stream)
+		return
+	}
 
+	startedAt := time.Now().UTC()
+
+	reqCap := newPreviewCapture(t.captureBytes)
+	respCap := newPreviewCapture(t.captureBytes)
+
+	bytesIn, bytesOut, _ := proxyBidirectionalWithCapture(ctx, upstream, stream, reqCap, respCap)
+	duration := time.Since(startedAt)
+
+	s, ok := summarizeHTTPExchange(reqCap.Bytes(), respCap.Bytes())
+	if !ok {
+		return
+	}
+
+	t.inspector.Add(inspect.Entry{
+		StartedAt:       startedAt,
+		DurationMs:      duration.Milliseconds(),
+		TunnelID:        t.ID,
+		Method:          s.Method,
+		Path:            s.Path,
+		Host:            s.Host,
+		StatusCode:      s.StatusCode,
+		BytesIn:         bytesIn,
+		BytesOut:        bytesOut,
+		RequestHeaders:  s.RequestHeaders,
+		ResponseHeaders: s.ResponseHeaders,
+	})
+}

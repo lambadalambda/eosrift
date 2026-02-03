@@ -6,11 +6,11 @@ func TestTunnelIDFromHost(t *testing.T) {
 	t.Parallel()
 
 	cases := []struct {
-		name        string
-		host        string
+		name         string
+		host         string
 		tunnelDomain string
-		wantID      string
-		wantOK      bool
+		wantID       string
+		wantOK       bool
 	}{
 		{"basic", "abcd1234.tunnel.eosrift.com", "tunnel.eosrift.com", "abcd1234", true},
 		{"with port", "abcd1234.tunnel.eosrift.com:443", "tunnel.eosrift.com", "abcd1234", true},
@@ -34,4 +34,3 @@ func TestTunnelIDFromHost(t *testing.T) {
 		})
 	}
 }
-

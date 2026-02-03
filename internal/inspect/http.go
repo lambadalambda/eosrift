@@ -35,4 +35,3 @@ func Handler(store *Store) http.Handler {
 
 	return mux
 }
-
