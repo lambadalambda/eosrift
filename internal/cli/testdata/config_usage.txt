@@ -1,0 +1,5 @@
+usage: eosrift config <command> [args]
+
+commands:
+  add-authtoken   save authtoken to config
+  check           validate config file

@@ -1,0 +1,20 @@
+usage: eosrift [--config <path>] <command> [args]
+
+commands:
+  http      start an HTTP tunnel
+  tcp       start a TCP tunnel
+  config    manage client config
+  version   print version information
+  help      show help
+
+environment:
+  EOSRIFT_CONFIG        config path override
+  EOSRIFT_SERVER_ADDR   server base address (recommended)
+  EOSRIFT_CONTROL_URL   legacy: full ws(s) control URL
+  EOSRIFT_AUTHTOKEN     client auth token
+  EOSRIFT_INSPECT_ADDR  local inspector listen address
+
+examples:
+  eosrift config add-authtoken <token>
+  eosrift http 8080 --server https://eosrift.com
+  eosrift tcp  5432 --server https://eosrift.com
