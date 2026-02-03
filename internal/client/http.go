@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"eosrift.com/eosrift/internal/control"
@@ -35,6 +36,7 @@ type HTTPTunnel struct {
 
 	captureBytes int
 
+	closing   atomic.Bool
 	closeOnce sync.Once
 	done      chan error
 }
@@ -116,6 +118,7 @@ func (t *HTTPTunnel) Close() error {
 	var closeErr error
 
 	t.closeOnce.Do(func() {
+		t.closing.Store(true)
 		if t.session != nil {
 			closeErr = t.session.Close()
 		}
@@ -132,24 +135,29 @@ func (t *HTTPTunnel) Wait() error {
 }
 
 func (t *HTTPTunnel) acceptStreams(ctx context.Context) {
-	defer func() {
-		select {
-		case t.done <- ctx.Err():
-		default:
-		}
-	}()
-
 	for {
 		stream, err := t.session.AcceptStream()
 		if err != nil {
-			select {
-			case t.done <- err:
-			default:
+			if t.closing.Load() || ctx.Err() != nil {
+				if ctx.Err() != nil {
+					t.finish(ctx.Err())
+				} else {
+					t.finish(nil)
+				}
+				return
 			}
+			t.finish(err)
 			return
 		}
 
 		go t.handleStream(ctx, stream)
+	}
+}
+
+func (t *HTTPTunnel) finish(err error) {
+	select {
+	case t.done <- err:
+	default:
 	}
 }
 
