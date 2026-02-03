@@ -44,8 +44,18 @@ type TokenValidator interface {
 	ValidateToken(ctx context.Context, token string) (bool, error)
 }
 
+type TokenResolver interface {
+	TokenID(ctx context.Context, token string) (int64, bool, error)
+}
+
+type ReservationStore interface {
+	ReservedSubdomainTokenID(ctx context.Context, subdomain string) (int64, bool, error)
+}
+
 type Dependencies struct {
 	TokenValidator TokenValidator
+	TokenResolver  TokenResolver
+	Reservations   ReservationStore
 }
 
 func NewHandler(cfg Config, deps Dependencies) http.Handler {
@@ -79,7 +89,7 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
 
-	mux.HandleFunc("/control", controlHandler(cfg, registry, deps.TokenValidator))
+	mux.HandleFunc("/control", controlHandler(cfg, registry, deps))
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/style.css" {
 			serveLandingStyle(w, r)

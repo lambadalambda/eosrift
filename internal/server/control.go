@@ -41,9 +41,11 @@ type baseRequest struct {
 	Subdomain  string `json:"subdomain,omitempty"`
 }
 
-func controlHandler(cfg Config, registry *TunnelRegistry, validator TokenValidator) http.HandlerFunc {
+func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
+
+		validator := deps.TokenValidator
 
 		conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
 			CompressionMode: websocket.CompressionDisabled,
@@ -123,15 +125,15 @@ func controlHandler(cfg Config, registry *TunnelRegistry, validator TokenValidat
 			handleTCPControl(ctx, conn, session, ctrlStream, control.CreateTCPTunnelRequest{
 				Type:       "tcp",
 				Authtoken:  req.Authtoken,
-				RemotePort: req.RemotePort,
-			}, cfg)
+			RemotePort: req.RemotePort,
+		}, cfg)
 			return
 		case "http":
 			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
 				Type:      "http",
 				Authtoken: req.Authtoken,
 				Subdomain: req.Subdomain,
-			}, cfg, registry)
+			}, cfg, registry, deps)
 			return
 		default:
 			_ = writeControlTCPError(ctrlStream, "unsupported tunnel type")
@@ -191,21 +193,45 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 	}
 }
 
-func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry) {
-	if req.Subdomain != "" {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
-			Type:  "http",
-			Error: "custom subdomains not supported yet",
-		})
-		_ = ctrlStream.Close()
-		return
-	}
+func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry, deps Dependencies) {
+	id, err := func() (string, error) {
+		if strings.TrimSpace(req.Subdomain) == "" {
+			id, err := registry.AllocateID()
+			if err != nil {
+				return "", errors.New("failed to allocate id")
+			}
+			return id, nil
+		}
 
-	id, err := registry.AllocateID()
+		if deps.TokenResolver == nil || deps.Reservations == nil {
+			return "", errors.New("custom subdomains not supported")
+		}
+
+		tokenID, ok, err := deps.TokenResolver.TokenID(ctx, req.Authtoken)
+		if err != nil {
+			return "", errors.New("auth error")
+		}
+		if !ok {
+			return "", errors.New("unauthorized")
+		}
+
+		reservedTokenID, reserved, err := deps.Reservations.ReservedSubdomainTokenID(ctx, req.Subdomain)
+		if err != nil {
+			return "", errors.New("invalid subdomain")
+		}
+		if !reserved {
+			return "", errors.New("subdomain is not reserved")
+		}
+		if reservedTokenID != tokenID {
+			return "", errors.New("unauthorized")
+		}
+
+		return strings.ToLower(strings.TrimSpace(req.Subdomain)), nil
+	}()
 	if err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
-			Error: "failed to allocate id",
+			Error: err.Error(),
 		})
 		_ = ctrlStream.Close()
 		return
