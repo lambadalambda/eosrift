@@ -213,6 +213,34 @@ func (s *Store) ValidateToken(ctx context.Context, token string) (bool, error) {
 	return false, err
 }
 
+func (s *Store) TokenID(ctx context.Context, token string) (int64, bool, error) {
+	if s == nil || s.db == nil {
+		return 0, false, errors.New("nil store")
+	}
+
+	token = strings.TrimSpace(token)
+	if token == "" {
+		return 0, false, nil
+	}
+
+	hash := hashToken(token)
+
+	var id int64
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id
+		FROM authtokens
+		WHERE token_hash = ? AND revoked_at IS NULL
+		LIMIT 1
+	`, hash).Scan(&id)
+	if err == nil {
+		return id, true, nil
+	}
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, false, nil
+	}
+	return 0, false, err
+}
+
 func (s *Store) ensureSchema(ctx context.Context) error {
 	if s == nil || s.db == nil {
 		return errors.New("nil store")

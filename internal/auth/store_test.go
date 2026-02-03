@@ -114,3 +114,52 @@ func TestStore_EnsureTokenIsIdempotent(t *testing.T) {
 		t.Fatalf("validate ok = false, want true")
 	}
 }
+
+func TestStore_TokenID(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	dir := t.TempDir()
+
+	s, err := Open(ctx, filepath.Join(dir, "eosrift.db"))
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+
+	rec, token, err := s.CreateToken(ctx, "test")
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+
+	id, ok, err := s.TokenID(ctx, token)
+	if err != nil {
+		t.Fatalf("TokenID: %v", err)
+	}
+	if !ok {
+		t.Fatalf("TokenID ok = false, want true")
+	}
+	if id != rec.ID {
+		t.Fatalf("TokenID = %d, want %d", id, rec.ID)
+	}
+
+	id, ok, err = s.TokenID(ctx, "eos_wrong")
+	if err != nil {
+		t.Fatalf("TokenID wrong: %v", err)
+	}
+	if ok || id != 0 {
+		t.Fatalf("TokenID wrong = (%d,%v), want (0,false)", id, ok)
+	}
+
+	if err := s.RevokeToken(ctx, rec.ID); err != nil {
+		t.Fatalf("revoke: %v", err)
+	}
+
+	id, ok, err = s.TokenID(ctx, token)
+	if err != nil {
+		t.Fatalf("TokenID after revoke: %v", err)
+	}
+	if ok || id != 0 {
+		t.Fatalf("TokenID after revoke = (%d,%v), want (0,false)", id, ok)
+	}
+}
