@@ -110,6 +110,7 @@ The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>
 Expose a local HTTP port through the server:
 
 - `./bin/eosrift http 8080 --server https://<yourdomain>`
+- Request a stable domain (ngrok-like): `./bin/eosrift http --domain demo.tunnel.<yourdomain> 127.0.0.1:8080`
 
 The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
 
@@ -139,10 +140,12 @@ Server (Docker):
 Client:
 
 - `./bin/eosrift http 8080 --subdomain demo`
+- Or (ngrok-like): `./bin/eosrift http --domain demo.tunnel.<yourdomain> 127.0.0.1:8080`
 
 Notes:
 
 - The server will reject `--subdomain` unless it is reserved for your authtoken.
+- If `--domain` is unused, the server auto-reserves it to your authtoken on first use.
 - Use `docker compose exec server /eosrift-server reserve list` to view reservations.
 
 ### Inspector (alpha)
