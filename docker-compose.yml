@@ -1,3 +1,5 @@
+name: eosrift
+
 services:
   server:
     build:
