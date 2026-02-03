@@ -11,6 +11,7 @@ services:
       EOSRIFT_TUNNEL_DOMAIN: "${EOSRIFT_TUNNEL_DOMAIN:-tunnel.eosrift.com}"
       EOSRIFT_TCP_PORT_RANGE_START: "${EOSRIFT_TCP_PORT_RANGE_START:-20000}"
       EOSRIFT_TCP_PORT_RANGE_END: "${EOSRIFT_TCP_PORT_RANGE_END:-21000}"
+      EOSRIFT_AUTH_TOKEN: "${EOSRIFT_AUTH_TOKEN:-}"
       EOSRIFT_DB_PATH: "/data/eosrift.db"
     volumes:
       - eosrift-data:/data
