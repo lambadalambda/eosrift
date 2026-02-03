@@ -49,6 +49,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - `cp .env.example .env` (edit for your domain)
 - (Optional) Set `EOSRIFT_AUTH_TOKEN` in `.env` to bootstrap the first authtoken
 - (Optional) Set `EOSRIFT_MAX_TUNNELS_PER_TOKEN` to cap active tunnels per authtoken (0 = unlimited)
+- (Optional) Set `EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN` to rate limit tunnel creations per authtoken (0 = unlimited)
 - `docker compose up -d --build`
 - `curl -fsS http://127.0.0.1:8080/healthz`
 

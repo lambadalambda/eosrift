@@ -123,7 +123,7 @@ Current focus: **Milestone 5**.
 - [x] Bootstrap token (`EOSRIFT_AUTH_TOKEN`) to create an initial authtoken
 - [x] Reserved subdomains and/or custom domains (admin-managed)
 - [x] Resource limits: max active tunnels per token (`EOSRIFT_MAX_TUNNELS_PER_TOKEN`)
-- [ ] Basic rate limiting
+- [x] Basic rate limiting (tunnel creates per token): `EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN`
 
 ## Milestone 6 — Packaging + deployment polish
 
