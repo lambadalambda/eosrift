@@ -27,7 +27,7 @@ func printSession(w io.Writer, out sessionOutput) {
 	_, _ = fmt.Fprintln(w, "")
 	_, _ = fmt.Fprintf(w, "%s %s\n\n", st.brand("Eosrift"), st.dim(out.Version))
 
-	const labelWidth = 13
+	const labelWidth = 14
 	row := func(label, value string) {
 		_, _ = fmt.Fprintf(w, "  %s  %s\n", st.dim(fmt.Sprintf("%-*s", labelWidth, label)), value)
 	}
