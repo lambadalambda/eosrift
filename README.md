@@ -4,7 +4,7 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** pre-alpha (TCP + HTTP tunnels work; inspector/auth/custom domains coming).
+**Status:** pre-alpha (TCP + HTTP tunnels work; inspector is alpha; auth/custom domains coming).
 
 ## Goals
 
@@ -91,6 +91,18 @@ Expose a local HTTP port through the server:
 - `./bin/eosrift http 8080 --server wss://<yourdomain>/control`
 
 The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
+
+### Inspector (alpha)
+
+When running `eosrift http ...`, the client starts a local inspector by default:
+
+- `http://127.0.0.1:4040` (root page)
+- `http://127.0.0.1:4040/api/requests` (JSON list)
+
+Flags:
+
+- Disable: `--inspect=false`
+- Change address: `--inspect-addr 127.0.0.1:4041`
 
 Notes:
 

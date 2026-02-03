@@ -87,10 +87,13 @@ Current focus: **Milestone 3**.
 
 **Goal:** developer UX parity: view recent requests and replay.
 
-- Client runs a local web server on `127.0.0.1:4040`
-- Capture request/response metadata with size limits (store in memory first; SQLite later if needed)
-- “Replay” / “resend” support for HTTP tunnels (best-effort)
-- Optional SPA (React) talking to a local JSON API
+**Status:** in progress (2026-02-03, alpha)
+
+- [x] In-memory store + local JSON API (`/api/requests`)
+- [x] Capture request/response previews for HTTP tunnels
+- [x] Start local inspector server by default (`127.0.0.1:4040`)
+- [ ] “Replay” / “resend” support for HTTP tunnels (best-effort)
+- [ ] Optional SPA (React) talking to a local JSON API
 
 **Acceptance tests**
 

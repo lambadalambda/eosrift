@@ -5,13 +5,17 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"eosrift.com/eosrift/internal/client"
+	"eosrift.com/eosrift/internal/inspect"
 )
 
 func main() {
@@ -37,6 +41,8 @@ func httpCmd(args []string) {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
 
 	controlURL := fs.String("server", getenv("EOSRIFT_CONTROL_URL", "ws://127.0.0.1:8080/control"), "Control URL (ws/wss)")
+	inspectEnabled := fs.Bool("inspect", true, "Enable local inspector")
+	inspectAddr := fs.String("inspect-addr", getenv("EOSRIFT_INSPECT_ADDR", "127.0.0.1:4040"), "Inspector listen address")
 
 	_ = fs.Parse(args)
 
@@ -53,7 +59,33 @@ func httpCmd(args []string) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	tunnel, err := client.StartHTTPTunnel(ctx, *controlURL, localAddr)
+	var store *inspect.Store
+	if *inspectEnabled {
+		store = inspect.NewStore(inspect.StoreConfig{MaxEntries: 200})
+
+		ln, err := net.Listen("tcp", *inspectAddr)
+		if err != nil {
+			fmt.Fprintln(os.Stderr, "warning: inspector disabled:", err)
+			store = nil
+		} else {
+			srv := &http.Server{Handler: inspect.Handler(store)}
+
+			go func() {
+				<-ctx.Done()
+				shutdownCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+				_ = srv.Shutdown(shutdownCtx)
+			}()
+
+			go func() { _ = srv.Serve(ln) }()
+
+			fmt.Printf("Inspector http://%s\n", ln.Addr().String())
+		}
+	}
+
+	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, *controlURL, localAddr, client.HTTPTunnelOptions{
+		Inspector: store,
+	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
