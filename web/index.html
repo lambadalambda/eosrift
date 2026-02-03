@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eosrift - Self-Hosted Tunnel Service</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="grid-bg"></div>
+
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">&#9670;</span>
+                <span class="logo-text">Eosrift</span>
+            </div>
+            <nav class="nav">
+                <a href="#features">Features</a>
+                <a href="#quickstart">Quick Start</a>
+                <a href="https://github.com/lambadalambda/eosrift" class="nav-github">GitHub</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span>You are running Eosrift</span>
+                </div>
+                <h1 class="hero-title">
+                    Your infrastructure.<br>
+                    <span class="gradient-text">Your tunnels.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Self-hosted tunnel service with ngrok-like simplicity.
+                    Expose local services to the internet without vendor lock-in.
+                </p>
+                <div class="hero-actions">
+                    <a href="#quickstart" class="btn btn-primary">Get Started</a>
+                    <a href="https://github.com/lambadalambda/eosrift" class="btn btn-secondary">View Source</a>
+                </div>
+
+                <div class="hero-terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="terminal-title">Terminal</span>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span>
+                            <span class="terminal-cmd">eosrift http 3000</span>
+                        </div>
+                        <div class="terminal-output">
+                            <span class="output-label">Eosrift</span>
+                            <span class="output-version">v0.1.0</span>
+                        </div>
+                        <div class="terminal-output">
+                            <span class="output-dim">Session Status</span>
+                            <span class="output-success">online</span>
+                        </div>
+                        <div class="terminal-output">
+                            <span class="output-dim">Forwarding</span>
+                            <span class="output-url">https://abc123.tunnel.eosrift.com</span>
+                            <span class="output-arrow">-></span>
+                            <span>localhost:3000</span>
+                        </div>
+                        <div class="terminal-output">
+                            <span class="output-dim">Inspector</span>
+                            <span class="output-url">http://localhost:4040</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features">
+            <div class="container">
+                <h2 class="section-title">Built for developers who value control</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                            </svg>
+                        </div>
+                        <h3>Self-Hosted</h3>
+                        <p>Deploy on your own infrastructure. Your data never touches third-party servers.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="4 17 10 11 4 5"/>
+                                <line x1="12" y1="19" x2="20" y2="19"/>
+                            </svg>
+                        </div>
+                        <h3>Familiar CLI</h3>
+                        <p>ngrok-compatible commands and config. Switch without relearning anything.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="3" y="3" width="18" height="18" rx="2"/>
+                                <path d="M3 9h18M9 21V9"/>
+                            </svg>
+                        </div>
+                        <h3>HTTP & TCP Tunnels</h3>
+                        <p>Expose web apps, databases, SSH, or any TCP service through secure tunnels.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"/>
+                                <path d="M12 6v6l4 2"/>
+                            </svg>
+                        </div>
+                        <h3>Request Inspector</h3>
+                        <p>Debug webhooks and API calls with the built-in request inspector at localhost:4040.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            </svg>
+                        </div>
+                        <h3>Docker-First</h3>
+                        <p>Single docker-compose.yml deployment. Production-ready in minutes, not hours.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                            </svg>
+                        </div>
+                        <h3>Automatic TLS</h3>
+                        <p>Let's Encrypt certificates managed automatically. HTTPS by default, always.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="quickstart" class="quickstart">
+            <div class="container">
+                <h2 class="section-title">Up and running in minutes</h2>
+
+                <div class="quickstart-group">
+                    <h3 class="quickstart-group-title">On your server</h3>
+                    <div class="quickstart-grid">
+                        <div class="quickstart-step">
+                            <div class="step-number">1</div>
+                            <h3>Point your domains</h3>
+                            <p class="step-desc">Point your base domain and wildcard tunnel subdomain to your server.</p>
+                            <div class="code-block">
+                                <code>eosrift.com → your.server.ip</code>
+                                <code>*.tunnel.eosrift.com → your.server.ip</code>
+                            </div>
+                        </div>
+                        <div class="quickstart-step">
+                            <div class="step-number">2</div>
+                            <h3>Configure and deploy</h3>
+                            <p class="step-desc">Set your domain and run the stack.</p>
+                            <div class="code-block">
+                                <code>export EOSRIFT_BASE_DOMAIN=eosrift.com</code>
+                                <code>export EOSRIFT_TUNNEL_DOMAIN=tunnel.eosrift.com</code>
+                                <code>docker compose up -d</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quickstart-group">
+                    <h3 class="quickstart-group-title">On your client</h3>
+                    <div class="quickstart-grid">
+                        <div class="quickstart-step">
+                            <div class="step-number">1</div>
+                            <h3>Configure your token</h3>
+                            <div class="code-block">
+                                <code>eosrift config add-authtoken &lt;your-token&gt;</code>
+                            </div>
+                        </div>
+                        <div class="quickstart-step">
+                            <div class="step-number">2</div>
+                            <h3>Expose your service</h3>
+                            <div class="code-block">
+                                <code>eosrift http 8080</code>
+                            </div>
+                        </div>
+                        <div class="quickstart-step">
+                            <div class="step-number">3</div>
+                            <h3>Share your URL</h3>
+                            <div class="code-block">
+                                <code>https://abc123.tunnel.eosrift.com</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta">
+            <div class="container">
+                <div class="cta-content">
+                    <h2>Ready to take control?</h2>
+                    <p>Deploy Eosrift on your own infrastructure today.</p>
+                    <a href="https://github.com/lambadalambda/eosrift" class="btn btn-primary btn-large">Deploy Now</a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="logo">
+                    <span class="logo-icon">&#9670;</span>
+                    <span class="logo-text">Eosrift</span>
+                </div>
+                <p class="footer-tagline">Self-hosted tunnels for the modern stack.</p>
+            </div>
+            <div class="footer-links">
+                <a href="https://github.com/lambadalambda/eosrift">GitHub</a>
+                <a href="https://github.com/lambadalambda/eosrift/blob/main/CHANGELOG.md">Changelog</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
