@@ -4,8 +4,13 @@ set -euo pipefail
 image="${EOSRIFT_GO_IMAGE:-golang:1.23}"
 
 exec docker run --rm \
+  -e CGO_ENABLED \
+  -e GOOS \
+  -e GOARCH \
+  -e GOARM \
+  -e GOAMD64 \
+  -e GO386 \
   -v "${PWD}:/src" \
   -w /src \
   "${image}" \
   go "$@"
-

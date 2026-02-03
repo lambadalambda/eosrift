@@ -24,3 +24,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Set project name to EosRift (`eosrift.com`).
+
+### Fixed
+
+- `./scripts/go` now forwards `GOOS`/`GOARCH`/`CGO_ENABLED` into the Docker container so macOS client builds work.
