@@ -13,6 +13,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Docker Compose deployment (Caddy + server).
 - Coolify deployment notes (`deploy/COOLIFY.md`).
 - Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
+- GitHub Actions release workflow (builds client/server binaries on tags).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
 - Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.

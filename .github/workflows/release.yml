@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build release artifacts
+        run: |
+          set -euo pipefail
+
+          VERSION="${GITHUB_REF_NAME}"
+          DIST="dist"
+          rm -rf "${DIST}"
+          mkdir -p "${DIST}"
+
+          build() {
+            local name="$1"
+            local pkg="$2"
+            local goos="$3"
+            local goarch="$4"
+
+            local dir="${name}_${VERSION}_${goos}_${goarch}"
+            mkdir -p "${DIST}/${dir}"
+
+            CGO_ENABLED=0 GOOS="${goos}" GOARCH="${goarch}" \
+              go build -trimpath \
+                -ldflags "-s -w -X eosrift.com/eosrift/internal/cli.version=${VERSION}" \
+                -o "${DIST}/${dir}/${name}" \
+                "${pkg}"
+
+            (cd "${DIST}" && tar -czf "${dir}.tar.gz" "${dir}")
+            rm -rf "${DIST:?}/${dir}"
+          }
+
+          # Client (Linux + macOS).
+          for GOARCH in amd64 arm64; do
+            build "eosrift" "./cmd/client" "linux" "${GOARCH}"
+            build "eosrift" "./cmd/client" "darwin" "${GOARCH}"
+          done
+
+          # Server (Linux only).
+          for GOARCH in amd64 arm64; do
+            build "eosrift-server" "./cmd/server" "linux" "${GOARCH}"
+          done
+
+          (cd "${DIST}" && sha256sum *.tar.gz > checksums.txt)
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.tar.gz
+            dist/checksums.txt
+          generate_release_notes: true
+

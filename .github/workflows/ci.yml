@@ -4,7 +4,8 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
+  workflow_dispatch:
 
 jobs:
   test:
@@ -22,4 +23,3 @@ jobs:
       - name: Cleanup
         if: always()
         run: docker compose -f docker-compose.test.yml down -v --remove-orphans
-
