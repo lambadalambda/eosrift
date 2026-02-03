@@ -78,9 +78,17 @@ func runTCP(ctx context.Context, args []string, configPath string, stdout, stder
 	defer tunnel.Close()
 
 	host := controlHost(controlURL)
-	fmt.Fprintf(stdout, "Forwarding tcp://%s:%d -> %s\n", host, tunnel.RemotePort, localAddr)
+	printSession(stdout, sessionOutput{
+		Version:        version,
+		Status:         "online",
+		ForwardingFrom: fmt.Sprintf("tcp://%s:%d", host, tunnel.RemotePort),
+		ForwardingTo:   displayHostPort(localAddr),
+	})
 
 	if err := tunnel.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		if ctx.Err() != nil {
+			return 0
+		}
 		fmt.Fprintln(stderr, "error:", err)
 		return 1
 	}

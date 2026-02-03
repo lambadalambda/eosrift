@@ -91,12 +91,26 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	var store *inspect.Store
 	if *inspectEnabled {
 		store = inspect.NewStore(inspect.StoreConfig{MaxEntries: 200})
+	}
 
+	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
+		Authtoken: *authtoken,
+		Inspector: store,
+	})
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+	defer tunnel.Close()
+
+	inspectorURL := ""
+	if store != nil {
 		ln, err := net.Listen("tcp", *inspectAddr)
 		if err != nil {
 			fmt.Fprintln(stderr, "warning: inspector disabled:", err)
-			store = nil
 		} else {
+			inspectorURL = "http://" + displayHostPort(ln.Addr().String())
+
 			srv := &http.Server{
 				Handler: inspect.Handler(store, inspect.HandlerOptions{
 					Replay: func(ctx context.Context, entry inspect.Entry) (inspect.ReplayResult, error) {
@@ -147,24 +161,21 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 			}()
 
 			go func() { _ = srv.Serve(ln) }()
-
-			fmt.Fprintf(stdout, "Inspector http://%s\n", ln.Addr().String())
 		}
 	}
 
-	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
-		Authtoken: *authtoken,
-		Inspector: store,
+	printSession(stdout, sessionOutput{
+		Version:        version,
+		Status:         "online",
+		ForwardingFrom: tunnel.URL,
+		ForwardingTo:   displayHostPort(localAddr),
+		Inspector:      inspectorURL,
 	})
-	if err != nil {
-		fmt.Fprintln(stderr, "error:", err)
-		return 1
-	}
-	defer tunnel.Close()
-
-	fmt.Fprintf(stdout, "Forwarding %s -> %s\n", tunnel.URL, localAddr)
 
 	if err := tunnel.Wait(); err != nil && !errors.Is(err, context.Canceled) {
+		if ctx.Err() != nil {
+			return 0
+		}
 		fmt.Fprintln(stderr, "error:", err)
 		return 1
 	}

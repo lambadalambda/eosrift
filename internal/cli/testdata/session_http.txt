@@ -1,0 +1,7 @@
+
+Eosrift v0.1.0
+
+  Session Status  online
+
+  Forwarding     https://abc123.tunnel.eosrift.com → localhost:3000
+  Inspector      http://localhost:4040
