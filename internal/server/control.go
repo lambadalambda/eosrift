@@ -34,7 +34,9 @@ func (y yamuxSession) Close() error {
 }
 
 type baseRequest struct {
-	Type string `json:"type"`
+	Type       string `json:"type"`
+	RemotePort int    `json:"remote_port,omitempty"`
+	Subdomain  string `json:"subdomain,omitempty"`
 }
 
 func controlHandler(cfg Config, registry *TunnelRegistry) http.HandlerFunc {
@@ -65,26 +67,25 @@ func controlHandler(cfg Config, registry *TunnelRegistry) http.HandlerFunc {
 			return
 		}
 
-		body, err := io.ReadAll(io.LimitReader(ctrlStream, 64*1024))
-		if err != nil {
+		var req baseRequest
+		if err := json.NewDecoder(ctrlStream).Decode(&req); err != nil {
 			_ = writeControlTCPError(ctrlStream, "invalid request")
 			_ = ctrlStream.Close()
 			return
 		}
 
-		var base baseRequest
-		if err := json.Unmarshal(body, &base); err != nil {
-			_ = writeControlTCPError(ctrlStream, "invalid request")
-			_ = ctrlStream.Close()
-			return
-		}
-
-		switch strings.ToLower(strings.TrimSpace(base.Type)) {
+		switch strings.ToLower(strings.TrimSpace(req.Type)) {
 		case "tcp":
-			handleTCPControl(ctx, conn, session, ctrlStream, body, cfg)
+			handleTCPControl(ctx, conn, session, ctrlStream, control.CreateTCPTunnelRequest{
+				Type:       "tcp",
+				RemotePort: req.RemotePort,
+			}, cfg)
 			return
 		case "http":
-			handleHTTPControl(ctx, session, ctrlStream, body, cfg, registry)
+			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
+				Type:      "http",
+				Subdomain: req.Subdomain,
+			}, cfg, registry)
 			return
 		default:
 			_ = writeControlTCPError(ctrlStream, "unsupported tunnel type")
@@ -94,14 +95,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry) http.HandlerFunc {
 	}
 }
 
-func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, body []byte, cfg Config) {
-	var req control.CreateTCPTunnelRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		_ = writeControlTCPError(ctrlStream, "invalid request")
-		_ = ctrlStream.Close()
-		return
-	}
-
+func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateTCPTunnelRequest, cfg Config) {
 	ln, port, err := allocateTCPListener(cfg, req.RemotePort)
 	if err != nil {
 		_ = writeControlTCPError(ctrlStream, err.Error())
@@ -151,17 +145,7 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 	}
 }
 
-func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, body []byte, cfg Config, registry *TunnelRegistry) {
-	var req control.CreateHTTPTunnelRequest
-	if err := json.Unmarshal(body, &req); err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
-			Type:  "http",
-			Error: "invalid request",
-		})
-		_ = ctrlStream.Close()
-		return
-	}
-
+func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry) {
 	if req.Subdomain != "" {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
