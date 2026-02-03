@@ -23,6 +23,9 @@ func main() {
 		case "token", "tokens":
 			tokenCmd(os.Args[2:])
 			return
+		case "reserve", "reservations":
+			reserveCmd(os.Args[2:])
+			return
 		}
 	}
 
@@ -199,4 +202,115 @@ func getenv(key, fallback string) string {
 		return fallback
 	}
 	return v
+}
+
+func reserveCmd(args []string) {
+	if len(args) < 1 {
+		reserveUsage()
+		os.Exit(2)
+	}
+
+	switch args[0] {
+	case "add":
+		reserveAddCmd(args[1:])
+	case "list":
+		reserveListCmd(args[1:])
+	case "remove", "rm", "delete":
+		reserveRemoveCmd(args[1:])
+	default:
+		reserveUsage()
+		os.Exit(2)
+	}
+}
+
+func reserveUsage() {
+	fmt.Fprintln(os.Stderr, "usage: eosrift-server reserve <command> [args]")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "commands:")
+	fmt.Fprintln(os.Stderr, "  add      reserve a subdomain for a token id")
+	fmt.Fprintln(os.Stderr, "  list     list reserved subdomains")
+	fmt.Fprintln(os.Stderr, "  remove   remove a reserved subdomain")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "env:")
+	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
+}
+
+func reserveAddCmd(args []string) {
+	fs := flag.NewFlagSet("reserve add", flag.ExitOnError)
+	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
+	tokenID := fs.Int64("token-id", 0, "Token id to bind the subdomain to")
+	_ = fs.Parse(args)
+
+	if *tokenID <= 0 || fs.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "usage: eosrift-server reserve add --token-id <id> [--db path] <subdomain>")
+		os.Exit(2)
+	}
+
+	subdomain := fs.Arg(0)
+
+	ctx := context.Background()
+	store, err := auth.Open(ctx, *dbPath)
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	defer store.Close()
+
+	if err := store.ReserveSubdomain(ctx, *tokenID, subdomain); err != nil {
+		log.Fatalf("reserve subdomain: %v", err)
+	}
+
+	fmt.Printf("reserved %s\n", subdomain)
+}
+
+func reserveListCmd(args []string) {
+	fs := flag.NewFlagSet("reserve list", flag.ExitOnError)
+	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
+	_ = fs.Parse(args)
+
+	ctx := context.Background()
+	store, err := auth.Open(ctx, *dbPath)
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	defer store.Close()
+
+	list, err := store.ListReservedSubdomains(ctx)
+	if err != nil {
+		log.Fatalf("list reserved subdomains: %v", err)
+	}
+
+	if len(list) == 0 {
+		fmt.Println("no reserved subdomains")
+		return
+	}
+
+	for _, r := range list {
+		fmt.Printf("%s\t%d\t%s\n", r.Subdomain, r.TokenID, r.TokenPrefix)
+	}
+}
+
+func reserveRemoveCmd(args []string) {
+	fs := flag.NewFlagSet("reserve remove", flag.ExitOnError)
+	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
+	_ = fs.Parse(args)
+
+	if fs.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "usage: eosrift-server reserve remove [--db path] <subdomain>")
+		os.Exit(2)
+	}
+
+	subdomain := fs.Arg(0)
+
+	ctx := context.Background()
+	store, err := auth.Open(ctx, *dbPath)
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	defer store.Close()
+
+	if err := store.UnreserveSubdomain(ctx, subdomain); err != nil {
+		log.Fatalf("unreserve subdomain: %v", err)
+	}
+
+	fmt.Printf("unreserved %s\n", subdomain)
 }

@@ -80,6 +80,53 @@ func TestStore_ReserveSubdomain_UniqueName(t *testing.T) {
 	}
 }
 
+func TestStore_ListReservedSubdomains(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	dir := t.TempDir()
+
+	s, err := Open(ctx, filepath.Join(dir, "eosrift.db"))
+	if err != nil {
+		t.Fatalf("open: %v", err)
+	}
+	t.Cleanup(func() { _ = s.Close() })
+
+	rec, _, err := s.CreateToken(ctx, "owner")
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	if err := s.ReserveSubdomain(ctx, rec.ID, "zzz"); err != nil {
+		t.Fatalf("reserve zzz: %v", err)
+	}
+	if err := s.ReserveSubdomain(ctx, rec.ID, "aaa"); err != nil {
+		t.Fatalf("reserve aaa: %v", err)
+	}
+
+	list, err := s.ListReservedSubdomains(ctx)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(list) != 2 {
+		t.Fatalf("len(list) = %d, want %d", len(list), 2)
+	}
+	if list[0].Subdomain != "aaa" || list[1].Subdomain != "zzz" {
+		t.Fatalf("subdomains = %q, %q, want %q, %q", list[0].Subdomain, list[1].Subdomain, "aaa", "zzz")
+	}
+	for _, r := range list {
+		if r.TokenID != rec.ID {
+			t.Fatalf("token id = %d, want %d", r.TokenID, rec.ID)
+		}
+		if r.TokenPrefix == "" {
+			t.Fatalf("token prefix empty")
+		}
+		if r.CreatedAt.IsZero() {
+			t.Fatalf("created_at is zero")
+		}
+	}
+}
+
 func TestNormalizeSubdomain(t *testing.T) {
 	t.Parallel()
 
@@ -113,4 +160,3 @@ func TestNormalizeSubdomain(t *testing.T) {
 		})
 	}
 }
-

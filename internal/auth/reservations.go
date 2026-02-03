@@ -8,6 +8,15 @@ import (
 	"time"
 )
 
+type ReservedSubdomain struct {
+	Subdomain string
+	TokenID   int64
+	// TokenPrefix is a short display-safe token prefix.
+	TokenPrefix string
+
+	CreatedAt time.Time
+}
+
 func (s *Store) ReserveSubdomain(ctx context.Context, tokenID int64, subdomain string) error {
 	if s == nil || s.db == nil {
 		return errors.New("nil store")
@@ -26,6 +35,41 @@ func (s *Store) ReserveSubdomain(ctx context.Context, tokenID int64, subdomain s
 		VALUES (?, ?, ?)
 	`, norm, tokenID, time.Now().UTC().Unix())
 	return err
+}
+
+func (s *Store) ListReservedSubdomains(ctx context.Context) ([]ReservedSubdomain, error) {
+	if s == nil || s.db == nil {
+		return nil, errors.New("nil store")
+	}
+
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT r.subdomain, r.token_id, t.token_prefix, r.created_at
+		FROM reserved_subdomains r
+		JOIN authtokens t ON t.id = r.token_id
+		ORDER BY r.subdomain ASC
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var out []ReservedSubdomain
+	for rows.Next() {
+		var (
+			rec       ReservedSubdomain
+			createdAt int64
+		)
+		if err := rows.Scan(&rec.Subdomain, &rec.TokenID, &rec.TokenPrefix, &createdAt); err != nil {
+			return nil, err
+		}
+		rec.CreatedAt = time.Unix(createdAt, 0).UTC()
+		out = append(out, rec)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 func (s *Store) UnreserveSubdomain(ctx context.Context, subdomain string) error {
@@ -102,4 +146,3 @@ func normalizeSubdomain(s string) (string, error) {
 
 	return s, nil
 }
-
