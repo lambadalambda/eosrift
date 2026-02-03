@@ -11,6 +11,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial project documentation and planning.
 - Docker Compose deployment (Caddy + server).
+- Coolify deployment notes (`deploy/COOLIFY.md`).
 - Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.

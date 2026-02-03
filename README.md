@@ -54,6 +54,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - `PLAN.md` — milestones and TDD approach
 - `ARCHITECTURE.md` — proposed architecture and protocols
 - `CHANGELOG.md` — notable changes (Keep a Changelog format)
+- `deploy/COOLIFY.md` — deployment notes for Coolify
 
 ## Quickstart
 
@@ -95,9 +96,6 @@ Notes:
 
 - You must point `*.tunnel.<yourdomain>` at your server (example: `*.tunnel.eosrift.com`).
 - In early versions, the host header is preserved (your local service will see `abcd1234.tunnel.<yourdomain>`).
-
-- point `*.tunnel.<yourdomain>` (and optionally `<yourdomain>`) at the server (example: `*.tunnel.eosrift.com`)
-- run a client locally: `eosrift http 8080` → get a public URL like `https://abcd1234.tunnel.<yourdomain>` (example: `https://abcd1234.tunnel.eosrift.com`)
 
 ## Trademarks
 
