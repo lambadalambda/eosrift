@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/url"
@@ -73,7 +74,45 @@ func httpCmd(args []string) {
 			fmt.Fprintln(os.Stderr, "warning: inspector disabled:", err)
 			store = nil
 		} else {
-			srv := &http.Server{Handler: inspect.Handler(store, inspect.HandlerOptions{})}
+			srv := &http.Server{Handler: inspect.Handler(store, inspect.HandlerOptions{
+				Replay: func(ctx context.Context, entry inspect.Entry) (inspect.ReplayResult, error) {
+					u, err := url.ParseRequestURI(entry.Path)
+					if err != nil {
+						return inspect.ReplayResult{}, err
+					}
+
+					dst := &url.URL{
+						Scheme:   "http",
+						Host:     localAddr,
+						Path:     u.Path,
+						RawQuery: u.RawQuery,
+					}
+
+					req, err := http.NewRequestWithContext(ctx, entry.Method, dst.String(), nil)
+					if err != nil {
+						return inspect.ReplayResult{}, err
+					}
+
+					if entry.Host != "" {
+						req.Host = entry.Host
+					}
+
+					req.Header = entry.RequestHeaders.Clone()
+					stripHopByHopHeaders(req.Header)
+					req.Header.Del("Content-Length")
+					req.Header.Del("Transfer-Encoding")
+
+					clientHTTP := &http.Client{Timeout: 10 * time.Second}
+					resp, err := clientHTTP.Do(req)
+					if err != nil {
+						return inspect.ReplayResult{}, err
+					}
+					_, _ = io.Copy(io.Discard, resp.Body)
+					_ = resp.Body.Close()
+
+					return inspect.ReplayResult{StatusCode: resp.StatusCode}, nil
+				},
+			})}
 
 			go func() {
 				<-ctx.Done()
@@ -175,4 +214,22 @@ func controlHost(controlURL string) string {
 		return h
 	}
 	return controlURL
+}
+
+func stripHopByHopHeaders(h http.Header) {
+	// https://www.rfc-editor.org/rfc/rfc7230#section-6.1
+	hopByHop := []string{
+		"Connection",
+		"Proxy-Connection",
+		"Keep-Alive",
+		"Proxy-Authenticate",
+		"Proxy-Authorization",
+		"Te",
+		"Trailer",
+		"Transfer-Encoding",
+		"Upgrade",
+	}
+	for _, k := range hopByHop {
+		h.Del(k)
+	}
 }
