@@ -9,6 +9,8 @@ services:
       EOSRIFT_LISTEN_ADDR: ":8080"
       EOSRIFT_BASE_DOMAIN: "${EOSRIFT_BASE_DOMAIN:-eosrift.com}"
       EOSRIFT_TUNNEL_DOMAIN: "${EOSRIFT_TUNNEL_DOMAIN:-tunnel.eosrift.com}"
+      EOSRIFT_TCP_PORT_RANGE_START: "${EOSRIFT_TCP_PORT_RANGE_START:-20000}"
+      EOSRIFT_TCP_PORT_RANGE_END: "${EOSRIFT_TCP_PORT_RANGE_END:-21000}"
       EOSRIFT_DB_PATH: "/data/eosrift.db"
     volumes:
       - eosrift-data:/data
@@ -16,6 +18,7 @@ services:
       - "8080"
     ports:
       - "127.0.0.1:8080:8080"
+      - "${EOSRIFT_TCP_PORT_RANGE_START:-20000}-${EOSRIFT_TCP_PORT_RANGE_END:-21000}:${EOSRIFT_TCP_PORT_RANGE_START:-20000}-${EOSRIFT_TCP_PORT_RANGE_END:-21000}"
 
   caddy:
     image: caddy:2
