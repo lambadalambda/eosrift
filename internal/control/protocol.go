@@ -18,6 +18,7 @@ type CreateHTTPTunnelRequest struct {
 	Type      string `json:"type"` // "http"
 	Authtoken string `json:"authtoken,omitempty"`
 	Subdomain string `json:"subdomain,omitempty"`
+	Domain    string `json:"domain,omitempty"`
 }
 
 type CreateHTTPTunnelResponse struct {

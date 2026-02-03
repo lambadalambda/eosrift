@@ -9,6 +9,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -39,6 +40,7 @@ type baseRequest struct {
 	Authtoken  string `json:"authtoken,omitempty"`
 	RemotePort int    `json:"remote_port,omitempty"`
 	Subdomain  string `json:"subdomain,omitempty"`
+	Domain     string `json:"domain,omitempty"`
 }
 
 func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter) http.HandlerFunc {
@@ -185,6 +187,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Type:      "http",
 				Authtoken: req.Authtoken,
 				Subdomain: req.Subdomain,
+				Domain:    req.Domain,
 			}, cfg, registry, deps, tokenID)
 			return
 		default:
@@ -247,30 +250,65 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 
 func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry, deps Dependencies, tokenID int64) {
 	id, err := func() (string, error) {
-		if strings.TrimSpace(req.Subdomain) == "" {
+		domain := strings.TrimSpace(req.Domain)
+		subdomain := strings.TrimSpace(req.Subdomain)
+
+		switch {
+		case domain == "" && subdomain == "":
 			id, err := registry.AllocateID()
 			if err != nil {
 				return "", errors.New("failed to allocate id")
 			}
 			return id, nil
+		case domain != "" && subdomain != "":
+			return "", errors.New("invalid request")
 		}
 
 		if tokenID <= 0 || deps.Reservations == nil {
-			return "", errors.New("custom subdomains not supported")
-		}
-
-		reservedTokenID, reserved, err := deps.Reservations.ReservedSubdomainTokenID(ctx, req.Subdomain)
-		if err != nil {
-			return "", errors.New("invalid subdomain")
-		}
-		if !reserved {
-			return "", errors.New("subdomain is not reserved")
-		}
-		if reservedTokenID != tokenID {
 			return "", errors.New("unauthorized")
 		}
 
-		return strings.ToLower(strings.TrimSpace(req.Subdomain)), nil
+		desired := subdomain
+		if domain != "" {
+			host := domain
+			if strings.Contains(host, "://") {
+				u, err := url.Parse(host)
+				if err != nil {
+					return "", errors.New("invalid domain")
+				}
+				host = u.Host
+			}
+
+			id, ok := tunnelIDFromHost(host, cfg.TunnelDomain)
+			if !ok {
+				return "", errors.New("invalid domain")
+			}
+			desired = id
+		}
+
+		reservedTokenID, reserved, err := deps.Reservations.ReservedSubdomainTokenID(ctx, desired)
+		if err != nil {
+			return "", errors.New("invalid subdomain")
+		}
+		if reserved && reservedTokenID != tokenID {
+			return "", errors.New("unauthorized")
+		}
+
+		if !reserved {
+			if err := deps.Reservations.ReserveSubdomain(ctx, tokenID, desired); err != nil {
+				// In case of a race, re-check ownership.
+				reservedTokenID, reserved, err2 := deps.Reservations.ReservedSubdomainTokenID(ctx, desired)
+				if err2 == nil && reserved && reservedTokenID == tokenID {
+					return desired, nil
+				}
+				if err2 == nil && reserved && reservedTokenID != tokenID {
+					return "", errors.New("unauthorized")
+				}
+				return "", errors.New("failed to reserve subdomain")
+			}
+		}
+
+		return desired, nil
 	}()
 	if err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
