@@ -15,6 +15,9 @@ func runConfig(args []string, configPath string, stdout, stderr io.Writer) int {
 	}
 
 	switch args[0] {
+	case "help", "-h", "--help":
+		configUsage(stdout)
+		return 0
 	case "add-authtoken":
 		return runConfigAddAuthtoken(args[1:], configPath, stdout, stderr)
 	case "set-server":
@@ -40,11 +43,22 @@ func configUsage(w io.Writer) {
 func runConfigAddAuthtoken(args []string, configPath string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("config add-authtoken", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	help := fs.Bool("help", false, "Show help")
+	fs.BoolVar(help, "h", false, "Show help")
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "usage: eosrift config add-authtoken <token>")
+	}
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	if *help {
+		fs.SetOutput(stdout)
+		fs.Usage()
+		return 0
+	}
 	if fs.NArg() != 1 {
-		fmt.Fprintln(stderr, "usage: eosrift config add-authtoken <token>")
+		fs.Usage()
 		return 2
 	}
 
@@ -69,11 +83,22 @@ func runConfigAddAuthtoken(args []string, configPath string, stdout, stderr io.W
 func runConfigSetServer(args []string, configPath string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("config set-server", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	help := fs.Bool("help", false, "Show help")
+	fs.BoolVar(help, "h", false, "Show help")
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "usage: eosrift config set-server <server-addr>")
+	}
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	if *help {
+		fs.SetOutput(stdout)
+		fs.Usage()
+		return 0
+	}
 	if fs.NArg() != 1 {
-		fmt.Fprintln(stderr, "usage: eosrift config set-server <server-addr>")
+		fs.Usage()
 		return 2
 	}
 
@@ -98,11 +123,22 @@ func runConfigSetServer(args []string, configPath string, stdout, stderr io.Writ
 func runConfigCheck(args []string, configPath string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("config check", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	help := fs.Bool("help", false, "Show help")
+	fs.BoolVar(help, "h", false, "Show help")
+	fs.Usage = func() {
+		out := fs.Output()
+		fmt.Fprintln(out, "usage: eosrift config check")
+	}
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	if *help {
+		fs.SetOutput(stdout)
+		fs.Usage()
+		return 0
+	}
 	if fs.NArg() != 0 {
-		fmt.Fprintln(stderr, "usage: eosrift config check")
+		fs.Usage()
 		return 2
 	}
 

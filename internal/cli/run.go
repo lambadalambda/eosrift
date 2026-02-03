@@ -18,7 +18,9 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 
 	defaultConfigPath := getenv("EOSRIFT_CONFIG", config.DefaultPath())
 	configPath := global.String("config", defaultConfigPath, "Config file path")
-	help := global.Bool("help", false, "Show help")
+	var help bool
+	global.BoolVar(&help, "help", false, "Show help")
+	global.BoolVar(&help, "h", false, "Show help")
 
 	global.Usage = func() {
 		usage(stderr)
@@ -28,7 +30,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return 2
 	}
 
-	if *help {
+	if help {
 		usage(stdout)
 		return 0
 	}

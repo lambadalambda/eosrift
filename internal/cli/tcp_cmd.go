@@ -43,14 +43,22 @@ func runTCP(ctx context.Context, args []string, configPath string, stdout, stder
 
 	serverAddr := fs.String("server", serverDefault, "Server address (https://host, http://host:port, or ws(s)://host/control)")
 	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
+	help := fs.Bool("help", false, "Show help")
+	fs.BoolVar(help, "h", false, "Show help")
 
 	fs.Usage = func() {
-		fmt.Fprintln(stderr, "usage: eosrift tcp [flags] <local-port|local-addr>")
+		out := fs.Output()
+		fmt.Fprintln(out, "usage: eosrift tcp [flags] <local-port|local-addr>")
 		fs.PrintDefaults()
 	}
 
 	if err := parseInterspersedFlags(fs, args); err != nil {
 		return 2
+	}
+	if *help {
+		fs.SetOutput(stdout)
+		fs.Usage()
+		return 0
 	}
 	if fs.NArg() != 1 {
 		fs.Usage()

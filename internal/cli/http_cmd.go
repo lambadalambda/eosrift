@@ -62,14 +62,22 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector")
 	inspectAddr := fs.String("inspect-addr", inspectAddrDefault, "Inspector listen address")
+	help := fs.Bool("help", false, "Show help")
+	fs.BoolVar(help, "h", false, "Show help")
 
 	fs.Usage = func() {
-		fmt.Fprintln(stderr, "usage: eosrift http [flags] <local-port|local-addr>")
+		out := fs.Output()
+		fmt.Fprintln(out, "usage: eosrift http [flags] <local-port|local-addr>")
 		fs.PrintDefaults()
 	}
 
 	if err := parseInterspersedFlags(fs, args); err != nil {
 		return 2
+	}
+	if *help {
+		fs.SetOutput(stdout)
+		fs.Usage()
+		return 0
 	}
 	if fs.NArg() != 1 {
 		fs.Usage()

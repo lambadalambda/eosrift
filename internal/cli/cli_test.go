@@ -62,3 +62,60 @@ func TestRun_ConfigSetServer_WritesConfig(t *testing.T) {
 		t.Fatalf("server_addr = %q, want %q", cfg.ServerAddr, "https://example.com")
 	}
 }
+
+func TestRun_HTTPHelp_PrintsToStdout(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "http", "--help"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr not empty: %q", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "usage: eosrift http") {
+		t.Fatalf("stdout missing usage: %q", stdout.String())
+	}
+}
+
+func TestRun_TCPHelp_PrintsToStdout(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "tcp", "--help"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr not empty: %q", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "usage: eosrift tcp") {
+		t.Fatalf("stdout missing usage: %q", stdout.String())
+	}
+}
+
+func TestRun_ConfigHelp_PrintsToStdout(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "config", "--help"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr not empty: %q", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "usage: eosrift config") {
+		t.Fatalf("stdout missing usage: %q", stdout.String())
+	}
+}
