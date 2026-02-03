@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"eosrift.com/eosrift/internal/control"
+	"eosrift.com/eosrift/internal/mux"
 	"github.com/hashicorp/yamux"
 	"nhooyr.io/websocket"
 )
@@ -55,7 +56,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, validator TokenValidat
 
 		netConn := websocket.NetConn(ctx, conn, websocket.MessageBinary)
 
-		session, err := yamux.Server(netConn, nil)
+		session, err := yamux.Server(netConn, mux.QuietYamuxConfig())
 		if err != nil {
 			log.Printf("yamux server error: %v", err)
 			return
