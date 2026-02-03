@@ -9,6 +9,8 @@ services:
       EOSRIFT_LISTEN_ADDR: ":8080"
       EOSRIFT_BASE_DOMAIN: "eosrift.test"
       EOSRIFT_TUNNEL_DOMAIN: "tunnel.eosrift.test"
+      EOSRIFT_TCP_PORT_RANGE_START: "20000"
+      EOSRIFT_TCP_PORT_RANGE_END: "20010"
     expose:
       - "8080"
 
