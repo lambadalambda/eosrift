@@ -159,31 +159,35 @@ const inspectorIndexHTML = `<!doctype html>
 
     .layout {
       display: grid;
-      grid-template-columns: 420px 1fr;
+      grid-template-columns: 520px 1fr;
       min-height: calc(100vh - 56px);
     }
 
     .list {
       border-right: 1px solid var(--border);
       background: rgba(15, 23, 42, 0.18);
-      overflow: auto;
+      overflow-y: auto;
+      overflow-x: hidden;
     }
     .row {
       padding: 10px 14px;
       border-bottom: 1px solid rgba(255,255,255,0.06);
       cursor: pointer;
       display: grid;
-      grid-template-columns: 66px 1fr 72px;
-      gap: 10px;
+      grid-template-columns: 54px 1fr auto;
+      gap: 12px;
       align-items: center;
     }
     .row:hover { background: rgba(96,165,250,0.08); }
     .row.selected { background: rgba(96,165,250,0.14); }
     .method {
       font-weight: 700;
-      font-size: 12px;
+      font-size: 11px;
       letter-spacing: 0.3px;
       color: var(--accent);
+    }
+    .pathwrap {
+      min-width: 0;
     }
     .path {
       font-size: 13px;
@@ -200,13 +204,15 @@ const inspectorIndexHTML = `<!doctype html>
       white-space: nowrap;
     }
     .status {
-      justify-self: end;
+      flex-shrink: 0;
       font-size: 12px;
       font-weight: 700;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,0.1);
       background: rgba(255,255,255,0.04);
+      text-align: center;
+      min-width: 42px;
     }
 
     .detail {
@@ -227,13 +233,13 @@ const inspectorIndexHTML = `<!doctype html>
     }
     .kv {
       display: grid;
-      grid-template-columns: 140px 1fr;
-      gap: 8px 12px;
-      align-items: start;
+      grid-template-columns: 90px 1fr;
+      gap: 10px 16px;
+      align-items: baseline;
       font-size: 13px;
     }
-    .k { color: var(--muted); }
-    .v { color: var(--text); overflow-wrap: anywhere; }
+    .k { color: var(--muted); flex-shrink: 0; }
+    .v { color: var(--text); overflow-wrap: anywhere; word-break: break-all; min-width: 0; }
     .actions {
       margin-top: 12px;
       display: flex;
@@ -363,7 +369,7 @@ const inspectorIndexHTML = `<!doctype html>
         return (
           '<div class="row ' + selected + '" data-id="' + esc(r.id) + '">' +
             '<div class="method">' + esc(r.method || "") + '</div>' +
-            '<div>' +
+            '<div class="pathwrap">' +
               '<div class="path">' + esc(r.path || "") + '</div>' +
               '<div class="meta">' + esc(host) + ' • ' + esc(started) + '</div>' +
             '</div>' +
