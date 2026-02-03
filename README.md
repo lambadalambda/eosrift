@@ -69,6 +69,13 @@ Save your authtoken (ngrok-like):
 
 - `./bin/eosrift config add-authtoken <token>`
 
+Set your default server (recommended for self-hosting):
+
+- `./bin/eosrift config set-server https://<yourdomain>`
+- or env: `EOSRIFT_SERVER_ADDR=https://<yourdomain>`
+
+If unset, the client defaults to `https://eosrift.com`.
+
 Default config path:
 
 - Linux: `~/.config/eosrift/eosrift.yml` (or `$XDG_CONFIG_HOME/eosrift/eosrift.yml`)

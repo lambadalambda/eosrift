@@ -25,6 +25,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Set project name to EosRift (`eosrift.com`).
 - `eosrift version` now prints `eosrift version <version>` (release builds inject the version via `-ldflags -X`).
+- Default client server is now `https://eosrift.com` (override via `--server`, `EOSRIFT_SERVER_ADDR`, or `server_addr` in config).
 
 ### Fixed
 

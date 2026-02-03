@@ -32,7 +32,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		serverDefault = cfg.ServerAddr
 	}
 	if serverDefault == "" {
-		serverDefault = "ws://127.0.0.1:8080/control"
+		serverDefault = "https://eosrift.com"
 	}
 
 	authtokenDefault := getenv("EOSRIFT_AUTHTOKEN", "")
