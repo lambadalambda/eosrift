@@ -13,6 +13,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Docker Compose deployment (Caddy + server).
 - Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
+- HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
 - Docker Compose-based integration test harness.
 - GitHub Actions CI (unit tests + integration tests).
 

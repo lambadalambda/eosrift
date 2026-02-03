@@ -50,8 +50,8 @@ Responsibilities:
 ### Control plane
 
 - Transport: **WebSocket over TLS** (`wss://…/control`) for NAT friendliness
-- Multiplexing: a session multiplexer (e.g., yamux) over the WebSocket connection
-- Messages: framed control messages (JSON or protobuf; exact format TBD)
+- Multiplexing: yamux over the WebSocket connection
+- Messages: JSON control messages (initially; may move to a stricter schema later)
 
 Control messages cover:
 

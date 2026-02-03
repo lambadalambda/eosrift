@@ -4,7 +4,7 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** pre-alpha (TCP tunnels work; HTTP/inspector/auth coming).
+**Status:** pre-alpha (TCP + HTTP tunnels work; inspector/auth/custom domains coming).
 
 ## Goals
 
@@ -83,7 +83,18 @@ Expose a local TCP port through the server:
 
 The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>:20001 -> 127.0.0.1:8080`.
 
-### HTTP tunnels (planned)
+### HTTP tunnel (alpha)
+
+Expose a local HTTP port through the server:
+
+- `./bin/eosrift http 8080 --server wss://<yourdomain>/control`
+
+The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
+
+Notes:
+
+- You must point `*.tunnel.<yourdomain>` at your server (example: `*.tunnel.eosrift.com`).
+- In early versions, the host header is preserved (your local service will see `abcd1234.tunnel.<yourdomain>`).
 
 - point `*.tunnel.<yourdomain>` (and optionally `<yourdomain>`) at the server (example: `*.tunnel.eosrift.com`)
 - run a client locally: `eosrift http 8080` → get a public URL like `https://abcd1234.tunnel.<yourdomain>` (example: `https://abcd1234.tunnel.eosrift.com`)
