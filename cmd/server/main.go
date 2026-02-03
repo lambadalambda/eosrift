@@ -15,9 +15,11 @@ func main() {
 		addr = ":8080"
 	}
 
+	cfg := server.ConfigFromEnv()
+
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           server.NewHandler(),
+		Handler:           server.NewHandler(cfg),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
@@ -27,4 +29,3 @@ func main() {
 		log.Fatalf("server error: %v", err)
 	}
 }
-
