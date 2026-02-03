@@ -1,0 +1,30 @@
+name: eosrift-test
+
+services:
+  server:
+    build:
+      context: .
+      target: server
+    environment:
+      EOSRIFT_LISTEN_ADDR: ":8080"
+      EOSRIFT_BASE_DOMAIN: "eosrift.test"
+      EOSRIFT_TUNNEL_DOMAIN: "tunnel.eosrift.test"
+    expose:
+      - "8080"
+
+  test:
+    image: golang:1.23
+    working_dir: /src
+    volumes:
+      - .:/src
+    environment:
+      EOSRIFT_SERVER_URL: "http://server:8080"
+    depends_on:
+      - server
+    command: ["go", "test", "./...", "-tags=integration"]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.231.0.0/24
