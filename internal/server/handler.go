@@ -51,6 +51,7 @@ type Dependencies struct {
 func NewHandler(cfg Config, deps Dependencies) http.Handler {
 	mux := http.NewServeMux()
 	registry := NewTunnelRegistry()
+	tunnelProxy := httpTunnelProxyHandler(cfg, registry)
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -79,7 +80,20 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 	})
 
 	mux.HandleFunc("/control", controlHandler(cfg, registry, deps.TokenValidator))
-	mux.HandleFunc("/", httpTunnelProxyHandler(cfg, registry))
+	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
+		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/style.css" {
+			serveLandingStyle(w, r)
+			return
+		}
+		tunnelProxy(w, r)
+	})
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/" {
+			serveLandingIndex(w, r)
+			return
+		}
+		tunnelProxy(w, r)
+	})
 
 	return mux
 }
@@ -108,6 +122,14 @@ func caddyAskDomain(r *http.Request) (string, error) {
 	}
 
 	return domain, nil
+}
+
+func isBaseDomainHost(host, baseDomain string) bool {
+	base := normalizeDomain(baseDomain)
+	if base == "" {
+		return false
+	}
+	return normalizeDomain(host) == base
 }
 
 func isAllowedDomain(domain string, cfg Config) bool {
