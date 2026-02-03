@@ -61,6 +61,8 @@ func (s *Store) Add(e Entry) Entry {
 		e.StartedAt = time.Now().UTC()
 	}
 
+	e = redactEntry(e)
+
 	s.entries = append(s.entries, e)
 	if len(s.entries) > s.maxEntries {
 		s.entries = s.entries[len(s.entries)-s.maxEntries:]
