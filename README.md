@@ -22,19 +22,6 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - Proprietary ngrok features (SAML, paid dashboards, etc.)
 - Supporting Windows clients
 
-## Name ideas (alternatives)
-
-1. Riftgate
-2. OpenTunnel
-3. WireBore
-4. PortRelay
-5. Holloway
-6. Tunnelrod
-7. EdgeHook
-8. Subduct
-9. Driftpipe
-10. Cavern
-
 ## Proposed stack
 
 - **Go** (server + client): static binaries, great networking, fast iteration
