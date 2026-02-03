@@ -40,7 +40,7 @@ type baseRequest struct {
 	Subdomain  string `json:"subdomain,omitempty"`
 }
 
-func controlHandler(cfg Config, registry *TunnelRegistry) http.HandlerFunc {
+func controlHandler(cfg Config, registry *TunnelRegistry, validator TokenValidator) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -76,7 +76,35 @@ func controlHandler(cfg Config, registry *TunnelRegistry) http.HandlerFunc {
 		}
 
 		reqType := strings.ToLower(strings.TrimSpace(req.Type))
-		if cfg.AuthToken != "" && strings.TrimSpace(req.Authtoken) != cfg.AuthToken {
+		if validator != nil {
+			ok, err := validator.ValidateToken(ctx, req.Authtoken)
+			if err != nil {
+				switch reqType {
+				case "tcp":
+					_ = writeControlTCPError(ctrlStream, "auth error")
+				case "http":
+					_ = writeControlHTTPError(ctrlStream, "auth error")
+				default:
+					_ = writeControlTCPError(ctrlStream, "auth error")
+				}
+				_ = ctrlStream.Close()
+				return
+			}
+			if !ok {
+				switch reqType {
+				case "tcp":
+					_ = writeControlTCPError(ctrlStream, "unauthorized")
+				case "http":
+					_ = writeControlHTTPError(ctrlStream, "unauthorized")
+				default:
+					_ = writeControlTCPError(ctrlStream, "unauthorized")
+				}
+				_ = ctrlStream.Close()
+				return
+			}
+		}
+
+		if validator == nil && cfg.AuthToken != "" && strings.TrimSpace(req.Authtoken) != cfg.AuthToken {
 			switch reqType {
 			case "tcp":
 				_ = writeControlTCPError(ctrlStream, "unauthorized")

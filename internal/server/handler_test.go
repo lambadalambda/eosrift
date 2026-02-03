@@ -12,7 +12,7 @@ func TestNewHandler_healthz(t *testing.T) {
 	req := httptest.NewRequest(http.MethodGet, "/healthz", nil)
 	rec := httptest.NewRecorder()
 
-	NewHandler(Config{}).ServeHTTP(rec, req)
+	NewHandler(Config{}, Dependencies{}).ServeHTTP(rec, req)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
@@ -29,7 +29,7 @@ func TestNewHandler_caddyAsk_allowsBaseAndTunnelDomains(t *testing.T) {
 	h := NewHandler(Config{
 		BaseDomain:   "eosrift.com",
 		TunnelDomain: "tunnel.eosrift.com",
-	})
+	}, Dependencies{})
 
 	cases := []struct {
 		name       string

@@ -114,4 +114,3 @@ func TestStore_EnsureTokenIsIdempotent(t *testing.T) {
 		t.Fatalf("validate ok = false, want true")
 	}
 }
-

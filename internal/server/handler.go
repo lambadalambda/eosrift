@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -17,7 +18,11 @@ type Config struct {
 	TCPPortRangeStart int
 	TCPPortRangeEnd   int
 
-	// AuthToken, if set, is required for /control requests.
+	// DBPath is the path to the SQLite database.
+	DBPath string
+
+	// AuthToken, if set, is ensured to exist in the SQLite DB on startup.
+	// (Bootstrap convenience; not required when tokens already exist.)
 	AuthToken string
 }
 
@@ -29,11 +34,21 @@ func ConfigFromEnv() Config {
 		TCPPortRangeStart: getenvInt("EOSRIFT_TCP_PORT_RANGE_START", 20000),
 		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
 
+		DBPath: strings.TrimSpace(os.Getenv("EOSRIFT_DB_PATH")),
+
 		AuthToken: strings.TrimSpace(os.Getenv("EOSRIFT_AUTH_TOKEN")),
 	}
 }
 
-func NewHandler(cfg Config) http.Handler {
+type TokenValidator interface {
+	ValidateToken(ctx context.Context, token string) (bool, error)
+}
+
+type Dependencies struct {
+	TokenValidator TokenValidator
+}
+
+func NewHandler(cfg Config, deps Dependencies) http.Handler {
 	mux := http.NewServeMux()
 	registry := NewTunnelRegistry()
 
@@ -63,7 +78,7 @@ func NewHandler(cfg Config) http.Handler {
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
 
-	mux.HandleFunc("/control", controlHandler(cfg, registry))
+	mux.HandleFunc("/control", controlHandler(cfg, registry, deps.TokenValidator))
 	mux.HandleFunc("/", httpTunnelProxyHandler(cfg, registry))
 
 	return mux

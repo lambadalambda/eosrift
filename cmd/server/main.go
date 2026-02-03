@@ -32,15 +32,30 @@ func main() {
 	}
 
 	cfg := server.ConfigFromEnv()
-
-	srv := &http.Server{
-		Addr:              addr,
-		Handler:           server.NewHandler(cfg),
-		ReadHeaderTimeout: 5 * time.Second,
+	if cfg.DBPath == "" {
+		cfg.DBPath = getenv("EOSRIFT_DB_PATH", "/data/eosrift.db")
 	}
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+
+	store, err := auth.Open(ctx, cfg.DBPath)
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	defer store.Close()
+
+	if cfg.AuthToken != "" {
+		if err := store.EnsureToken(ctx, cfg.AuthToken, "bootstrap"); err != nil {
+			log.Fatalf("bootstrap token: %v", err)
+		}
+	}
+
+	srv := &http.Server{
+		Addr:              addr,
+		Handler:           server.NewHandler(cfg, server.Dependencies{TokenValidator: store}),
+		ReadHeaderTimeout: 5 * time.Second,
+	}
 
 	go func() {
 		<-ctx.Done()

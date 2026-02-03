@@ -17,7 +17,8 @@ func TestControlAuth_HTTP_Unauthorized(t *testing.T) {
 
 	srv := httptest.NewServer(NewHandler(Config{
 		TunnelDomain: "tunnel.example.com",
-		AuthToken:    "secret",
+	}, Dependencies{
+		TokenValidator: staticValidator{token: "secret"},
 	}))
 	t.Cleanup(srv.Close)
 
@@ -55,7 +56,8 @@ func TestControlAuth_HTTP_Authorized(t *testing.T) {
 
 	srv := httptest.NewServer(NewHandler(Config{
 		TunnelDomain: "tunnel.example.com",
-		AuthToken:    "secret",
+	}, Dependencies{
+		TokenValidator: staticValidator{token: "secret"},
 	}))
 	t.Cleanup(srv.Close)
 
@@ -117,4 +119,12 @@ func dialTestControl(t *testing.T, httpBaseURL string) (*websocket.Conn, *yamux.
 	}
 
 	return ws, session
+}
+
+type staticValidator struct {
+	token string
+}
+
+func (v staticValidator) ValidateToken(ctx context.Context, token string) (bool, error) {
+	return token == v.token, nil
 }
