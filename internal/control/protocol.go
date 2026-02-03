@@ -13,3 +13,16 @@ type CreateTCPTunnelResponse struct {
 	Error      string `json:"error,omitempty"`
 }
 
+type CreateHTTPTunnelRequest struct {
+	Type      string `json:"type"` // "http"
+	Subdomain string `json:"subdomain,omitempty"`
+}
+
+type CreateHTTPTunnelResponse struct {
+	Type string `json:"type"` // "http"
+
+	ID  string `json:"id,omitempty"`
+	URL string `json:"url,omitempty"`
+
+	Error string `json:"error,omitempty"`
+}
