@@ -115,9 +115,9 @@ Current focus: **Milestone 5**.
 
 **Status:** in progress (2026-02-03, alpha)
 
-- [x] Control plane auth token (`EOSRIFT_AUTH_TOKEN` + `--authtoken` / `EOSRIFT_AUTHTOKEN`)
-- [ ] SQLite schema + migrations
-- [ ] Authtokens stored/validated server-side (SQLite-backed)
+- [x] Authtokens stored/validated server-side (SQLite-backed)
+- [x] Token management CLI (`eosrift-server token create|list|revoke`)
+- [x] Bootstrap token (`EOSRIFT_AUTH_TOKEN`) to create an initial authtoken
 - [ ] Reserved subdomains and/or custom domains (admin-managed)
 - [ ] Resource limits and basic rate limiting
 

@@ -24,7 +24,7 @@ EosRift is Docker Compose-first, so deploying on Coolify is mostly “run the co
 4. Set environment variables (App Env Vars):
    - `EOSRIFT_BASE_DOMAIN` (example: `eosrift.com`)
    - `EOSRIFT_TUNNEL_DOMAIN` (example: `tunnel.eosrift.com`)
-   - `EOSRIFT_AUTH_TOKEN` (required for production; protects `/control`)
+   - `EOSRIFT_AUTH_TOKEN` (recommended bootstrap; ensures an initial authtoken exists for `/control`)
    - `EOSRIFT_ACME_EMAIL` (recommended; used by Caddy for ACME registration)
    - Optional: `EOSRIFT_TCP_PORT_RANGE_START` / `EOSRIFT_TCP_PORT_RANGE_END`
 5. Deploy.
@@ -40,6 +40,11 @@ From your laptop (client):
 - Build the client (see `README.md`)
 - Create a tunnel:
   - `./bin/eosrift http 8080 --server wss://<EOSRIFT_BASE_DOMAIN>/control --authtoken <EOSRIFT_AUTH_TOKEN>`
+
+If you did not set `EOSRIFT_AUTH_TOKEN` (bootstrap), create an authtoken by exec’ing into the server
+container and then use it from your client:
+
+- `docker exec -it <server-container> /eosrift-server token create --label laptop`
 
 ## Notes
 

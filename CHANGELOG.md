@@ -15,7 +15,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
-- Control plane auth (alpha): set `EOSRIFT_AUTH_TOKEN` on the server and pass `--authtoken` / `EOSRIFT_AUTHTOKEN` from the client.
+- Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.
 - Local inspector (alpha): capture HTTP exchanges and serve `/api/requests` on `127.0.0.1:4040`.
 - Docker Compose-based integration test harness.
 - GitHub Actions CI (unit tests + integration tests).

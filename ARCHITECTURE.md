@@ -62,8 +62,9 @@ Control messages cover:
 
 Current implementation notes:
 
-- Auth is a shared token passed in the initial control request (`authtoken`) and (when configured)
-  enforced server-side via `EOSRIFT_AUTH_TOKEN`.
+- Auth uses SQLite-backed authtokens. The client sends `authtoken` in the initial control request and
+  the server validates it against the database. `EOSRIFT_AUTH_TOKEN` is a bootstrap convenience to
+  ensure an initial token exists.
 
 ### Data plane (proxied traffic)
 

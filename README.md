@@ -61,14 +61,14 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 ### Server (Docker)
 
 - `cp .env.example .env` (edit for your domain)
-- Set `EOSRIFT_AUTH_TOKEN` in `.env` (recommended)
+- (Optional) Set `EOSRIFT_AUTH_TOKEN` in `.env` to bootstrap the first authtoken
 - `docker compose up -d --build`
 - `curl -fsS http://127.0.0.1:8080/healthz`
 
 Notes:
 
 - TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
-- Set `EOSRIFT_AUTH_TOKEN` to protect `/control` (recommended). If unset, `/control` is unauthenticated.
+- `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
 
 ### Client (build)
 
@@ -95,10 +95,16 @@ The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<your
 
 ### Auth (alpha)
 
-If the server has `EOSRIFT_AUTH_TOKEN` set, pass the same token from the client:
+Authtokens are stored and validated server-side (SQLite). Create one on the server, then pass it from the client:
 
 - flag: `--authtoken <token>`
 - env: `EOSRIFT_AUTHTOKEN=<token>`
+
+Server token management (Docker):
+
+- Create: `docker compose exec server /eosrift-server token create --label laptop`
+- List: `docker compose exec server /eosrift-server token list`
+- Revoke: `docker compose exec server /eosrift-server token revoke <id>`
 
 ### Inspector (alpha)
 
