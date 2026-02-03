@@ -5,6 +5,21 @@ integration tests). The goal is a self-hostable tunnel service with an ngrok-lik
 
 Examples may reference `eosrift.com`; self-hosters can substitute their own domain.
 
+## Milestone tracker (keep updated)
+
+Last updated: **2026-02-03**
+
+- [x] Milestone 0 — Repository + delivery scaffolding
+- [x] Milestone 1 — Control plane + TCP tunnel (end-to-end MVP)
+- [x] Milestone 2 — HTTP tunnel with host routing (alpha)
+- [ ] Milestone 3 — Local inspector (`localhost:4040` equivalent)
+- [ ] Milestone 4 — CLI + config compatibility
+- [ ] Milestone 5 — Auth + reserved names (SQLite-backed)
+- [ ] Milestone 6 — Packaging + deployment polish
+- [ ] Milestone 7 — Hardening + observability
+
+Current focus: **Milestone 3**.
+
 ## Guiding principles
 
 - **TDD:** write a failing test first, then implement, then refactor.
@@ -16,6 +31,8 @@ Examples may reference `eosrift.com`; self-hosters can substitute their own doma
 ## Milestone 0 — Repository + delivery scaffolding
 
 **Goal:** reproducible builds/tests and a runnable skeleton.
+
+**Status:** done (2026-02-03)
 
 - Go module layout (`cmd/server`, `cmd/client`, internal packages)
 - Dockerfiles for server/client (client optional in Docker)
@@ -33,6 +50,8 @@ Examples may reference `eosrift.com`; self-hosters can substitute their own doma
 
 **Goal:** a working tunnel for raw TCP with automated tests.
 
+**Status:** done (2026-02-03, alpha; unauthenticated)
+
 - Client establishes a **single outbound control connection** to the server (WSS in prod)
 - Multiplex streams over that connection (e.g., yamux)
 - Server allocates a TCP port from a configured range and listens publicly
@@ -49,7 +68,9 @@ Examples may reference `eosrift.com`; self-hosters can substitute their own doma
 
 **Goal:** `http 8080` yields a stable public URL on a wildcard domain.
 
-- Subdomain allocator: `https://<id>.tunnel.<base-domain>`
+**Status:** done (2026-02-03, alpha; missing auth + websocket coverage)
+
+- Subdomain allocator: `https://<id>.<tunnel-domain>` (example: `https://abcd1234.tunnel.eosrift.com`)
 - Host-based routing on the server (map `<id>` → active tunnel)
 - Reverse-proxy HTTP over multiplexed streams
 - Websocket and streaming support where possible (don’t buffer entire bodies)
@@ -58,7 +79,8 @@ Examples may reference `eosrift.com`; self-hosters can substitute their own doma
 **Acceptance tests (Docker)**
 
 - Run a small HTTP upstream next to the client container
-- Request `https://<id>.tunnel.<base-domain>/...` through Caddy and assert response
+- Request `http://server:8080/...` with `Host: <id>.<tunnel-domain>` and assert response
+- (TODO) Request via Caddy+TLS and assert response
 - Basic websocket smoke test (optional in this milestone if it complicates MVP)
 
 ## Milestone 3 — Local inspector (`localhost:4040` equivalent)
