@@ -41,7 +41,7 @@ type baseRequest struct {
 	Subdomain  string `json:"subdomain,omitempty"`
 }
 
-func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter) http.HandlerFunc {
+func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -155,6 +155,21 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				return
 			}
 			defer release()
+		}
+
+		if cfg.MaxTunnelCreatesPerMinute > 0 && rateLimiter != nil && tokenID > 0 {
+			if !rateLimiter.Allow(tokenID, cfg.MaxTunnelCreatesPerMinute) {
+				switch reqType {
+				case "tcp":
+					_ = writeControlTCPError(ctrlStream, "rate limit exceeded")
+				case "http":
+					_ = writeControlHTTPError(ctrlStream, "rate limit exceeded")
+				default:
+					_ = writeControlTCPError(ctrlStream, "rate limit exceeded")
+				}
+				_ = ctrlStream.Close()
+				return
+			}
 		}
 
 		switch reqType {
