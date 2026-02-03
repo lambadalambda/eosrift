@@ -9,7 +9,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 ## Goals
 
 - Functional, self-hostable “ngrok clone”
-- Easy deployment via **Docker / Docker Compose** (bare server or platforms like **Coolify**)
+- Easy deployment via **Docker / Docker Compose**
 - **HTTPS termination via Caddy**
 - **Linux-only server**, **Linux + macOS client**
 - CLI UX as close to ngrok as practical (commands, flags, config, output)
@@ -41,7 +41,6 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - `PLAN.md` — milestones and TDD approach
 - `ARCHITECTURE.md` — proposed architecture and protocols
 - `CHANGELOG.md` — notable changes (Keep a Changelog format)
-- `deploy/COOLIFY.md` — deployment notes for Coolify
 
 ## Quickstart
 

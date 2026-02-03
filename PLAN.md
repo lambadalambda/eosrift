@@ -129,7 +129,7 @@ Current focus: **Milestone 4**.
 - Multi-arch server Docker images (linux/amd64 + linux/arm64)
 - Signed client releases (macOS + Linux), single-file binaries
 - Optional Homebrew tap / install script
-- Production docs: firewall ports, Caddy wildcard cert setup, Coolify notes
+- Production docs: firewall ports, Caddy wildcard cert setup
 
 ## Milestone 7 — Hardening + observability
 
