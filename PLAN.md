@@ -107,7 +107,8 @@ Current focus: **Milestone 4**.
 - [x] Commands/flags modeled after ngrok (subset first): `http`, `tcp`, `config`, `version`, `help`
 - [x] ngrok-style YAML config parsing (compatible subset): `authtoken`, `server_addr`, `inspect`, `inspect_addr`
 - [x] Golden tests for help text and key command outputs (initial)
-- [ ] CLI output formatting and errors close to ngrok where reasonable
+- [x] CLI session output formatting (initial)
+- [ ] CLI output formatting and errors closer to ngrok (ongoing)
 - [ ] Document config precedence + migration notes
 
 ## Milestone 5 — Auth + reserved names (SQLite-backed)

@@ -16,7 +16,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
 - Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.
-- Client config (alpha): ngrok-style YAML config (`eosrift.yml`) + `eosrift config add-authtoken|check` and global `--config`.
+- Client config (alpha): ngrok-style YAML config (`eosrift.yml`) + `eosrift config add-authtoken|set-server|check` and global `--config`.
 - Local inspector (alpha): capture HTTP exchanges, redact common secrets, serve a web UI at `/`, expose `/api/requests`, and support best-effort replay.
 - Docker Compose-based integration test harness.
 - GitHub Actions CI (unit tests + integration tests).
@@ -26,9 +26,11 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Set project name to EosRift (`eosrift.com`).
 - `eosrift version` now prints `eosrift version <version>` (release builds inject the version via `-ldflags -X`).
 - Default client server is now `https://eosrift.com` (override via `--server`, `EOSRIFT_SERVER_ADDR`, or `server_addr` in config).
+- `eosrift http` / `eosrift tcp` now print an ngrok-like session summary (including forwarding URL and inspector URL).
 
 ### Fixed
 
 - `./scripts/go` now forwards `GOOS`/`GOARCH`/`CGO_ENABLED` into the Docker container so macOS client builds work.
 - `eosrift http` / `eosrift tcp` now accept flags after args (ngrok-like): `eosrift http 8080 --server https://...`.
 - `deploy/Caddyfile` now uses the correct `on_demand_tls { ask ... }` placement for Caddy.
+- Ctrl-C shutdown no longer prints spurious tunnel errors.
