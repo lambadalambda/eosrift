@@ -77,11 +77,24 @@ This repo doesn’t require Go on your host; you can build with Docker:
 - Linux (example): `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 ./scripts/go build -o bin/eosrift ./cmd/client`
 - macOS (example): `CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 ./scripts/go build -o bin/eosrift ./cmd/client`
 
+### Client config (alpha)
+
+Save your authtoken (ngrok-like):
+
+- `./bin/eosrift config add-authtoken <token>`
+
+Default config path:
+
+- Linux: `~/.config/eosrift/eosrift.yml` (or `$XDG_CONFIG_HOME/eosrift/eosrift.yml`)
+- macOS: `~/Library/Application Support/eosrift/eosrift.yml`
+
+Supported keys (compatible subset): `authtoken`, `server_addr`, `inspect`, `inspect_addr`.
+
 ### TCP tunnel (alpha)
 
 Expose a local TCP port through the server:
 
-- `./bin/eosrift tcp 8080 --server wss://<yourdomain>/control`
+- `./bin/eosrift tcp 8080 --server https://<yourdomain>`
 
 The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>:20001 -> 127.0.0.1:8080`.
 
@@ -89,7 +102,7 @@ The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>
 
 Expose a local HTTP port through the server:
 
-- `./bin/eosrift http 8080 --server wss://<yourdomain>/control`
+- `./bin/eosrift http 8080 --server https://<yourdomain>`
 
 The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
 
@@ -99,6 +112,7 @@ Authtokens are stored and validated server-side (SQLite). Create one on the serv
 
 - flag: `--authtoken <token>`
 - env: `EOSRIFT_AUTHTOKEN=<token>`
+- config: `eosrift config add-authtoken <token>`
 
 Server token management (Docker):
 
