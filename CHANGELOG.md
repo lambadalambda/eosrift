@@ -24,6 +24,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - Set project name to EosRift (`eosrift.com`).
+- `eosrift version` now prints `eosrift version <version>` (release builds inject the version via `-ldflags -X`).
 
 ### Fixed
 

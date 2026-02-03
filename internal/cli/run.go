@@ -10,7 +10,7 @@ import (
 	"eosrift.com/eosrift/internal/config"
 )
 
-const versionString = "eosrift (dev)"
+var version = "dev"
 
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	global := flag.NewFlagSet("eosrift", flag.ContinueOnError)
@@ -44,7 +44,7 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		usage(stdout)
 		return 0
 	case "version":
-		fmt.Fprintln(stdout, versionString)
+		fmt.Fprintf(stdout, "eosrift version %s\n", version)
 		return 0
 	case "config":
 		return runConfig(rest[1:], *configPath, stdout, stderr)
