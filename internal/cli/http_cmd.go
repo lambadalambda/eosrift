@@ -69,7 +69,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		fs.PrintDefaults()
 	}
 
-	if err := fs.Parse(args); err != nil {
+	if err := parseInterspersedFlags(fs, args); err != nil {
 		return 2
 	}
 	if fs.NArg() != 1 {

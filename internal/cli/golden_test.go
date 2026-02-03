@@ -54,4 +54,3 @@ func readGolden(t *testing.T, name string) string {
 	}
 	return string(b)
 }
-
