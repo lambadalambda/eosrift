@@ -1,6 +1,12 @@
 {
 	# Optional (recommended): set via EOSRIFT_ACME_EMAIL in docker-compose.yml
 	email {$EOSRIFT_ACME_EMAIL}
+
+	# Restrict on-demand certificates to allowed hostnames.
+	# This is configured globally (not inside the site tls block).
+	on_demand_tls {
+		ask http://server:8080/caddy/ask
+	}
 }
 
 :80 {
@@ -8,13 +14,10 @@
 }
 
 :443 {
-	# Avoid wildcard DNS plugins by using on-demand certificates. The server's
-	# /caddy/ask endpoint restricts which hostnames are allowed.
+	# Avoid wildcard DNS plugins by using on-demand certificates.
 	tls {
 		on_demand
-		ask http://server:8080/caddy/ask
 	}
 
 	reverse_proxy server:8080
 }
-

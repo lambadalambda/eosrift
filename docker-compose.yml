@@ -26,7 +26,8 @@ services:
     depends_on:
       - server
     environment:
-      EOSRIFT_ACME_EMAIL: "${EOSRIFT_ACME_EMAIL:-}"
+      # If EOSRIFT_ACME_EMAIL is empty, default to an address at the base domain.
+      EOSRIFT_ACME_EMAIL: "${EOSRIFT_ACME_EMAIL:-admin@${EOSRIFT_BASE_DOMAIN:-eosrift.com}}"
     ports:
       - "80:80"
       - "443:443"
