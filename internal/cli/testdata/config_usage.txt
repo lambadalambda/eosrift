@@ -2,4 +2,5 @@ usage: eosrift config <command> [args]
 
 commands:
   add-authtoken   save authtoken to config
+  set-server      save server address to config
   check           validate config file

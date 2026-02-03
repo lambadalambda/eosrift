@@ -17,6 +17,8 @@ func runConfig(args []string, configPath string, stdout, stderr io.Writer) int {
 	switch args[0] {
 	case "add-authtoken":
 		return runConfigAddAuthtoken(args[1:], configPath, stdout, stderr)
+	case "set-server":
+		return runConfigSetServer(args[1:], configPath, stdout, stderr)
 	case "check":
 		return runConfigCheck(args[1:], configPath, stdout, stderr)
 	default:
@@ -31,6 +33,7 @@ func configUsage(w io.Writer) {
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "commands:")
 	fmt.Fprintln(w, "  add-authtoken   save authtoken to config")
+	fmt.Fprintln(w, "  set-server      save server address to config")
 	fmt.Fprintln(w, "  check           validate config file")
 }
 
@@ -60,6 +63,35 @@ func runConfigAddAuthtoken(args []string, configPath string, stdout, stderr io.W
 	}
 
 	fmt.Fprintf(stdout, "Authtoken saved to %s\n", configPath)
+	return 0
+}
+
+func runConfigSetServer(args []string, configPath string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("config set-server", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() != 1 {
+		fmt.Fprintln(stderr, "usage: eosrift config set-server <server-addr>")
+		return 2
+	}
+
+	serverAddr := fs.Arg(0)
+
+	cfg, _, err := config.Load(configPath)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+
+	cfg.ServerAddr = serverAddr
+	if err := config.Save(configPath, cfg); err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+
+	fmt.Fprintf(stdout, "Server address saved to %s\n", configPath)
 	return 0
 }
 

@@ -78,6 +78,7 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "")
 	fmt.Fprintln(w, "examples:")
 	fmt.Fprintln(w, "  eosrift config add-authtoken <token>")
+	fmt.Fprintln(w, "  eosrift config set-server https://eosrift.com")
 	fmt.Fprintln(w, "  eosrift http 8080 --server https://eosrift.com")
 	fmt.Fprintln(w, "  eosrift tcp  5432 --server https://eosrift.com")
 }

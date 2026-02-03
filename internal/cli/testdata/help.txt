@@ -16,5 +16,6 @@ environment:
 
 examples:
   eosrift config add-authtoken <token>
+  eosrift config set-server https://eosrift.com
   eosrift http 8080 --server https://eosrift.com
   eosrift tcp  5432 --server https://eosrift.com
