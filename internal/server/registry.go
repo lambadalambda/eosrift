@@ -15,7 +15,6 @@ type TunnelRegistry struct {
 }
 
 type httpTunnelEntry struct {
-	localAddr string
 	session   streamSession
 }
 
@@ -32,16 +31,13 @@ func NewTunnelRegistry() *TunnelRegistry {
 	}
 }
 
-func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, localAddr string) error {
+func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession) error {
 	id = strings.TrimSpace(strings.ToLower(id))
 	if id == "" {
 		return errors.New("empty tunnel id")
 	}
 	if session == nil {
 		return errors.New("nil session")
-	}
-	if localAddr == "" {
-		return errors.New("empty local addr")
 	}
 
 	r.mu.Lock()
@@ -53,15 +49,14 @@ func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, lo
 
 	r.httpTunnels[id] = httpTunnelEntry{
 		session:   session,
-		localAddr: localAddr,
 	}
 	return nil
 }
 
-func (r *TunnelRegistry) GetHTTPTunnel(id string) (streamSession, string, bool) {
+func (r *TunnelRegistry) GetHTTPTunnel(id string) (streamSession, bool) {
 	id = strings.TrimSpace(strings.ToLower(id))
 	if id == "" {
-		return nil, "", false
+		return nil, false
 	}
 
 	r.mu.RLock()
@@ -69,9 +64,9 @@ func (r *TunnelRegistry) GetHTTPTunnel(id string) (streamSession, string, bool) 
 
 	t, ok := r.httpTunnels[id]
 	if !ok {
-		return nil, "", false
+		return nil, false
 	}
-	return t.session, t.localAddr, true
+	return t.session, true
 }
 
 func (r *TunnelRegistry) UnregisterHTTPTunnel(id string) {

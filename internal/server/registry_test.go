@@ -20,27 +20,24 @@ func TestTunnelRegistry_RegisterAndGetHTTP(t *testing.T) {
 
 	r := NewTunnelRegistry()
 
-	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}, "127.0.0.1:8080"); err != nil {
+	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}); err != nil {
 		t.Fatalf("register: %v", err)
 	}
 
-	sess, addr, ok := r.GetHTTPTunnel("abc123")
+	sess, ok := r.GetHTTPTunnel("abc123")
 	if !ok {
 		t.Fatalf("expected tunnel to exist")
 	}
 	if sess == nil {
 		t.Fatalf("expected session to be non-nil")
 	}
-	if addr != "127.0.0.1:8080" {
-		t.Fatalf("addr = %q, want %q", addr, "127.0.0.1:8080")
-	}
 
-	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}, "127.0.0.1:8081"); err == nil {
+	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}); err == nil {
 		t.Fatalf("expected duplicate id error")
 	}
 
 	r.UnregisterHTTPTunnel("abc123")
-	_, _, ok = r.GetHTTPTunnel("abc123")
+	_, ok = r.GetHTTPTunnel("abc123")
 	if ok {
 		t.Fatalf("expected tunnel to be removed")
 	}
@@ -58,4 +55,3 @@ func TestTunnelRegistry_AllocateID(t *testing.T) {
 		t.Fatalf("id len = %d, want %d", len(id), 8)
 	}
 }
-
