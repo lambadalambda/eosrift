@@ -12,6 +12,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Initial project documentation and planning.
 - Docker Compose deployment (Caddy + server).
 - Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
+- Embedded landing page on the base domain (`GET /` + `GET /style.css`).
 - GitHub Actions release workflow (builds client/server binaries on tags).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.

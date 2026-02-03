@@ -37,6 +37,7 @@ Current focus: **Milestone 4**.
 - Go module layout (`cmd/server`, `cmd/client`, internal packages)
 - Dockerfiles for server/client (client optional in Docker)
 - `docker-compose.yml` for “naked server” deployment (Caddy + server + SQLite volume)
+- Embedded landing page on the base domain (`GET /` + `GET /style.css`)
 - `docker-compose.test.yml` for deterministic integration tests
 - Basic CI (build + unit tests + integration tests in containers)
 - `CHANGELOG.md` kept up to date

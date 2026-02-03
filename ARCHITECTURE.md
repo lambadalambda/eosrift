@@ -22,6 +22,7 @@ Examples use `eosrift.com` as the base domain; self-hosters can substitute their
 - Obtains certificates (recommended: wildcard `*.tunnel.<base-domain>` via DNS challenge)
 - Reverse-proxies:
   - `https://<id>.tunnel.<base-domain>` → server’s HTTP edge handler
+  - `https://<base-domain>/` → server’s embedded landing page
   - `https://<base-domain>/control` (websocket upgrade) → server control handler
   - Optional: `https://<base-domain>/api/...` → server management API
 
