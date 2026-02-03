@@ -1,0 +1,16 @@
+# Binaries / build output
+bin/
+dist/
+build/
+
+# OS/editor
+.DS_Store
+
+# Logs
+*.log
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+

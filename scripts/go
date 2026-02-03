@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+image="${EOSRIFT_GO_IMAGE:-golang:1.23}"
+
+exec docker run --rm \
+  -v "${PWD}:/src" \
+  -w /src \
+  "${image}" \
+  go "$@"
+
