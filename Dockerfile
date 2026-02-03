@@ -3,7 +3,7 @@ ARG GO_VERSION=1.23
 FROM golang:${GO_VERSION} AS build
 WORKDIR /src
 
-COPY go.mod ./
+COPY go.mod go.sum ./
 
 COPY cmd ./cmd
 COPY internal ./internal
@@ -20,4 +20,3 @@ ENTRYPOINT ["/eosrift-server"]
 FROM gcr.io/distroless/base-debian12:nonroot AS client
 COPY --from=build /out/eosrift /eosrift
 ENTRYPOINT ["/eosrift"]
-

@@ -6,18 +6,25 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 )
 
 type Config struct {
 	BaseDomain   string
 	TunnelDomain string
+
+	TCPPortRangeStart int
+	TCPPortRangeEnd   int
 }
 
 func ConfigFromEnv() Config {
 	return Config{
 		BaseDomain:   os.Getenv("EOSRIFT_BASE_DOMAIN"),
 		TunnelDomain: os.Getenv("EOSRIFT_TUNNEL_DOMAIN"),
+
+		TCPPortRangeStart: getenvInt("EOSRIFT_TCP_PORT_RANGE_START", 20000),
+		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
 	}
 }
 
@@ -49,6 +56,8 @@ func NewHandler(cfg Config) http.Handler {
 
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
+
+	mux.HandleFunc("/control", controlHandler(cfg))
 
 	return mux
 }
@@ -102,4 +111,16 @@ func ValidateConfig(cfg Config) error {
 		return fmt.Errorf("EOSRIFT_TUNNEL_DOMAIN is required")
 	}
 	return nil
+}
+
+func getenvInt(key string, fallback int) int {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return fallback
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil {
+		return fallback
+	}
+	return n
 }
