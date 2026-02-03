@@ -84,6 +84,17 @@ Default config path:
 
 Supported keys (compatible subset): `authtoken`, `server_addr`, `inspect`, `inspect_addr`.
 
+Config precedence:
+
+- Flags > environment > config file > defaults
+- Server address (`--server`):
+  - `--server` > `EOSRIFT_SERVER_ADDR` > `EOSRIFT_CONTROL_URL` > `server_addr` > `https://eosrift.com`
+- Authtoken (`--authtoken`):
+  - `--authtoken` > `EOSRIFT_AUTHTOKEN` > `authtoken` > empty
+- Inspector:
+  - `--inspect` > `inspect` > `true`
+  - `--inspect-addr` > `EOSRIFT_INSPECT_ADDR` > `inspect_addr` > `127.0.0.1:4040` (tries up to `:5000`)
+
 ### TCP tunnel (alpha)
 
 Expose a local TCP port through the server:

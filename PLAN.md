@@ -13,12 +13,12 @@ Last updated: **2026-02-03**
 - [x] Milestone 1 — Control plane + TCP tunnel (end-to-end MVP)
 - [x] Milestone 2 — HTTP tunnel with host routing (alpha)
 - [x] Milestone 3 — Local inspector (`localhost:4040` equivalent)
-- [ ] Milestone 4 — CLI + config compatibility
+- [x] Milestone 4 — CLI + config compatibility
 - [ ] Milestone 5 — Auth + reserved names (SQLite-backed)
 - [ ] Milestone 6 — Packaging + deployment polish
 - [ ] Milestone 7 — Hardening + observability
 
-Current focus: **Milestone 4**.
+Current focus: **Milestone 5**.
 
 ## Guiding principles
 
@@ -109,8 +109,8 @@ Current focus: **Milestone 4**.
 - [x] ngrok-style YAML config parsing (compatible subset): `authtoken`, `server_addr`, `inspect`, `inspect_addr`
 - [x] Golden tests for help text and key command outputs (initial)
 - [x] CLI session output formatting (initial)
-- [ ] CLI output formatting and errors closer to ngrok (ongoing)
-- [ ] Document config precedence + migration notes
+- [x] CLI output formatting and errors closer to ngrok (initial)
+- [x] Document config precedence + migration notes
 
 ## Milestone 5 — Auth + reserved names (SQLite-backed)
 

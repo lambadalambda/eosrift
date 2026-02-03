@@ -33,6 +33,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `./scripts/go` now forwards `GOOS`/`GOARCH`/`CGO_ENABLED` into the Docker container so macOS client builds work.
 - `eosrift http` / `eosrift tcp` now accept flags after args (ngrok-like): `eosrift http 8080 --server https://...`.
+- `eosrift http|tcp|config --help` (and `-h`) now prints help to stdout and exits 0.
 - `deploy/Caddyfile` now uses the correct `on_demand_tls { ask ... }` placement for Caddy.
 - Ctrl-C shutdown no longer prints spurious tunnel errors.
 - Suppress noisy yamux shutdown logs (e.g. `Failed to read header: ... context canceled`) on normal disconnects.
