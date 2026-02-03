@@ -35,7 +35,9 @@ func TestHTTPTunnel_Basic(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tunnel, err := client.StartHTTPTunnel(ctx, "ws://server:8080/control", ln.Addr().String())
+	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, "ws://server:8080/control", ln.Addr().String(), client.HTTPTunnelOptions{
+		Authtoken: getenv("EOSRIFT_AUTHTOKEN", ""),
+	})
 	if err != nil {
 		t.Fatalf("start http tunnel: %v", err)
 	}
@@ -68,4 +70,3 @@ func TestHTTPTunnel_Basic(t *testing.T) {
 		t.Fatalf("body = %q, want %q", got, want)
 	}
 }
-

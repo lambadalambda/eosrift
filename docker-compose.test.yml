@@ -11,6 +11,7 @@ services:
       EOSRIFT_TUNNEL_DOMAIN: "tunnel.eosrift.test"
       EOSRIFT_TCP_PORT_RANGE_START: "20000"
       EOSRIFT_TCP_PORT_RANGE_END: "20010"
+      EOSRIFT_AUTH_TOKEN: "test-token"
     expose:
       - "8080"
 
@@ -21,6 +22,7 @@ services:
       - .:/src
     environment:
       EOSRIFT_SERVER_URL: "http://server:8080"
+      EOSRIFT_AUTHTOKEN: "test-token"
     depends_on:
       - server
     command: ["go", "test", "./...", "-tags=integration"]

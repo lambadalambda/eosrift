@@ -39,7 +39,9 @@ func TestTCPTunnel_Echo(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tunnel, err := client.StartTCPTunnel(ctx, "ws://server:8080/control", ln.Addr().String())
+	tunnel, err := client.StartTCPTunnelWithOptions(ctx, "ws://server:8080/control", ln.Addr().String(), client.TCPTunnelOptions{
+		Authtoken: getenv("EOSRIFT_AUTHTOKEN", ""),
+	})
 	if err != nil {
 		t.Fatalf("start tcp tunnel: %v", err)
 	}
@@ -69,4 +71,3 @@ func TestTCPTunnel_Echo(t *testing.T) {
 		t.Fatalf("echo = %q, want %q", string(got), string(msg))
 	}
 }
-

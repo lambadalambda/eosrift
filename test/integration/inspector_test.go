@@ -43,6 +43,7 @@ func TestInspector_CapturesHTTPTunnel(t *testing.T) {
 	defer cancel()
 
 	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, "ws://server:8080/control", ln.Addr().String(), client.HTTPTunnelOptions{
+		Authtoken:  getenv("EOSRIFT_AUTHTOKEN", ""),
 		Inspector: store,
 	})
 	if err != nil {
@@ -105,4 +106,3 @@ func TestInspector_CapturesHTTPTunnel(t *testing.T) {
 
 	t.Fatalf("inspector did not record a request before deadline")
 }
-
