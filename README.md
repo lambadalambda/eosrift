@@ -57,9 +57,14 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 
 ## Quickstart
 
-Implementation is not in place yet; the intent is for the first usable version to run like:
+Tunnels are not implemented yet, but you can run the current server skeleton:
 
-- `docker compose up -d` on a Linux server
+- `cp .env.example .env` (edit for your domain)
+- `docker compose up -d --build`
+- `curl -fsS http://127.0.0.1:8080/healthz`
+
+When tunnels land, the intended UX is:
+
 - point `*.tunnel.<yourdomain>` (and optionally `<yourdomain>`) at the server (example: `*.tunnel.eosrift.com`)
 - run a client locally: `eosrift http 8080` → get a public URL like `https://abcd1234.tunnel.<yourdomain>` (example: `https://abcd1234.tunnel.eosrift.com`)
 

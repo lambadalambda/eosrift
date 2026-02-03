@@ -1,0 +1,20 @@
+{
+	# Optional (recommended): set via EOSRIFT_ACME_EMAIL in docker-compose.yml
+	email {$EOSRIFT_ACME_EMAIL}
+}
+
+:80 {
+	redir https://{host}{uri}
+}
+
+:443 {
+	# Avoid wildcard DNS plugins by using on-demand certificates. The server's
+	# /caddy/ask endpoint restricts which hostnames are allowed.
+	tls {
+		on_demand
+		ask http://server:8080/caddy/ask
+	}
+
+	reverse_proxy server:8080
+}
+

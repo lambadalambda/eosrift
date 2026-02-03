@@ -1,0 +1,35 @@
+services:
+  server:
+    build:
+      context: .
+      target: server
+    environment:
+      EOSRIFT_LISTEN_ADDR: ":8080"
+      EOSRIFT_BASE_DOMAIN: "${EOSRIFT_BASE_DOMAIN:-eosrift.com}"
+      EOSRIFT_TUNNEL_DOMAIN: "${EOSRIFT_TUNNEL_DOMAIN:-tunnel.eosrift.com}"
+      EOSRIFT_DB_PATH: "/data/eosrift.db"
+    volumes:
+      - eosrift-data:/data
+    expose:
+      - "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - server
+    environment:
+      EOSRIFT_ACME_EMAIL: "${EOSRIFT_ACME_EMAIL:-}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  eosrift-data:
+  caddy-data:
+  caddy-config:
