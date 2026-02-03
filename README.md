@@ -125,6 +125,24 @@ Server token management (Docker):
 - List: `docker compose exec server /eosrift-server token list`
 - Revoke: `docker compose exec server /eosrift-server token revoke <id>`
 
+### Reserved subdomains (alpha)
+
+To get a stable URL (instead of a random one each time), reserve a subdomain on the server DB and then request it from the client.
+
+Server (Docker):
+
+- Create a token (note the `id`): `docker compose exec server /eosrift-server token create --label laptop`
+- Reserve a subdomain under `EOSRIFT_TUNNEL_DOMAIN`: `docker compose exec server /eosrift-server reserve add --token-id <id> demo`
+
+Client:
+
+- `./bin/eosrift http 8080 --subdomain demo`
+
+Notes:
+
+- The server will reject `--subdomain` unless it is reserved for your authtoken.
+- Use `docker compose exec server /eosrift-server reserve list` to view reservations.
+
 ### Inspector (alpha)
 
 When running `eosrift http ...`, the client starts a local inspector by default:

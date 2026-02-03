@@ -115,7 +115,7 @@ SQLite is used for durable configuration:
 
 - users/accounts (optional early on; can start single-tenant)
 - authtokens
-- reserved subdomains / custom domains (later milestone)
+- reserved subdomains (implemented) / custom domains (later milestone)
 - reserved TCP ports (optional)
 - audit log / minimal telemetry (optional; keep privacy-respecting by default)
 

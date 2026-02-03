@@ -16,6 +16,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Actions release workflow (builds client/server binaries on tags).
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
+- Reserved subdomains (alpha): `eosrift-server reserve ...` + `eosrift http --subdomain ...` (stable tunnel URLs).
 - Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.
 - Client config (alpha): ngrok-style YAML config (`eosrift.yml`) + `eosrift config add-authtoken|set-server|check` and global `--config`.
 - Local inspector (alpha): capture HTTP exchanges, redact common secrets, serve a web UI at `/`, expose `/api/requests`, and support best-effort replay.
