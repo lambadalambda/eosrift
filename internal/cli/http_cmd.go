@@ -6,7 +6,6 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -105,7 +104,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 
 	inspectorURL := ""
 	if store != nil {
-		ln, err := net.Listen("tcp", *inspectAddr)
+		ln, err := listenTCPWithPortFallback(*inspectAddr, 5000)
 		if err != nil {
 			fmt.Fprintln(stderr, "warning: inspector disabled:", err)
 		} else {

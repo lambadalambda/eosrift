@@ -130,6 +130,7 @@ Notes:
 
 - The inspector redacts sensitive headers (e.g. `Authorization`, `Cookie`) and common secret query params.
 - Replay is best-effort: it forwards to your local upstream and does not include request bodies.
+- If the inspector port is in use, the client will try the next port up to `:5000`.
 - You must point `*.tunnel.<yourdomain>` at your server (example: `*.tunnel.eosrift.com`).
 - In early versions, the host header is preserved (your local service will see `abcd1234.tunnel.<yourdomain>`).
 
