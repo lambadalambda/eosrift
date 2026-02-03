@@ -27,18 +27,8 @@ type TCPTunnel struct {
 }
 
 func StartTCPTunnel(ctx context.Context, controlURL, localAddr string) (*TCPTunnel, error) {
-	ws, _, err := websocket.Dial(ctx, controlURL, &websocket.DialOptions{
-		CompressionMode: websocket.CompressionDisabled,
-	})
+	ws, session, err := dialControl(ctx, controlURL)
 	if err != nil {
-		return nil, err
-	}
-
-	netConn := websocket.NetConn(ctx, ws, websocket.MessageBinary)
-
-	session, err := yamux.Client(netConn, nil)
-	if err != nil {
-		_ = ws.Close(websocket.StatusInternalError, "yamux error")
 		return nil, err
 	}
 
@@ -172,4 +162,3 @@ func proxyBidirectional(ctx context.Context, a, b net.Conn) error {
 func (t *TCPTunnel) RemoteAddr(serverHost string) string {
 	return fmt.Sprintf("%s:%d", serverHost, t.RemotePort)
 }
-
