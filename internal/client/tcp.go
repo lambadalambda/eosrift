@@ -27,6 +27,14 @@ type TCPTunnel struct {
 }
 
 func StartTCPTunnel(ctx context.Context, controlURL, localAddr string) (*TCPTunnel, error) {
+	return StartTCPTunnelWithOptions(ctx, controlURL, localAddr, TCPTunnelOptions{})
+}
+
+type TCPTunnelOptions struct {
+	Authtoken string
+}
+
+func StartTCPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts TCPTunnelOptions) (*TCPTunnel, error) {
 	ws, session, err := dialControl(ctx, controlURL)
 	if err != nil {
 		return nil, err
@@ -41,6 +49,7 @@ func StartTCPTunnel(ctx context.Context, controlURL, localAddr string) (*TCPTunn
 
 	if err := json.NewEncoder(ctrlStream).Encode(control.CreateTCPTunnelRequest{
 		Type:       "tcp",
+		Authtoken:  opts.Authtoken,
 		RemotePort: 0,
 	}); err != nil {
 		_ = ctrlStream.Close()

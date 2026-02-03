@@ -15,6 +15,8 @@ import (
 )
 
 type HTTPTunnelOptions struct {
+	Authtoken string
+
 	Inspector *inspect.Store
 
 	// CaptureBytes is the maximum number of bytes to keep for request and response
@@ -55,7 +57,8 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 	}
 
 	if err := json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelRequest{
-		Type: "http",
+		Type:      "http",
+		Authtoken: opts.Authtoken,
 	}); err != nil {
 		_ = ctrlStream.Close()
 		_ = session.Close()

@@ -3,7 +3,8 @@ package control
 // Control protocol messages are sent over a dedicated yamux stream.
 
 type CreateTCPTunnelRequest struct {
-	Type       string `json:"type"`        // "tcp"
+	Type       string `json:"type"` // "tcp"
+	Authtoken  string `json:"authtoken,omitempty"`
 	RemotePort int    `json:"remote_port"` // 0 = auto-allocate
 }
 
@@ -15,6 +16,7 @@ type CreateTCPTunnelResponse struct {
 
 type CreateHTTPTunnelRequest struct {
 	Type      string `json:"type"` // "http"
+	Authtoken string `json:"authtoken,omitempty"`
 	Subdomain string `json:"subdomain,omitempty"`
 }
 

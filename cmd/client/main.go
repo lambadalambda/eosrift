@@ -41,6 +41,11 @@ func httpCmd(args []string) {
 	fs := flag.NewFlagSet("http", flag.ExitOnError)
 
 	controlURL := fs.String("server", getenv("EOSRIFT_CONTROL_URL", "ws://127.0.0.1:8080/control"), "Control URL (ws/wss)")
+	authtokenDefault := getenv("EOSRIFT_AUTHTOKEN", "")
+	if authtokenDefault == "" {
+		authtokenDefault = getenv("EOSRIFT_AUTH_TOKEN", "")
+	}
+	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
 	inspectEnabled := fs.Bool("inspect", true, "Enable local inspector")
 	inspectAddr := fs.String("inspect-addr", getenv("EOSRIFT_INSPECT_ADDR", "127.0.0.1:4040"), "Inspector listen address")
 
@@ -84,6 +89,7 @@ func httpCmd(args []string) {
 	}
 
 	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, *controlURL, localAddr, client.HTTPTunnelOptions{
+		Authtoken: *authtoken,
 		Inspector: store,
 	})
 	if err != nil {
@@ -104,6 +110,11 @@ func tcpCmd(args []string) {
 	fs := flag.NewFlagSet("tcp", flag.ExitOnError)
 
 	controlURL := fs.String("server", getenv("EOSRIFT_CONTROL_URL", "ws://127.0.0.1:8080/control"), "Control URL (ws/wss)")
+	authtokenDefault := getenv("EOSRIFT_AUTHTOKEN", "")
+	if authtokenDefault == "" {
+		authtokenDefault = getenv("EOSRIFT_AUTH_TOKEN", "")
+	}
+	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
 
 	_ = fs.Parse(args)
 
@@ -120,7 +131,9 @@ func tcpCmd(args []string) {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	tunnel, err := client.StartTCPTunnel(ctx, *controlURL, localAddr)
+	tunnel, err := client.StartTCPTunnelWithOptions(ctx, *controlURL, localAddr, client.TCPTunnelOptions{
+		Authtoken: *authtoken,
+	})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "error:", err)
 		os.Exit(1)
