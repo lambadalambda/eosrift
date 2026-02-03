@@ -16,6 +16,9 @@ type Config struct {
 
 	TCPPortRangeStart int
 	TCPPortRangeEnd   int
+
+	// AuthToken, if set, is required for /control requests.
+	AuthToken string
 }
 
 func ConfigFromEnv() Config {
@@ -25,6 +28,8 @@ func ConfigFromEnv() Config {
 
 		TCPPortRangeStart: getenvInt("EOSRIFT_TCP_PORT_RANGE_START", 20000),
 		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
+
+		AuthToken: strings.TrimSpace(os.Getenv("EOSRIFT_AUTH_TOKEN")),
 	}
 }
 

@@ -35,6 +35,7 @@ func (y yamuxSession) Close() error {
 
 type baseRequest struct {
 	Type       string `json:"type"`
+	Authtoken  string `json:"authtoken,omitempty"`
 	RemotePort int    `json:"remote_port,omitempty"`
 	Subdomain  string `json:"subdomain,omitempty"`
 }
@@ -74,16 +75,32 @@ func controlHandler(cfg Config, registry *TunnelRegistry) http.HandlerFunc {
 			return
 		}
 
-		switch strings.ToLower(strings.TrimSpace(req.Type)) {
+		reqType := strings.ToLower(strings.TrimSpace(req.Type))
+		if cfg.AuthToken != "" && strings.TrimSpace(req.Authtoken) != cfg.AuthToken {
+			switch reqType {
+			case "tcp":
+				_ = writeControlTCPError(ctrlStream, "unauthorized")
+			case "http":
+				_ = writeControlHTTPError(ctrlStream, "unauthorized")
+			default:
+				_ = writeControlTCPError(ctrlStream, "unauthorized")
+			}
+			_ = ctrlStream.Close()
+			return
+		}
+
+		switch reqType {
 		case "tcp":
 			handleTCPControl(ctx, conn, session, ctrlStream, control.CreateTCPTunnelRequest{
 				Type:       "tcp",
+				Authtoken:  req.Authtoken,
 				RemotePort: req.RemotePort,
 			}, cfg)
 			return
 		case "http":
 			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
 				Type:      "http",
+				Authtoken: req.Authtoken,
 				Subdomain: req.Subdomain,
 			}, cfg, registry)
 			return
@@ -194,6 +211,14 @@ func writeControlTCPError(w io.Writer, msg string) error {
 	enc := json.NewEncoder(w)
 	return enc.Encode(control.CreateTCPTunnelResponse{
 		Type:  "tcp",
+		Error: msg,
+	})
+}
+
+func writeControlHTTPError(w io.Writer, msg string) error {
+	enc := json.NewEncoder(w)
+	return enc.Encode(control.CreateHTTPTunnelResponse{
+		Type:  "http",
 		Error: msg,
 	})
 }
