@@ -83,3 +83,15 @@ func (s *Store) List() []Entry {
 
 	return out
 }
+
+func (s *Store) Get(id string) (Entry, bool) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for i := range s.entries {
+		if s.entries[i].ID == id {
+			return s.entries[i], true
+		}
+	}
+	return Entry{}, false
+}

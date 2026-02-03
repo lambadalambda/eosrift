@@ -73,7 +73,7 @@ func httpCmd(args []string) {
 			fmt.Fprintln(os.Stderr, "warning: inspector disabled:", err)
 			store = nil
 		} else {
-			srv := &http.Server{Handler: inspect.Handler(store)}
+			srv := &http.Server{Handler: inspect.Handler(store, inspect.HandlerOptions{})}
 
 			go func() {
 				<-ctx.Done()

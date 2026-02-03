@@ -36,7 +36,7 @@ func TestInspector_CapturesHTTPTunnel(t *testing.T) {
 	defer srv.Close()
 
 	store := inspect.NewStore(inspect.StoreConfig{MaxEntries: 50})
-	inspector := httptest.NewServer(inspect.Handler(store))
+	inspector := httptest.NewServer(inspect.Handler(store, inspect.HandlerOptions{}))
 	t.Cleanup(inspector.Close)
 
 	ctx, cancel := context.WithCancel(context.Background())
