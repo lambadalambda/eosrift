@@ -7,5 +7,15 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
 - Initial project documentation and planning.
+- Docker Compose deployment (Caddy + server).
+- Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
+- TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
+- Docker Compose-based integration test harness.
+- GitHub Actions CI (unit tests + integration tests).
+
+### Changed
+
 - Set project name to EosRift (`eosrift.com`).

@@ -4,7 +4,7 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** pre-alpha (docs-first; implementation starts next).
+**Status:** pre-alpha (TCP tunnels work; HTTP/inspector/auth coming).
 
 ## Goals
 
@@ -57,13 +57,33 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 
 ## Quickstart
 
-Tunnels are not implemented yet, but you can run the current server skeleton:
+### Server (Docker)
 
 - `cp .env.example .env` (edit for your domain)
 - `docker compose up -d --build`
 - `curl -fsS http://127.0.0.1:8080/healthz`
 
-When tunnels land, the intended UX is:
+Notes:
+
+- TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
+- `/control` is currently **unauthenticated** (not safe for multi-tenant/public use yet).
+
+### Client (build)
+
+This repo doesn’t require Go on your host; you can build with Docker:
+
+- Linux (example): `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 ./scripts/go build -o bin/eosrift ./cmd/client`
+- macOS (example): `CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 ./scripts/go build -o bin/eosrift ./cmd/client`
+
+### TCP tunnel (alpha)
+
+Expose a local TCP port through the server:
+
+- `./bin/eosrift tcp 8080 --server wss://<yourdomain>/control`
+
+The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>:20001 -> 127.0.0.1:8080`.
+
+### HTTP tunnels (planned)
 
 - point `*.tunnel.<yourdomain>` (and optionally `<yourdomain>`) at the server (example: `*.tunnel.eosrift.com`)
 - run a client locally: `eosrift http 8080` → get a public URL like `https://abcd1234.tunnel.<yourdomain>` (example: `https://abcd1234.tunnel.eosrift.com`)
