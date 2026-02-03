@@ -61,6 +61,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	serverAddr := fs.String("server", serverDefault, "Server address (https://host, http://host:port, or ws(s)://host/control)")
 	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
 	subdomain := fs.String("subdomain", "", "Reserved subdomain to request (requires server-side reservation)")
+	domain := fs.String("domain", "", "Domain to request (must be under the server tunnel domain; auto-reserved on first use)")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector")
 	inspectAddr := fs.String("inspect-addr", inspectAddrDefault, "Inspector listen address")
 	help := fs.Bool("help", false, "Show help")
@@ -85,6 +86,11 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		return 2
 	}
 
+	if strings.TrimSpace(*subdomain) != "" && strings.TrimSpace(*domain) != "" {
+		fmt.Fprintln(stderr, "error: only one of --subdomain or --domain may be set")
+		return 2
+	}
+
 	localAddr := fs.Arg(0)
 	if !strings.Contains(localAddr, ":") {
 		localAddr = "127.0.0.1:" + localAddr
@@ -104,6 +110,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
 		Authtoken: *authtoken,
 		Subdomain: *subdomain,
+		Domain:    *domain,
 		Inspector: store,
 	})
 	if err != nil {
