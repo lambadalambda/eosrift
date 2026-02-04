@@ -44,7 +44,7 @@ kept in mind as we move toward `v1.0.0`.
 - [ ] Improve unit test coverage (esp. glue in `cmd/*`; keep relying on Docker integration for e2e).
 - [x] Reduce duplication between CLI and server validation (header transforms: shared header name/value validation).
 - [x] Reduce duplication between CLI and server validation (CIDR parsing).
-- [ ] Deduplicate defaults/precedence logic across `http`, `tcp`, and `start` commands.
+- [x] Deduplicate defaults/precedence logic across `http`, `tcp`, and `start` commands.
 - [x] HTTP edge proxy perf: avoid per-request `Transport`/`ReverseProxy` construction; reuse shared proxy/transport.
 - [x] Control-plane hardening: limit initial JSON request bytes; cap list lengths (CIDRs/headers); validate header values.
 - [ ] Decide policy for allowing transforms on `Forwarded` / `X-Forwarded-*` (currently allowed).
