@@ -154,3 +154,11 @@ func (s stubReservations) ReservedSubdomainTokenID(ctx context.Context, subdomai
 func (s stubReservations) ReserveSubdomain(ctx context.Context, tokenID int64, subdomain string) error {
 	return nil
 }
+
+func (s stubReservations) ReservedTCPPortTokenID(ctx context.Context, port int) (int64, bool, error) {
+	return 0, false, nil
+}
+
+func (s stubReservations) ReserveTCPPort(ctx context.Context, tokenID int64, port int) error {
+	return nil
+}

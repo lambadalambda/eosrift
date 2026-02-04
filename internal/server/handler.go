@@ -79,6 +79,9 @@ type TokenResolver interface {
 type ReservationStore interface {
 	ReservedSubdomainTokenID(ctx context.Context, subdomain string) (int64, bool, error)
 	ReserveSubdomain(ctx context.Context, tokenID int64, subdomain string) error
+
+	ReservedTCPPortTokenID(ctx context.Context, port int) (int64, bool, error)
+	ReserveTCPPort(ctx context.Context, tokenID int64, port int) error
 }
 
 type Dependencies struct {

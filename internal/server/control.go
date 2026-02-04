@@ -195,6 +195,44 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 
 		switch reqType {
 		case "tcp":
+			if req.RemotePort != 0 && tokenID > 0 && deps.Reservations != nil {
+				if req.RemotePort < cfg.TCPPortRangeStart || req.RemotePort > cfg.TCPPortRangeEnd {
+					_ = writeControlTCPError(ctrlStream, "requested port out of range")
+					_ = ctrlStream.Close()
+					return
+				}
+
+				reservedTokenID, reserved, err := deps.Reservations.ReservedTCPPortTokenID(ctx, req.RemotePort)
+				if err != nil {
+					_ = writeControlTCPError(ctrlStream, "invalid requested port")
+					_ = ctrlStream.Close()
+					return
+				}
+				if reserved && reservedTokenID != tokenID {
+					_ = writeControlTCPError(ctrlStream, "unauthorized")
+					_ = ctrlStream.Close()
+					return
+				}
+
+				if !reserved {
+					if err := deps.Reservations.ReserveTCPPort(ctx, tokenID, req.RemotePort); err != nil {
+						// In case of a race, re-check ownership.
+						reservedTokenID, reserved, err2 := deps.Reservations.ReservedTCPPortTokenID(ctx, req.RemotePort)
+						if err2 == nil && reserved && reservedTokenID == tokenID {
+							// OK: claimed by us.
+						} else if err2 == nil && reserved && reservedTokenID != tokenID {
+							_ = writeControlTCPError(ctrlStream, "unauthorized")
+							_ = ctrlStream.Close()
+							return
+						} else {
+							_ = writeControlTCPError(ctrlStream, "failed to reserve port")
+							_ = ctrlStream.Close()
+							return
+						}
+					}
+				}
+			}
+
 			handleTCPControl(ctx, conn, session, ctrlStream, control.CreateTCPTunnelRequest{
 				Type:       "tcp",
 				Authtoken:  req.Authtoken,
