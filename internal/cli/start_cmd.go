@@ -245,6 +245,9 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			if domain != "" && subdomain != "" {
 				return fmt.Errorf("tunnel %q: only one of domain or subdomain may be set", t.Name)
 			}
+			if basicAuth := strings.TrimSpace(t.Tunnel.BasicAuth); basicAuth != "" && !strings.Contains(basicAuth, ":") {
+				return fmt.Errorf("tunnel %q: basic_auth must be in the form user:pass", t.Name)
+			}
 			if t.Tunnel.RemotePort != 0 {
 				return fmt.Errorf("tunnel %q: remote_port is only valid for tcp tunnels", t.Name)
 			}
@@ -260,6 +263,9 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			}
 			if strings.TrimSpace(t.Tunnel.Subdomain) != "" {
 				return fmt.Errorf("tunnel %q: subdomain is only valid for http tunnels", t.Name)
+			}
+			if strings.TrimSpace(t.Tunnel.BasicAuth) != "" {
+				return fmt.Errorf("tunnel %q: basic_auth is only valid for http tunnels", t.Name)
 			}
 			if strings.TrimSpace(t.Tunnel.HostHeader) != "" {
 				return fmt.Errorf("tunnel %q: host_header is only valid for http tunnels", t.Name)
@@ -416,6 +422,7 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				Authtoken:             authtoken,
 				Domain:                strings.TrimSpace(t.Tunnel.Domain),
 				Subdomain:             strings.TrimSpace(t.Tunnel.Subdomain),
+				BasicAuth:             strings.TrimSpace(t.Tunnel.BasicAuth),
 				HostHeader:            hostHeader,
 				UpstreamScheme:        upstreamScheme,
 				UpstreamTLSSkipVerify: upstreamTLSSkipVerify,

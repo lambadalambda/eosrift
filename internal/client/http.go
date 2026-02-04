@@ -22,6 +22,7 @@ type HTTPTunnelOptions struct {
 	Authtoken  string
 	Subdomain  string
 	Domain     string
+	BasicAuth  string
 	HostHeader string
 
 	// UpstreamScheme is the scheme used when dialing the local upstream.
@@ -89,6 +90,7 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		Authtoken: opts.Authtoken,
 		Subdomain: opts.Subdomain,
 		Domain:    opts.Domain,
+		BasicAuth: opts.BasicAuth,
 	})
 	if err != nil {
 		return nil, err

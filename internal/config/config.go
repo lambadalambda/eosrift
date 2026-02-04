@@ -32,6 +32,7 @@ type Tunnel struct {
 	// HTTP-only options.
 	Domain     string `yaml:"domain,omitempty"`
 	Subdomain  string `yaml:"subdomain,omitempty"`
+	BasicAuth  string `yaml:"basic_auth,omitempty"`
 	HostHeader string `yaml:"host_header,omitempty"`
 
 	// TCP-only options.

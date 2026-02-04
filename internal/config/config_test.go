@@ -34,6 +34,7 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 				Proto:       "http",
 				Addr:        "127.0.0.1:3000",
 				Domain:      "demo.tunnel.example.com",
+				BasicAuth:   "user:pass",
 				HostHeader:  "rewrite",
 				Inspect:     &tunnelInspect,
 				InspectAddr: "127.0.0.1:4041",
@@ -80,6 +81,9 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	if web.Domain != "demo.tunnel.example.com" || web.HostHeader != "rewrite" {
 		t.Fatalf("web http opts = %+v, want domain/host_header set", web)
 	}
+	if web.BasicAuth != "user:pass" {
+		t.Fatalf("web basic_auth = %q, want %q", web.BasicAuth, "user:pass")
+	}
 	if web.Inspect == nil || *web.Inspect != false || web.InspectAddr != "127.0.0.1:4041" {
 		t.Fatalf("web inspect = %+v, want inspect=false inspect_addr=127.0.0.1:4041", web)
 	}
@@ -99,6 +103,7 @@ tunnels:
     proto: http
     addr: 127.0.0.1:3000
     domain: demo.tunnel.example.com
+    basic_auth: user:pass
   db:
     proto: tcp
     addr: 127.0.0.1:5432
@@ -127,7 +132,7 @@ tunnels:
 	}
 
 	web := cfg.Tunnels["web"]
-	if web.Proto != "http" || web.Addr != "127.0.0.1:3000" || web.Domain != "demo.tunnel.example.com" {
+	if web.Proto != "http" || web.Addr != "127.0.0.1:3000" || web.Domain != "demo.tunnel.example.com" || web.BasicAuth != "user:pass" {
 		t.Fatalf("web tunnel = %+v, want http tunnel fields set", web)
 	}
 
