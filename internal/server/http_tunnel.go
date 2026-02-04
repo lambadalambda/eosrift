@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -22,10 +23,22 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 			return
 		}
 
-		session, ok := registry.GetHTTPTunnel(id)
+		entry, ok := registry.GetHTTPTunnel(id)
 		if !ok {
 			http.NotFound(w, r)
 			return
+		}
+
+		if entry.basicAuth != nil {
+			user, pass, ok := r.BasicAuth()
+			if !ok ||
+				subtle.ConstantTimeCompare([]byte(user), []byte(entry.basicAuth.Username)) != 1 ||
+				subtle.ConstantTimeCompare([]byte(pass), []byte(entry.basicAuth.Password)) != 1 {
+				w.Header().Set("WWW-Authenticate", `Basic realm="EosRift"`)
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
+			}
+			r.Header.Del("Authorization")
 		}
 
 		if !cfg.TrustProxyHeaders {
@@ -34,7 +47,7 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 
 		transport := &http.Transport{
 			Proxy:               http.ProxyFromEnvironment,
-			DialContext:         func(ctx context.Context, network, addr string) (net.Conn, error) { return session.OpenStream() },
+			DialContext:         func(ctx context.Context, network, addr string) (net.Conn, error) { return entry.session.OpenStream() },
 			ForceAttemptHTTP2:   false,
 			DisableKeepAlives:   true,
 			MaxIdleConnsPerHost: -1,

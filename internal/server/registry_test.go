@@ -20,19 +20,19 @@ func TestTunnelRegistry_RegisterAndGetHTTP(t *testing.T) {
 
 	r := NewTunnelRegistry()
 
-	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}); err != nil {
+	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}, nil); err != nil {
 		t.Fatalf("register: %v", err)
 	}
 
-	sess, ok := r.GetHTTPTunnel("abc123")
+	entry, ok := r.GetHTTPTunnel("abc123")
 	if !ok {
 		t.Fatalf("expected tunnel to exist")
 	}
-	if sess == nil {
+	if entry.session == nil {
 		t.Fatalf("expected session to be non-nil")
 	}
 
-	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}); err == nil {
+	if err := r.RegisterHTTPTunnel("abc123", fakeSession{}, nil); err == nil {
 		t.Fatalf("expected duplicate id error")
 	}
 

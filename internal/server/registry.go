@@ -15,7 +15,13 @@ type TunnelRegistry struct {
 }
 
 type httpTunnelEntry struct {
-	session streamSession
+	session   streamSession
+	basicAuth *basicAuthCredential
+}
+
+type basicAuthCredential struct {
+	Username string
+	Password string
 }
 
 // streamSession is intentionally minimal and only supports opening a stream.
@@ -31,7 +37,7 @@ func NewTunnelRegistry() *TunnelRegistry {
 	}
 }
 
-func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession) error {
+func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, basicAuth *basicAuthCredential) error {
 	id = strings.TrimSpace(strings.ToLower(id))
 	if id == "" {
 		return errors.New("empty tunnel id")
@@ -48,15 +54,16 @@ func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession) er
 	}
 
 	r.httpTunnels[id] = httpTunnelEntry{
-		session: session,
+		session:   session,
+		basicAuth: basicAuth,
 	}
 	return nil
 }
 
-func (r *TunnelRegistry) GetHTTPTunnel(id string) (streamSession, bool) {
+func (r *TunnelRegistry) GetHTTPTunnel(id string) (httpTunnelEntry, bool) {
 	id = strings.TrimSpace(strings.ToLower(id))
 	if id == "" {
-		return nil, false
+		return httpTunnelEntry{}, false
 	}
 
 	r.mu.RLock()
@@ -64,9 +71,9 @@ func (r *TunnelRegistry) GetHTTPTunnel(id string) (streamSession, bool) {
 
 	t, ok := r.httpTunnels[id]
 	if !ok {
-		return nil, false
+		return httpTunnelEntry{}, false
 	}
-	return t.session, true
+	return t, true
 }
 
 func (r *TunnelRegistry) UnregisterHTTPTunnel(id string) {

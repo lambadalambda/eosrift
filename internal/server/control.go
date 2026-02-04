@@ -41,6 +41,7 @@ type baseRequest struct {
 	RemotePort int    `json:"remote_port,omitempty"`
 	Subdomain  string `json:"subdomain,omitempty"`
 	Domain     string `json:"domain,omitempty"`
+	BasicAuth  string `json:"basic_auth,omitempty"`
 }
 
 func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter, metrics *metrics) http.HandlerFunc {
@@ -202,6 +203,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Authtoken: req.Authtoken,
 				Subdomain: req.Subdomain,
 				Domain:    req.Domain,
+				BasicAuth: req.BasicAuth,
 			}, cfg, registry, deps, tokenID, metrics)
 			return
 		default:
@@ -344,7 +346,17 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 
-	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}); err != nil {
+	basicAuth, err := parseBasicAuthCredential(req.BasicAuth)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+
+	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, basicAuth); err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: "failed to register tunnel",
@@ -376,6 +388,24 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	case <-session.CloseChan():
 	}
 	_ = session.Close()
+}
+
+func parseBasicAuthCredential(s string) (*basicAuthCredential, error) {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return nil, nil
+	}
+
+	user, pass, ok := strings.Cut(s, ":")
+	if !ok {
+		return nil, errors.New("invalid basic_auth")
+	}
+	user = strings.TrimSpace(user)
+	if user == "" {
+		return nil, errors.New("invalid basic_auth")
+	}
+
+	return &basicAuthCredential{Username: user, Password: pass}, nil
 }
 
 func writeControlTCPError(w io.Writer, msg string) error {
