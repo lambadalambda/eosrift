@@ -378,8 +378,12 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				close:          tun.Close,
 			})
 		case "tcp":
+			if t.Tunnel.RemotePort < 0 {
+				return nil, fmt.Errorf("tunnel %q: remote_port must be >= 0", t.Name)
+			}
 			tun, err := client.StartTCPTunnelWithOptions(ctx, controlURL, localAddr, client.TCPTunnelOptions{
-				Authtoken: authtoken,
+				Authtoken:  authtoken,
+				RemotePort: t.Tunnel.RemotePort,
 			})
 			if err != nil {
 				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)

@@ -165,6 +165,9 @@ func TestRun_TCPHelp_PrintsToStdout(t *testing.T) {
 	if !strings.Contains(stdout.String(), "usage: eosrift tcp") {
 		t.Fatalf("stdout missing usage: %q", stdout.String())
 	}
+	if !strings.Contains(stdout.String(), "remote-port") {
+		t.Fatalf("stdout missing remote-port flag: %q", stdout.String())
+	}
 }
 
 func TestRun_ConfigHelp_PrintsToStdout(t *testing.T) {

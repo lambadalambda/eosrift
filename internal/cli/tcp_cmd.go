@@ -43,6 +43,7 @@ func runTCP(ctx context.Context, args []string, configPath string, stdout, stder
 
 	serverAddr := fs.String("server", serverDefault, "Server address (https://host, http://host:port, or ws(s)://host/control)")
 	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
+	remotePort := fs.Int("remote-port", 0, "Request a specific remote port (must be within the server's TCP port range)")
 	help := fs.Bool("help", false, "Show help")
 	fs.BoolVar(help, "h", false, "Show help")
 
@@ -77,7 +78,8 @@ func runTCP(ctx context.Context, args []string, configPath string, stdout, stder
 	}
 
 	tunnel, err := client.StartTCPTunnelWithOptions(ctx, controlURL, localAddr, client.TCPTunnelOptions{
-		Authtoken: *authtoken,
+		Authtoken:  *authtoken,
+		RemotePort: *remotePort,
 	})
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
