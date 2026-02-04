@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -42,6 +43,9 @@ type baseRequest struct {
 	Subdomain  string `json:"subdomain,omitempty"`
 	Domain     string `json:"domain,omitempty"`
 	BasicAuth  string `json:"basic_auth,omitempty"`
+
+	AllowCIDR []string `json:"allow_cidr,omitempty"`
+	DenyCIDR  []string `json:"deny_cidr,omitempty"`
 }
 
 func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter, metrics *metrics) http.HandlerFunc {
@@ -204,6 +208,8 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Subdomain: req.Subdomain,
 				Domain:    req.Domain,
 				BasicAuth: req.BasicAuth,
+				AllowCIDR: req.AllowCIDR,
+				DenyCIDR:  req.DenyCIDR,
 			}, cfg, registry, deps, tokenID, metrics)
 			return
 		default:
@@ -356,7 +362,26 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 
-	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, basicAuth, nil, nil); err != nil {
+	allowCIDRs, err := parseCIDRList("allow_cidr", req.AllowCIDR)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+	denyCIDRs, err := parseCIDRList("deny_cidr", req.DenyCIDR)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+
+	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, basicAuth, allowCIDRs, denyCIDRs); err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: "failed to register tunnel",
@@ -406,6 +431,44 @@ func parseBasicAuthCredential(s string) (*basicAuthCredential, error) {
 	}
 
 	return &basicAuthCredential{Username: user, Password: pass}, nil
+}
+
+func parseCIDRList(field string, values []string) ([]netip.Prefix, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	out := make([]netip.Prefix, 0, len(values))
+	for _, v := range values {
+		s := strings.TrimSpace(v)
+		if s == "" {
+			return nil, fmt.Errorf("invalid %s", field)
+		}
+
+		var p netip.Prefix
+		if strings.Contains(s, "/") {
+			parsed, err := netip.ParsePrefix(s)
+			if err != nil {
+				return nil, fmt.Errorf("invalid %s: %q", field, v)
+			}
+			p = parsed
+		} else {
+			a, err := netip.ParseAddr(s)
+			if err != nil {
+				return nil, fmt.Errorf("invalid %s: %q", field, v)
+			}
+			a = a.Unmap()
+			bits := 128
+			if a.Is4() {
+				bits = 32
+			}
+			p = netip.PrefixFrom(a, bits)
+		}
+
+		out = append(out, p.Masked())
+	}
+
+	return out, nil
 }
 
 func writeControlTCPError(w io.Writer, msg string) error {
