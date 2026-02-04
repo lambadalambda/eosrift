@@ -138,10 +138,12 @@ Current focus: **Milestone 7**.
 
 **Goal:** stability under real-world networks.
 
-- Reconnect/backoff and session resumption
-- Health checks, structured logs, metrics (Prometheus-friendly)
-- Load testing harness in Docker
-- Security review checklist (auth, input validation, SSRF/host header concerns)
+- [ ] Reconnect/backoff and session resumption (beyond initial dial retries)
+- [x] Health checks (`/healthz`)
+- [x] Metrics endpoint (`/metrics`, Prometheus text format; token-gated)
+- [ ] Structured logs (JSON) and log levels
+- [ ] Load testing harness in Docker
+- [ ] Security review checklist (auth, input validation, SSRF/host header concerns)
 
 ## Ongoing
 
