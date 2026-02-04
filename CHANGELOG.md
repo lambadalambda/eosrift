@@ -42,6 +42,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `eosrift http` / `eosrift tcp` now print an ngrok-like session summary (including forwarding URL and inspector URL).
 - The client now retries initial control connection dials with exponential backoff until canceled.
 - The client now automatically reconnects and attempts to resume tunnels after control-plane disconnects.
+- The control-plane session now sends periodic keepalives to reduce idle disconnects.
 
 ### Fixed
 
