@@ -1,0 +1,49 @@
+name: eosrift-caddytest
+
+services:
+  server:
+    build:
+      context: .
+      target: server
+    environment:
+      EOSRIFT_LISTEN_ADDR: ":8080"
+      EOSRIFT_BASE_DOMAIN: "eosrift.test"
+      EOSRIFT_TUNNEL_DOMAIN: "tunnel.eosrift.test"
+      EOSRIFT_TRUST_PROXY_HEADERS: "1"
+      EOSRIFT_TCP_PORT_RANGE_START: "20000"
+      EOSRIFT_TCP_PORT_RANGE_END: "20010"
+      EOSRIFT_DB_PATH: "/tmp/eosrift-test.db"
+      EOSRIFT_AUTH_TOKEN: "test-token"
+    expose:
+      - "8080"
+
+  caddy:
+    image: caddy:2
+    depends_on:
+      - server
+    volumes:
+      - ./test/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+    expose:
+      - "8080"
+
+  test:
+    image: golang:1.23
+    working_dir: /src
+    volumes:
+      - .:/src
+    environment:
+      EOSRIFT_HTTP_BASE_URL: "http://caddy:8080"
+      EOSRIFT_CONTROL_URL: "ws://caddy:8080/control"
+      EOSRIFT_TCP_DIAL_HOST: "server"
+      EOSRIFT_AUTHTOKEN: "test-token"
+      EOSRIFT_DB_PATH: "/tmp/eosrift-test.db"
+    depends_on:
+      - server
+      - caddy
+    command: ["go", "test", "./...", "-tags=integration"]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.233.0.0/24

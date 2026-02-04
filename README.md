@@ -215,6 +215,7 @@ ngrok is a trademark of its respective owners. This project is not affiliated wi
 
 - Unit tests: `./scripts/go test ./...`
 - Integration tests (Docker): `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit`
+- Caddy-in-the-loop smoke (Docker): `docker compose -f docker-compose.caddytest.yml up --build --exit-code-from test --abort-on-container-exit`
 
 ### Load testing (Docker)
 

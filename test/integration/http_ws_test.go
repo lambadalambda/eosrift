@@ -59,7 +59,7 @@ func TestHTTPTunnel_WebSocketEcho(t *testing.T) {
 	tunnelCtx, tunnelCancel := context.WithCancel(context.Background())
 	defer tunnelCancel()
 
-	tunnel, err := client.StartHTTPTunnelWithOptions(tunnelCtx, "ws://server:8080/control", ln.Addr().String(), client.HTTPTunnelOptions{
+	tunnel, err := client.StartHTTPTunnelWithOptions(tunnelCtx, controlURL(), ln.Addr().String(), client.HTTPTunnelOptions{
 		Authtoken: getenv("EOSRIFT_AUTHTOKEN", ""),
 	})
 	if err != nil {
@@ -72,7 +72,7 @@ func TestHTTPTunnel_WebSocketEcho(t *testing.T) {
 	dialCtx, dialCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer dialCancel()
 
-	ws, _, err := websocket.Dial(dialCtx, "ws://server:8080/ws", &websocket.DialOptions{
+	ws, _, err := websocket.Dial(dialCtx, wsURL("/ws"), &websocket.DialOptions{
 		CompressionMode: websocket.CompressionDisabled,
 		Host:            host,
 	})

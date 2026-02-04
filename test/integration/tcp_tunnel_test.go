@@ -39,7 +39,7 @@ func TestTCPTunnel_Echo(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tunnel, err := client.StartTCPTunnelWithOptions(ctx, "ws://server:8080/control", ln.Addr().String(), client.TCPTunnelOptions{
+	tunnel, err := client.StartTCPTunnelWithOptions(ctx, controlURL(), ln.Addr().String(), client.TCPTunnelOptions{
 		Authtoken: getenv("EOSRIFT_AUTHTOKEN", ""),
 	})
 	if err != nil {
@@ -51,7 +51,7 @@ func TestTCPTunnel_Echo(t *testing.T) {
 		t.Fatalf("remote port = %d, want within [20000,20010]", tunnel.RemotePort)
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("server:%d", tunnel.RemotePort), 5*time.Second)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", tcpDialHost(), tunnel.RemotePort), 5*time.Second)
 	if err != nil {
 		t.Fatalf("dial remote: %v", err)
 	}

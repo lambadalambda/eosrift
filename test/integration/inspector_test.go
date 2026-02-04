@@ -42,8 +42,8 @@ func TestInspector_CapturesHTTPTunnel(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, "ws://server:8080/control", ln.Addr().String(), client.HTTPTunnelOptions{
-		Authtoken:  getenv("EOSRIFT_AUTHTOKEN", ""),
+	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL(), ln.Addr().String(), client.HTTPTunnelOptions{
+		Authtoken: getenv("EOSRIFT_AUTHTOKEN", ""),
 		Inspector: store,
 	})
 	if err != nil {
@@ -51,7 +51,7 @@ func TestInspector_CapturesHTTPTunnel(t *testing.T) {
 	}
 	defer tunnel.Close()
 
-	req, err := http.NewRequest(http.MethodGet, "http://server:8080/hello", nil)
+	req, err := http.NewRequest(http.MethodGet, httpURL("/hello"), nil)
 	if err != nil {
 		t.Fatalf("new request: %v", err)
 	}

@@ -47,7 +47,7 @@ func TestHTTPTunnel_HostHeaderRewrite(t *testing.T) {
 
 	localAddr := ln.Addr().String()
 
-	tunnel, err := client.StartHTTPTunnelWithOptions(tunnelCtx, "ws://server:8080/control", localAddr, client.HTTPTunnelOptions{
+	tunnel, err := client.StartHTTPTunnelWithOptions(tunnelCtx, controlURL(), localAddr, client.HTTPTunnelOptions{
 		Authtoken:  getenv("EOSRIFT_AUTHTOKEN", ""),
 		HostHeader: "rewrite",
 	})
@@ -59,7 +59,7 @@ func TestHTTPTunnel_HostHeaderRewrite(t *testing.T) {
 	reqCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, "http://server:8080/host", nil)
+	req, err := http.NewRequestWithContext(reqCtx, http.MethodGet, httpURL("/host"), nil)
 	if err != nil {
 		t.Fatalf("new request: %v", err)
 	}

@@ -5,8 +5,6 @@ package integration
 import (
 	"io"
 	"net/http"
-	"os"
-	"strings"
 	"testing"
 	"time"
 )
@@ -14,13 +12,13 @@ import (
 func TestServerHealthz(t *testing.T) {
 	t.Parallel()
 
-	baseURL := strings.TrimRight(getenv("EOSRIFT_SERVER_URL", "http://server:8080"), "/")
+	healthURL := httpURL("/healthz")
 
 	deadline := time.Now().Add(10 * time.Second)
 	var lastErr error
 
 	for time.Now().Before(deadline) {
-		resp, err := http.Get(baseURL + "/healthz")
+		resp, err := http.Get(healthURL)
 		if err != nil {
 			lastErr = err
 			time.Sleep(200 * time.Millisecond)
@@ -57,12 +55,3 @@ type unexpectedStatusError struct {
 func (e *unexpectedStatusError) Error() string {
 	return "unexpected status: " + http.StatusText(e.statusCode)
 }
-
-func getenv(key, fallback string) string {
-	v := os.Getenv(key)
-	if v == "" {
-		return fallback
-	}
-	return v
-}
-

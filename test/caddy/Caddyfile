@@ -1,0 +1,17 @@
+{
+	admin off
+	auto_https off
+}
+
+:8080 {
+	reverse_proxy server:8080 {
+		# Preserve the requested tunnel hostname for server-side routing.
+		header_up Host {http.request.host}
+
+		# Overwrite any client-supplied forwarded headers to prevent spoofing.
+		header_up X-Forwarded-For {http.request.remote.host}
+		header_up X-Forwarded-Proto {http.request.scheme}
+		header_up X-Forwarded-Host {http.request.host}
+	}
+}
+
