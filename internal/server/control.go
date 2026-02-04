@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +13,7 @@ import (
 	"time"
 
 	"eosrift.com/eosrift/internal/control"
+	"eosrift.com/eosrift/internal/logging"
 	"eosrift.com/eosrift/internal/mux"
 	"github.com/hashicorp/yamux"
 	"nhooyr.io/websocket"
@@ -44,6 +44,12 @@ type baseRequest struct {
 }
 
 func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter, metrics *metrics) http.HandlerFunc {
+	logger := deps.Logger
+	if logger == nil {
+		logger = logging.New(logging.Options{})
+	}
+	logger = logger.With(logging.F("component", "control"))
+
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -53,10 +59,12 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 			CompressionMode: websocket.CompressionDisabled,
 		})
 		if err != nil {
-			log.Printf("control accept error: %v", err)
+			logger.Warn("control accept error", logging.F("err", err), logging.F("remote_addr", r.RemoteAddr))
 			return
 		}
 		defer conn.Close(websocket.StatusNormalClosure, "closed")
+
+		reqLogger := logger.With(logging.F("remote_addr", r.RemoteAddr))
 
 		var releaseControlConn func()
 		if metrics != nil {
@@ -68,14 +76,14 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 
 		session, err := yamux.Server(netConn, mux.QuietYamuxConfig())
 		if err != nil {
-			log.Printf("yamux server error: %v", err)
+			reqLogger.Warn("yamux server error", logging.F("err", err))
 			return
 		}
 		defer session.Close()
 
 		ctrlStream, err := session.AcceptStream()
 		if err != nil {
-			log.Printf("control accept stream error: %v", err)
+			reqLogger.Warn("control accept stream error", logging.F("err", err))
 			return
 		}
 
@@ -186,7 +194,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Type:       "tcp",
 				Authtoken:  req.Authtoken,
 				RemotePort: req.RemotePort,
-			}, cfg, metrics)
+			}, cfg, metrics, reqLogger)
 			return
 		case "http":
 			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
@@ -204,7 +212,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 	}
 }
 
-func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateTCPTunnelRequest, cfg Config, metrics *metrics) {
+func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateTCPTunnelRequest, cfg Config, metrics *metrics, logger logging.Logger) {
 	ln, port, err := allocateTCPListener(cfg, req.RemotePort)
 	if err != nil {
 		_ = writeControlTCPError(ctrlStream, err.Error())
@@ -242,7 +250,9 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 				_ = ws.Close(websocket.StatusNormalClosure, "closed")
 				return
 			}
-			log.Printf("tcp accept error: %v", err)
+			if logger != nil {
+				logger.Warn("tcp accept error", logging.F("err", err))
+			}
 			return
 		}
 

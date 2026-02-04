@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"eosrift.com/eosrift/internal/logging"
 )
 
 type Config struct {
@@ -75,6 +77,7 @@ type Dependencies struct {
 	TokenValidator TokenValidator
 	TokenResolver  TokenResolver
 	Reservations   ReservationStore
+	Logger         logging.Logger
 }
 
 func NewHandler(cfg Config, deps Dependencies) http.Handler {

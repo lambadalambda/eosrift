@@ -102,4 +102,3 @@ func TestLogger_WithBaseFields(t *testing.T) {
 		t.Fatalf("err = %#v, want %q", got, "nope")
 	}
 }
-

@@ -259,4 +259,3 @@ func formatTextValue(v any) string {
 		return s
 	}
 }
-

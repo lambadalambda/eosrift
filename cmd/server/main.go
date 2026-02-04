@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -14,17 +13,20 @@ import (
 	"time"
 
 	"eosrift.com/eosrift/internal/auth"
+	"eosrift.com/eosrift/internal/logging"
 	"eosrift.com/eosrift/internal/server"
 )
 
 func main() {
+	logger := newLogger().With(logging.F("app", "eosrift-server"))
+
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "token", "tokens":
-			tokenCmd(os.Args[2:])
+			tokenCmd(logger, os.Args[2:])
 			return
 		case "reserve", "reservations":
-			reserveCmd(os.Args[2:])
+			reserveCmd(logger, os.Args[2:])
 			return
 		}
 	}
@@ -44,19 +46,19 @@ func main() {
 
 	store, err := auth.Open(ctx, cfg.DBPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if cfg.AuthToken != "" {
 		if err := store.EnsureToken(ctx, cfg.AuthToken, "bootstrap"); err != nil {
-			log.Fatalf("bootstrap token: %v", err)
+			fatal(logger, "bootstrap token", logging.F("err", err))
 		}
 	}
 
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           server.NewHandler(cfg, server.Dependencies{TokenValidator: store, TokenResolver: store, Reservations: store}),
+		Handler:           server.NewHandler(cfg, server.Dependencies{TokenValidator: store, TokenResolver: store, Reservations: store, Logger: logger}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
@@ -69,14 +71,14 @@ func main() {
 		_ = srv.Shutdown(shutdownCtx)
 	}()
 
-	log.Printf("eosrift-server listening on %s", addr)
+	logger.Info("listening", logging.F("addr", addr))
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("server error: %v", err)
+		fatal(logger, "server error", logging.F("err", err))
 	}
 }
 
-func tokenCmd(args []string) {
+func tokenCmd(logger logging.Logger, args []string) {
 	if len(args) < 1 {
 		tokenUsage()
 		os.Exit(2)
@@ -84,11 +86,11 @@ func tokenCmd(args []string) {
 
 	switch args[0] {
 	case "create":
-		tokenCreateCmd(args[1:])
+		tokenCreateCmd(logger, args[1:])
 	case "list":
-		tokenListCmd(args[1:])
+		tokenListCmd(logger, args[1:])
 	case "revoke":
-		tokenRevokeCmd(args[1:])
+		tokenRevokeCmd(logger, args[1:])
 	default:
 		tokenUsage()
 		os.Exit(2)
@@ -107,7 +109,7 @@ func tokenUsage() {
 	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
 }
 
-func tokenCreateCmd(args []string) {
+func tokenCreateCmd(logger logging.Logger, args []string) {
 	fs := flag.NewFlagSet("token create", flag.ExitOnError)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	label := fs.String("label", "", "Token label")
@@ -116,13 +118,13 @@ func tokenCreateCmd(args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	rec, token, err := store.CreateToken(ctx, *label)
 	if err != nil {
-		log.Fatalf("create token: %v", err)
+		fatal(logger, "create token", logging.F("err", err))
 	}
 
 	fmt.Printf("id: %d\n", rec.ID)
@@ -132,7 +134,7 @@ func tokenCreateCmd(args []string) {
 	fmt.Printf("token: %s\n", token)
 }
 
-func tokenListCmd(args []string) {
+func tokenListCmd(logger logging.Logger, args []string) {
 	fs := flag.NewFlagSet("token list", flag.ExitOnError)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	_ = fs.Parse(args)
@@ -140,13 +142,13 @@ func tokenListCmd(args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	tokens, err := store.ListTokens(ctx)
 	if err != nil {
-		log.Fatalf("list tokens: %v", err)
+		fatal(logger, "list tokens", logging.F("err", err))
 	}
 
 	if len(tokens) == 0 {
@@ -167,7 +169,7 @@ func tokenListCmd(args []string) {
 	}
 }
 
-func tokenRevokeCmd(args []string) {
+func tokenRevokeCmd(logger logging.Logger, args []string) {
 	fs := flag.NewFlagSet("token revoke", flag.ExitOnError)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	_ = fs.Parse(args)
@@ -179,18 +181,18 @@ func tokenRevokeCmd(args []string) {
 
 	id, err := strconv.ParseInt(fs.Arg(0), 10, 64)
 	if err != nil || id <= 0 {
-		log.Fatalf("invalid id: %q", fs.Arg(0))
+		fatal(logger, "invalid id", logging.F("id", fs.Arg(0)))
 	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.RevokeToken(ctx, id); err != nil {
-		log.Fatalf("revoke token: %v", err)
+		fatal(logger, "revoke token", logging.F("err", err))
 	}
 
 	fmt.Printf("revoked %d\n", id)
@@ -204,7 +206,7 @@ func getenv(key, fallback string) string {
 	return v
 }
 
-func reserveCmd(args []string) {
+func reserveCmd(logger logging.Logger, args []string) {
 	if len(args) < 1 {
 		reserveUsage()
 		os.Exit(2)
@@ -212,11 +214,11 @@ func reserveCmd(args []string) {
 
 	switch args[0] {
 	case "add":
-		reserveAddCmd(args[1:])
+		reserveAddCmd(logger, args[1:])
 	case "list":
-		reserveListCmd(args[1:])
+		reserveListCmd(logger, args[1:])
 	case "remove", "rm", "delete":
-		reserveRemoveCmd(args[1:])
+		reserveRemoveCmd(logger, args[1:])
 	default:
 		reserveUsage()
 		os.Exit(2)
@@ -235,7 +237,7 @@ func reserveUsage() {
 	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
 }
 
-func reserveAddCmd(args []string) {
+func reserveAddCmd(logger logging.Logger, args []string) {
 	fs := flag.NewFlagSet("reserve add", flag.ExitOnError)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	tokenID := fs.Int64("token-id", 0, "Token id to bind the subdomain to")
@@ -251,18 +253,18 @@ func reserveAddCmd(args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.ReserveSubdomain(ctx, *tokenID, subdomain); err != nil {
-		log.Fatalf("reserve subdomain: %v", err)
+		fatal(logger, "reserve subdomain", logging.F("err", err))
 	}
 
 	fmt.Printf("reserved %s\n", subdomain)
 }
 
-func reserveListCmd(args []string) {
+func reserveListCmd(logger logging.Logger, args []string) {
 	fs := flag.NewFlagSet("reserve list", flag.ExitOnError)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	_ = fs.Parse(args)
@@ -270,13 +272,13 @@ func reserveListCmd(args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	list, err := store.ListReservedSubdomains(ctx)
 	if err != nil {
-		log.Fatalf("list reserved subdomains: %v", err)
+		fatal(logger, "list reserved subdomains", logging.F("err", err))
 	}
 
 	if len(list) == 0 {
@@ -289,7 +291,7 @@ func reserveListCmd(args []string) {
 	}
 }
 
-func reserveRemoveCmd(args []string) {
+func reserveRemoveCmd(logger logging.Logger, args []string) {
 	fs := flag.NewFlagSet("reserve remove", flag.ExitOnError)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	_ = fs.Parse(args)
@@ -304,13 +306,33 @@ func reserveRemoveCmd(args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		log.Fatalf("open db: %v", err)
+		fatal(logger, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.UnreserveSubdomain(ctx, subdomain); err != nil {
-		log.Fatalf("unreserve subdomain: %v", err)
+		fatal(logger, "unreserve subdomain", logging.F("err", err))
 	}
 
 	fmt.Printf("unreserved %s\n", subdomain)
+}
+
+func newLogger() logging.Logger {
+	level, _ := logging.ParseLevel(os.Getenv("EOSRIFT_LOG_LEVEL"))
+	format, _ := logging.ParseFormat(os.Getenv("EOSRIFT_LOG_FORMAT"))
+
+	return logging.New(logging.Options{
+		Out:    os.Stderr,
+		Level:  level,
+		Format: format,
+	})
+}
+
+func fatal(logger logging.Logger, msg string, fields ...logging.Field) {
+	if logger != nil {
+		logger.Error(msg, fields...)
+	} else {
+		fmt.Fprintln(os.Stderr, msg)
+	}
+	os.Exit(1)
 }
