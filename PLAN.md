@@ -143,7 +143,7 @@ Current focus: **Milestone 7**.
 - [x] Metrics endpoint (`/metrics`, Prometheus text format; token-gated)
 - [ ] Structured logs (JSON) and log levels
 - [ ] Load testing harness in Docker
-- [ ] Security review checklist (auth, input validation, SSRF/host header concerns)
+- [x] Security review checklist (auth, input validation, SSRF/host header concerns)
 
 ## Ongoing
 
