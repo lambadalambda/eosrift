@@ -35,6 +35,8 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 				Addr:        "127.0.0.1:3000",
 				Domain:      "demo.tunnel.example.com",
 				BasicAuth:   "user:pass",
+				AllowCIDR:   []string{"1.2.3.0/24"},
+				DenyCIDR:    []string{"1.2.3.4/32"},
 				HostHeader:  "rewrite",
 				Inspect:     &tunnelInspect,
 				InspectAddr: "127.0.0.1:4041",
@@ -84,6 +86,12 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	if web.BasicAuth != "user:pass" {
 		t.Fatalf("web basic_auth = %q, want %q", web.BasicAuth, "user:pass")
 	}
+	if len(web.AllowCIDR) != 1 || web.AllowCIDR[0] != "1.2.3.0/24" {
+		t.Fatalf("web allow_cidr = %#v, want %q", web.AllowCIDR, "1.2.3.0/24")
+	}
+	if len(web.DenyCIDR) != 1 || web.DenyCIDR[0] != "1.2.3.4/32" {
+		t.Fatalf("web deny_cidr = %#v, want %q", web.DenyCIDR, "1.2.3.4/32")
+	}
 	if web.Inspect == nil || *web.Inspect != false || web.InspectAddr != "127.0.0.1:4041" {
 		t.Fatalf("web inspect = %+v, want inspect=false inspect_addr=127.0.0.1:4041", web)
 	}
@@ -104,6 +112,8 @@ tunnels:
     addr: 127.0.0.1:3000
     domain: demo.tunnel.example.com
     basic_auth: user:pass
+    allow_cidr:
+      - 1.2.3.0/24
   db:
     proto: tcp
     addr: 127.0.0.1:5432
@@ -134,6 +144,9 @@ tunnels:
 	web := cfg.Tunnels["web"]
 	if web.Proto != "http" || web.Addr != "127.0.0.1:3000" || web.Domain != "demo.tunnel.example.com" || web.BasicAuth != "user:pass" {
 		t.Fatalf("web tunnel = %+v, want http tunnel fields set", web)
+	}
+	if len(web.AllowCIDR) != 1 || web.AllowCIDR[0] != "1.2.3.0/24" {
+		t.Fatalf("web allow_cidr = %#v, want %q", web.AllowCIDR, "1.2.3.0/24")
 	}
 
 	db := cfg.Tunnels["db"]

@@ -248,6 +248,12 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			if basicAuth := strings.TrimSpace(t.Tunnel.BasicAuth); basicAuth != "" && !strings.Contains(basicAuth, ":") {
 				return fmt.Errorf("tunnel %q: basic_auth must be in the form user:pass", t.Name)
 			}
+			if err := validateCIDRs("allow_cidr", t.Tunnel.AllowCIDR); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			if err := validateCIDRs("deny_cidr", t.Tunnel.DenyCIDR); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
 			if t.Tunnel.RemotePort != 0 {
 				return fmt.Errorf("tunnel %q: remote_port is only valid for tcp tunnels", t.Name)
 			}
@@ -266,6 +272,12 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			}
 			if strings.TrimSpace(t.Tunnel.BasicAuth) != "" {
 				return fmt.Errorf("tunnel %q: basic_auth is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.AllowCIDR) != 0 {
+				return fmt.Errorf("tunnel %q: allow_cidr is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.DenyCIDR) != 0 {
+				return fmt.Errorf("tunnel %q: deny_cidr is only valid for http tunnels", t.Name)
 			}
 			if strings.TrimSpace(t.Tunnel.HostHeader) != "" {
 				return fmt.Errorf("tunnel %q: host_header is only valid for http tunnels", t.Name)
@@ -423,6 +435,8 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				Domain:                strings.TrimSpace(t.Tunnel.Domain),
 				Subdomain:             strings.TrimSpace(t.Tunnel.Subdomain),
 				BasicAuth:             strings.TrimSpace(t.Tunnel.BasicAuth),
+				AllowCIDRs:            t.Tunnel.AllowCIDR,
+				DenyCIDRs:             t.Tunnel.DenyCIDR,
 				HostHeader:            hostHeader,
 				UpstreamScheme:        upstreamScheme,
 				UpstreamTLSSkipVerify: upstreamTLSSkipVerify,
