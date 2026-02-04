@@ -20,8 +20,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 8 — RC track (HTTP correctness + compat)
 - [x] Milestone 9 — Config parity + Caddy smoke + release dry-run
 - [x] Milestone 10 — Named tunnels + `start` (ngrok-like)
+- [ ] Milestone 11 — `start` polish + TCP remote ports
 
-Current focus: **Define Milestone 11**.
+Current focus: **Milestone 11**.
 
 ## Guiding principles
 
@@ -204,3 +205,27 @@ tunnels” workflow.
 
 - `./scripts/go test ./...` is green.
 - `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit` is green.
+
+## Milestone 11 — `start` polish + TCP remote ports
+
+**Goal:** close a few remaining gaps in the “named tunnels” workflow and tighten config parity.
+
+- [ ] TCP `remote_port`:
+  - Support `remote_port` in `tunnels:` for TCP tunnels.
+  - Add a `--remote-port` flag to `eosrift tcp ...` (ngrok-like convenience; still optional).
+  - Client sends requested port to the server; server validates range/availability.
+- [ ] Stronger tunnel validation:
+  - Fail fast with clear errors for invalid `tunnels:` entries (missing/invalid `proto`, invalid `addr`,
+    `domain`+`subdomain` conflicts, unsupported keys).
+  - Improve errors to identify the tunnel name that failed.
+- [ ] UX + docs:
+  - Add more `eosrift start` examples to CLI help output and `README.md`.
+  - Include a full config example showing multiple named tunnels (HTTP + TCP) and typical flags.
+
+**Acceptance tests**
+
+- Unit tests: `./scripts/go test ./...` is green.
+- Integration tests (Docker): `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit` is green.
+- New integration coverage:
+  - TCP tunnel can request a specific port within the configured range and it is honored.
+  - Error cases: requested port out-of-range/unavailable produce clear messages.
