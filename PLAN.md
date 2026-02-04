@@ -19,9 +19,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 7 — Hardening + observability
 - [x] Milestone 8 — RC track (HTTP correctness + compat)
 - [x] Milestone 9 — Config parity + Caddy smoke + release dry-run
-- [ ] Milestone 10 — Next milestone (TBD)
+- [ ] Milestone 10 — Named tunnels + `start` (ngrok-like)
 
-Current focus: **Milestone 10 (TBD)**.
+Current focus: **Milestone 10**.
 
 ## Guiding principles
 
@@ -187,3 +187,20 @@ before tagging.
 - Unit tests: `./scripts/go test ./...` is green.
 - Integration tests: `docker compose -f docker-compose.test.yml up --build --exit-code-from test` is green.
 - Caddy smoke: `docker compose -f docker-compose.caddytest.yml up --build --exit-code-from test` is green.
+
+## Milestone 10 — Named tunnels + `start` (ngrok-like)
+
+**Goal:** run config-defined tunnels without repeating flags/args and get closer to ngrok’s “named
+tunnels” workflow.
+
+- [ ] Config: support an ngrok-like `tunnels:` map in `eosrift.yml`.
+  - Each tunnel defines: `proto` (`http`/`tcp`), `addr`, and optional HTTP settings like
+    `domain` / `subdomain` / `host_header`.
+- [ ] CLI: add `eosrift start <name>` and `eosrift start --all`.
+- [ ] Output: show a clear per-tunnel session summary (multiple tunnels should be readable).
+- [ ] Tests: unit tests for config parsing/validation + Docker integration coverage for `start`.
+
+**Acceptance tests**
+
+- `./scripts/go test ./...` is green.
+- `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit` is green.
