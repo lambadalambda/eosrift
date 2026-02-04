@@ -162,6 +162,7 @@ tunnels:
 - Start many: `./bin/eosrift start web db`
 - Start all: `./bin/eosrift start --all`
 - Override server/token: `./bin/eosrift start --all --server https://<yourdomain> --authtoken <token>`
+- HTTPS upstreams: set `addr: https://127.0.0.1:8443` and (if needed) add `--upstream-tls-skip-verify`.
 
 ### TCP tunnel (alpha)
 
@@ -179,6 +180,7 @@ Expose a local HTTP port through the server:
 - `./bin/eosrift http 8080 --server https://<yourdomain>`
 - Request a stable domain (ngrok-like): `./bin/eosrift http --domain demo.tunnel.<yourdomain> 127.0.0.1:8080`
 - Host header rewriting (ngrok-like): `./bin/eosrift http --host-header=rewrite 127.0.0.1:8080`
+- Forward to a local HTTPS upstream: `./bin/eosrift http https://127.0.0.1:8443 --upstream-tls-skip-verify`
 
 The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
 

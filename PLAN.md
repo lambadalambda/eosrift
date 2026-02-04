@@ -21,11 +21,11 @@ Last updated: **2026-02-04**
 - [x] Milestone 9 — Config parity + Caddy smoke + release dry-run
 - [x] Milestone 10 — Named tunnels + `start` (ngrok-like)
 - [x] Milestone 11 — `start` polish + TCP remote ports
-- [ ] Milestone 12 — HTTP upstream HTTPS
+- [x] Milestone 12 — HTTP upstream HTTPS
 - [ ] Milestone 13 — Per-tunnel access control
 - [ ] Milestone 14 — Reserved TCP ports
 
-Current focus: **Milestone 12**.
+Current focus: **Milestone 13**.
 
 ## Guiding principles
 
@@ -238,12 +238,12 @@ tunnels” workflow.
 **Goal:** support forwarding HTTP tunnels to local HTTPS upstreams (ngrok-like), while keeping
 websockets, streaming, and the local inspector working.
 
-- [ ] Accept upstream URLs for HTTP tunnels:
+- [x] Accept upstream URLs for HTTP tunnels:
   - `eosrift http https://127.0.0.1:8443` (scheme + host:port), in addition to the existing `<port|host:port>` forms.
   - `tunnels.*.addr` may also be a URL for `proto: http` tunnels.
-- [ ] Dial upstream with TLS when scheme is `https`.
-- [ ] Add a TLS verification toggle for upstream HTTPS (default behavior documented).
-- [ ] Ensure inspector capture + replay work for HTTPS upstreams.
+- [x] Dial upstream with TLS when scheme is `https`.
+- [x] Add a TLS verification toggle for upstream HTTPS (default behavior documented).
+- [x] Ensure inspector capture + replay work for HTTPS upstreams.
 
 **Acceptance tests**
 
