@@ -20,9 +20,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 8 — RC track (HTTP correctness + compat)
 - [x] Milestone 9 — Config parity + Caddy smoke + release dry-run
 - [x] Milestone 10 — Named tunnels + `start` (ngrok-like)
-- [ ] Milestone 11 — `start` polish + TCP remote ports
+- [x] Milestone 11 — `start` polish + TCP remote ports
 
-Current focus: **Milestone 11**.
+Current focus: **Define Milestone 12**.
 
 ## Guiding principles
 
@@ -214,11 +214,11 @@ tunnels” workflow.
   - Support `remote_port` in `tunnels:` for TCP tunnels.
   - Add a `--remote-port` flag to `eosrift tcp ...` (ngrok-like convenience; still optional).
   - Client sends requested port to the server; server validates range/availability.
-- [ ] Stronger tunnel validation:
+- [x] Stronger tunnel validation:
   - Fail fast with clear errors for invalid `tunnels:` entries (missing/invalid `proto`, invalid `addr`,
     `domain`+`subdomain` conflicts, unsupported keys).
   - Improve errors to identify the tunnel name that failed.
-- [ ] UX + docs:
+- [x] UX + docs:
   - Add more `eosrift start` examples to CLI help output and `README.md`.
   - Include a full config example showing multiple named tunnels (HTTP + TCP) and typical flags.
 
