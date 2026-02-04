@@ -17,9 +17,10 @@ Last updated: **2026-02-04**
 - [x] Milestone 5 — Auth + reserved names (SQLite-backed)
 - [x] Milestone 6 — Packaging + deployment polish
 - [x] Milestone 7 — Hardening + observability
-- [ ] Milestone 8 — RC track (HTTP correctness + compat)
+- [x] Milestone 8 — RC track (HTTP correctness + compat)
+- [ ] Milestone 9 — Next milestone (TBD)
 
-Current focus: **Milestone 8**.
+Current focus: **Milestone 9 (TBD)**.
 
 ## Guiding principles
 
@@ -162,7 +163,7 @@ but this milestone should make the system feel solid in daily use.
 - [x] Control-plane keepalive so idle sessions survive NAT/proxies
 - [x] Proxy header hygiene (strip `Forwarded` / `X-Forwarded-*` unless proxy headers are trusted)
 - [x] HTTP tunnel compat knobs (host header rewriting)
-- [ ] Pre-release checklist (what “v1.0-ready” means for EosRift)
+- [x] Pre-release checklist (what “v1.0-ready” means for EosRift)
 
 **Acceptance tests (Docker)**
 

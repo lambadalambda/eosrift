@@ -48,6 +48,7 @@ service yet:
 - `PLAN.md` — milestones and TDD approach
 - `ARCHITECTURE.md` — proposed architecture and protocols
 - `CHANGELOG.md` — notable changes (Keep a Changelog format)
+- `RELEASING.md` — release checklist and “v1.0-ready” definition
 - `deploy/PRODUCTION.md` — deployment notes (DNS, Caddy, firewall)
 - `SECURITY.md` — threat model and security checklist
 
