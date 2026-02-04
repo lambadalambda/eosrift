@@ -81,6 +81,14 @@ Health check:
 
 - `curl -fsS http://127.0.0.1:8080/healthz`
 
+## Optional: metrics
+
+If you set `EOSRIFT_METRICS_TOKEN`, the server exposes Prometheus-style metrics at `/metrics`.
+
+Example (local, via the `127.0.0.1:8080` bind in `docker-compose.yml`):
+
+- `curl -fsS -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/metrics`
+
 ## 6) Create an authtoken and remove bootstrap (recommended)
 
 Create a real token for your client:
@@ -101,4 +109,3 @@ Set your authtoken and server:
 Start a tunnel:
 
 - `eosrift http 3000`
-

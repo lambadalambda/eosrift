@@ -19,6 +19,9 @@ type Config struct {
 	TCPPortRangeStart int
 	TCPPortRangeEnd   int
 
+	// MetricsToken enables /metrics when set (requires Authorization: Bearer <token>).
+	MetricsToken string
+
 	// MaxTunnelsPerToken caps concurrent tunnels per authtoken.
 	// Zero means unlimited.
 	MaxTunnelsPerToken int
@@ -42,6 +45,8 @@ func ConfigFromEnv() Config {
 
 		TCPPortRangeStart: getenvInt("EOSRIFT_TCP_PORT_RANGE_START", 20000),
 		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
+
+		MetricsToken: strings.TrimSpace(os.Getenv("EOSRIFT_METRICS_TOKEN")),
 
 		MaxTunnelsPerToken: getenvInt("EOSRIFT_MAX_TUNNELS_PER_TOKEN", 0),
 
@@ -78,6 +83,7 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 	tunnelProxy := httpTunnelProxyHandler(cfg, registry)
 	limiter := newTokenTunnelLimiter()
 	rateLimiter := newTokenRateLimiter(time.Now)
+	metrics := newMetrics(time.Now)
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -105,7 +111,11 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
 
-	mux.HandleFunc("/control", controlHandler(cfg, registry, deps, limiter, rateLimiter))
+	if cfg.MetricsToken != "" {
+		mux.HandleFunc("/metrics", metricsHandler(cfg.MetricsToken, metrics))
+	}
+
+	mux.HandleFunc("/control", controlHandler(cfg, registry, deps, limiter, rateLimiter, metrics))
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/style.css" {
 			serveLandingStyle(w, r)

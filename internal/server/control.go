@@ -43,7 +43,7 @@ type baseRequest struct {
 	Domain     string `json:"domain,omitempty"`
 }
 
-func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter) http.HandlerFunc {
+func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter, metrics *metrics) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -57,6 +57,12 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 			return
 		}
 		defer conn.Close(websocket.StatusNormalClosure, "closed")
+
+		var releaseControlConn func()
+		if metrics != nil {
+			releaseControlConn = metrics.trackControlConn()
+			defer releaseControlConn()
+		}
 
 		netConn := websocket.NetConn(ctx, conn, websocket.MessageBinary)
 
@@ -180,7 +186,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Type:       "tcp",
 				Authtoken:  req.Authtoken,
 				RemotePort: req.RemotePort,
-			}, cfg)
+			}, cfg, metrics)
 			return
 		case "http":
 			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
@@ -188,7 +194,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Authtoken: req.Authtoken,
 				Subdomain: req.Subdomain,
 				Domain:    req.Domain,
-			}, cfg, registry, deps, tokenID)
+			}, cfg, registry, deps, tokenID, metrics)
 			return
 		default:
 			_ = writeControlTCPError(ctrlStream, "unsupported tunnel type")
@@ -198,7 +204,7 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 	}
 }
 
-func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateTCPTunnelRequest, cfg Config) {
+func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateTCPTunnelRequest, cfg Config, metrics *metrics) {
 	ln, port, err := allocateTCPListener(cfg, req.RemotePort)
 	if err != nil {
 		_ = writeControlTCPError(ctrlStream, err.Error())
@@ -206,6 +212,12 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 		return
 	}
 	defer ln.Close()
+
+	var releaseTunnel func()
+	if metrics != nil {
+		releaseTunnel = metrics.trackTCPTunnel()
+		defer releaseTunnel()
+	}
 
 	if err := json.NewEncoder(ctrlStream).Encode(control.CreateTCPTunnelResponse{
 		Type:       "tcp",
@@ -248,7 +260,7 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 	}
 }
 
-func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry, deps Dependencies, tokenID int64) {
+func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateHTTPTunnelRequest, cfg Config, registry *TunnelRegistry, deps Dependencies, tokenID int64, metrics *metrics) {
 	id, err := func() (string, error) {
 		domain := strings.TrimSpace(req.Domain)
 		subdomain := strings.TrimSpace(req.Subdomain)
@@ -328,6 +340,12 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 	defer registry.UnregisterHTTPTunnel(id)
+
+	var releaseTunnel func()
+	if metrics != nil {
+		releaseTunnel = metrics.trackHTTPTunnel()
+		defer releaseTunnel()
+	}
 
 	url := fmt.Sprintf("https://%s.%s", id, strings.TrimSuffix(cfg.TunnelDomain, "."))
 	if err := json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
