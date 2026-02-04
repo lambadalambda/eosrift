@@ -75,7 +75,8 @@ func (m *metrics) writePrometheus(w http.ResponseWriter) {
 	writeCounter("eosrift_tcp_tunnels_total", "Total TCP tunnels created.", m.totalTCP.Load())
 }
 
-func metricsHandler(token string, m *metrics) http.HandlerFunc {
+func metricsHandler(baseDomain, token string, m *metrics) http.HandlerFunc {
+	baseDomain = strings.TrimSpace(baseDomain)
 	token = strings.TrimSpace(token)
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -84,13 +85,15 @@ func metricsHandler(token string, m *metrics) http.HandlerFunc {
 			return
 		}
 
+		if !isBaseDomainHost(r.Host, baseDomain) {
+			http.NotFound(w, r)
+			return
+		}
+
 		ok := false
 
 		auth := strings.TrimSpace(r.Header.Get("Authorization"))
 		if strings.HasPrefix(auth, "Bearer ") && strings.TrimSpace(strings.TrimPrefix(auth, "Bearer ")) == token {
-			ok = true
-		}
-		if !ok && strings.TrimSpace(r.URL.Query().Get("token")) == token {
 			ok = true
 		}
 		if !ok {

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -103,7 +104,11 @@ func TestNewHandler_caddyAsk_allowsBaseAndTunnelDomains(t *testing.T) {
 	h := NewHandler(Config{
 		BaseDomain:   "eosrift.com",
 		TunnelDomain: "tunnel.eosrift.com",
-	}, Dependencies{})
+	}, Dependencies{
+		Reservations: stubReservations{reserved: map[string]bool{
+			"abcd1234": true,
+		}},
+	})
 
 	cases := []struct {
 		name       string
@@ -113,7 +118,8 @@ func TestNewHandler_caddyAsk_allowsBaseAndTunnelDomains(t *testing.T) {
 		{"base domain", "eosrift.com", http.StatusOK},
 		{"base domain (case)", "EOSRIFT.COM", http.StatusOK},
 		{"tunnel domain apex", "tunnel.eosrift.com", http.StatusOK},
-		{"tunnel subdomain", "abcd1234.tunnel.eosrift.com", http.StatusOK},
+		{"tunnel subdomain (reserved)", "abcd1234.tunnel.eosrift.com", http.StatusOK},
+		{"tunnel subdomain (unreserved)", "wxyz9999.tunnel.eosrift.com", http.StatusForbidden},
 		{"other subdomain rejected", "www.eosrift.com", http.StatusForbidden},
 		{"other domain rejected", "example.com", http.StatusForbidden},
 	}
@@ -132,4 +138,19 @@ func TestNewHandler_caddyAsk_allowsBaseAndTunnelDomains(t *testing.T) {
 			}
 		})
 	}
+}
+
+type stubReservations struct {
+	reserved map[string]bool
+}
+
+func (s stubReservations) ReservedSubdomainTokenID(ctx context.Context, subdomain string) (int64, bool, error) {
+	if s.reserved[strings.ToLower(subdomain)] {
+		return 1, true, nil
+	}
+	return 0, false, nil
+}
+
+func (s stubReservations) ReserveSubdomain(ctx context.Context, tokenID int64, subdomain string) error {
+	return nil
 }

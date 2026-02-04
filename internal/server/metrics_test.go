@@ -71,4 +71,19 @@ func TestNewHandler_metrics_requiresToken(t *testing.T) {
 			t.Fatalf("body missing marker (len=%d)", len(body))
 		}
 	})
+
+	t.Run("not on tunnel host", func(t *testing.T) {
+		t.Parallel()
+
+		req := httptest.NewRequest(http.MethodGet, "http://abcd1234.tunnel.eosrift.com/metrics", nil)
+		req.Host = "abcd1234.tunnel.eosrift.com"
+		req.Header.Set("Authorization", "Bearer secret")
+		rec := httptest.NewRecorder()
+
+		h.ServeHTTP(rec, req)
+
+		if rec.Code != http.StatusNotFound {
+			t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+		}
+	})
 }

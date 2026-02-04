@@ -103,16 +103,43 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 			return
 		}
 
-		if isAllowedDomain(domain, cfg) {
+		base := normalizeDomain(cfg.BaseDomain)
+		tunnel := normalizeDomain(cfg.TunnelDomain)
+
+		// Always allow issuing a cert for the base domain and tunnel domain apex.
+		if base != "" && domain == base {
 			w.WriteHeader(http.StatusOK)
 			return
+		}
+		if tunnel != "" && domain == tunnel {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// For tunnel subdomains, only allow issuance if:
+		// - the tunnel is currently active (in-memory), or
+		// - the subdomain is reserved in SQLite.
+		//
+		// This prevents arbitrary third parties from forcing ACME issuance for random
+		// hostnames under the tunnel domain.
+		if id, ok := tunnelIDFromHost(domain, cfg.TunnelDomain); ok {
+			if _, ok := registry.GetHTTPTunnel(id); ok {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+			if deps.Reservations != nil {
+				if _, reserved, err := deps.Reservations.ReservedSubdomainTokenID(r.Context(), id); err == nil && reserved {
+					w.WriteHeader(http.StatusOK)
+					return
+				}
+			}
 		}
 
 		http.Error(w, "forbidden", http.StatusForbidden)
 	})
 
 	if cfg.MetricsToken != "" {
-		mux.HandleFunc("/metrics", metricsHandler(cfg.MetricsToken, metrics))
+		mux.HandleFunc("/metrics", metricsHandler(cfg.BaseDomain, cfg.MetricsToken, metrics))
 	}
 
 	mux.HandleFunc("/control", controlHandler(cfg, registry, deps, limiter, rateLimiter, metrics))
