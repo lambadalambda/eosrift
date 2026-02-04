@@ -210,7 +210,7 @@ tunnels” workflow.
 
 **Goal:** close a few remaining gaps in the “named tunnels” workflow and tighten config parity.
 
-- [ ] TCP `remote_port`:
+- [x] TCP `remote_port`:
   - Support `remote_port` in `tunnels:` for TCP tunnels.
   - Add a `--remote-port` flag to `eosrift tcp ...` (ngrok-like convenience; still optional).
   - Client sends requested port to the server; server validates range/availability.
