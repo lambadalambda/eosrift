@@ -7,6 +7,15 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- CLI help output now includes examples for `--domain` and `--subdomain`.
+
+### Fixed
+
+- HTTP tunnels now unregister on control-plane disconnect so `--domain` can be reused after the prior session ends.
+- TCP tunnels now close their listener on control-plane disconnect.
+
 ## [0.1.0] - 2026-02-04
 
 ### Added

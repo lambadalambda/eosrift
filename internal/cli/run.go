@@ -83,6 +83,8 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "  eosrift config set-server https://eosrift.com")
 	fmt.Fprintln(w, "  eosrift config set-host-header rewrite")
 	fmt.Fprintln(w, "  eosrift http 8080 --server https://eosrift.com")
+	fmt.Fprintln(w, "  eosrift http 3000 --domain demo.tunnel.eosrift.com")
+	fmt.Fprintln(w, "  eosrift http 3000 --subdomain demo")
 	fmt.Fprintln(w, "  eosrift tcp  5432 --server https://eosrift.com")
 }
 

@@ -76,7 +76,15 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	fs.Usage = func() {
 		out := fs.Output()
 		fmt.Fprintln(out, "usage: eosrift http [flags] <local-port|local-addr>")
+		fmt.Fprintln(out, "")
+		fmt.Fprintln(out, "flags may appear before or after <local-port|local-addr>")
 		fs.PrintDefaults()
+		fmt.Fprintln(out, "")
+		fmt.Fprintln(out, "examples:")
+		fmt.Fprintln(out, "  eosrift http 3000")
+		fmt.Fprintln(out, "  eosrift http 3000 --domain demo.tunnel.eosrift.com")
+		fmt.Fprintln(out, "  eosrift http 3000 --subdomain demo")
+		fmt.Fprintln(out, "  eosrift http 3000 --host-header=rewrite")
 	}
 
 	if err := parseInterspersedFlags(fs, args); err != nil {
