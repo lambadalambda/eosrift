@@ -20,6 +20,13 @@ import (
 	"nhooyr.io/websocket"
 )
 
+const (
+	maxControlRequestBytes    = 64 * 1024
+	maxCIDREntries            = 64
+	maxHeaderTransformEntries = 64
+	maxHeaderValueBytes       = 8 * 1024
+)
+
 type yamuxSession struct {
 	s *yamux.Session
 }
@@ -97,8 +104,8 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 			return
 		}
 
-		var req baseRequest
-		if err := json.NewDecoder(ctrlStream).Decode(&req); err != nil {
+		req, err := decodeBaseRequest(ctrlStream)
+		if err != nil {
 			_ = writeControlTCPError(ctrlStream, "invalid request")
 			_ = ctrlStream.Close()
 			return
@@ -265,6 +272,17 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 			return
 		}
 	}
+}
+
+func decodeBaseRequest(r io.Reader) (baseRequest, error) {
+	var req baseRequest
+
+	dec := json.NewDecoder(io.LimitReader(r, maxControlRequestBytes))
+	if err := dec.Decode(&req); err != nil {
+		return baseRequest{}, err
+	}
+
+	return req, nil
 }
 
 func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Session, ctrlStream *yamux.Stream, req control.CreateTCPTunnelRequest, cfg Config, metrics *metrics, logger logging.Logger) {
@@ -531,6 +549,9 @@ func parseCIDRList(field string, values []string) ([]netip.Prefix, error) {
 	if len(values) == 0 {
 		return nil, nil
 	}
+	if len(values) > maxCIDREntries {
+		return nil, fmt.Errorf("invalid %s: too many entries", field)
+	}
 
 	out := make([]netip.Prefix, 0, len(values))
 	for _, v := range values {
@@ -569,6 +590,9 @@ func parseHeaderNameList(field string, values []string) ([]string, error) {
 	if len(values) == 0 {
 		return nil, nil
 	}
+	if len(values) > maxHeaderTransformEntries {
+		return nil, fmt.Errorf("invalid %s: too many entries", field)
+	}
 
 	out := make([]string, 0, len(values))
 	for _, v := range values {
@@ -585,6 +609,9 @@ func parseHeaderKVList(field string, values []control.HeaderKV) ([]headerKV, err
 	if len(values) == 0 {
 		return nil, nil
 	}
+	if len(values) > maxHeaderTransformEntries {
+		return nil, fmt.Errorf("invalid %s: too many entries", field)
+	}
 
 	out := make([]headerKV, 0, len(values))
 	for _, kv := range values {
@@ -592,9 +619,14 @@ func parseHeaderKVList(field string, values []control.HeaderKV) ([]headerKV, err
 		if err != nil {
 			return nil, err
 		}
+
+		val := strings.TrimSpace(kv.Value)
+		if len(val) > maxHeaderValueBytes || !isSafeHeaderValue(val) {
+			return nil, fmt.Errorf("invalid %s: %q", field, kv.Name)
+		}
 		out = append(out, headerKV{
 			Name:  name,
-			Value: strings.TrimSpace(kv.Value),
+			Value: val,
 		})
 	}
 	return out, nil
@@ -623,6 +655,22 @@ func isValidHeaderToken(s string) bool {
 		case c >= 'A' && c <= 'Z':
 		case strings.ContainsRune("!#$%&'*+-.^_`|~", rune(c)):
 		default:
+			return false
+		}
+	}
+	return true
+}
+
+func isSafeHeaderValue(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\r' || c == '\n' || c == 0 {
+			return false
+		}
+		if c < 0x20 && c != '\t' {
+			return false
+		}
+		if c == 0x7f {
 			return false
 		}
 	}

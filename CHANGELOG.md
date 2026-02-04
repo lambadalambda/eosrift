@@ -20,6 +20,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changed
 
 - `eosrift start` now validates `tunnels:` config and fails fast on common mistakes (invalid `addr`, invalid option combinations).
+- Control-plane requests now enforce basic size limits and validate header transform values (defense in depth).
 
 ### Fixed
 
