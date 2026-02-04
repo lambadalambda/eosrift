@@ -14,6 +14,11 @@ type CreateTCPTunnelResponse struct {
 	Error      string `json:"error,omitempty"`
 }
 
+type HeaderKV struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+}
+
 type CreateHTTPTunnelRequest struct {
 	Type      string `json:"type"` // "http"
 	Authtoken string `json:"authtoken,omitempty"`
@@ -27,6 +32,20 @@ type CreateHTTPTunnelRequest struct {
 	// deny_cidr always takes precedence.
 	AllowCIDR []string `json:"allow_cidr,omitempty"`
 	DenyCIDR  []string `json:"deny_cidr,omitempty"`
+
+	// Header transforms applied at the server edge (before proxying to the
+	// client/upstream). These are applied in the following order:
+	// - request_header_remove
+	// - request_header_add
+	//
+	// Response transforms are applied after receiving a response from the
+	// upstream, before sending it to the public client:
+	// - response_header_remove
+	// - response_header_add
+	RequestHeaderAdd    []HeaderKV `json:"request_header_add,omitempty"`
+	RequestHeaderRemove []string   `json:"request_header_remove,omitempty"`
+	ResponseHeaderAdd   []HeaderKV `json:"response_header_add,omitempty"`
+	ResponseHeaderRemove []string  `json:"response_header_remove,omitempty"`
 }
 
 type CreateHTTPTunnelResponse struct {
