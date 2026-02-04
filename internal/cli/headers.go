@@ -2,10 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"net/http"
 	"strings"
 
 	"eosrift.com/eosrift/internal/client"
+	"eosrift.com/eosrift/internal/control"
 )
 
 func parseHeaderAddList(field string, values []string) ([]client.HeaderKV, error) {
@@ -31,7 +31,7 @@ func parseHeaderRemoveList(field string, values []string) ([]string, error) {
 
 	out := make([]string, 0, len(values))
 	for _, raw := range values {
-		name, err := normalizeHeaderName(field, raw)
+		name, err := control.NormalizeHeaderName(field, raw)
 		if err != nil {
 			return nil, err
 		}
@@ -59,7 +59,7 @@ func parseHeaderKV(field string, raw string) (client.HeaderKV, error) {
 		return client.HeaderKV{}, err
 	}
 
-	normValue, err := normalizeHeaderValue(field, raw, value)
+	normValue, err := control.ValidateHeaderValue(field, raw, value)
 	if err != nil {
 		return client.HeaderKV{}, err
 	}
@@ -71,74 +71,5 @@ func parseHeaderKV(field string, raw string) (client.HeaderKV, error) {
 }
 
 func normalizeHeaderName(field string, raw string) (string, error) {
-	s := strings.TrimSpace(raw)
-	if s == "" || !isValidHeaderToken(s) {
-		return "", fmt.Errorf("invalid %s: %q", field, raw)
-	}
-
-	s = http.CanonicalHeaderKey(s)
-	if isDisallowedTransformedHeader(s) {
-		return "", fmt.Errorf("invalid %s: %q", field, raw)
-	}
-	return s, nil
-}
-
-func normalizeHeaderValue(field, raw, value string) (string, error) {
-	v := strings.TrimSpace(value)
-	if len(v) > maxHeaderValueBytes || !isSafeHeaderValue(v) {
-		return "", fmt.Errorf("invalid %s: %q", field, raw)
-	}
-	return v, nil
-}
-
-func isValidHeaderToken(s string) bool {
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		switch {
-		case c >= '0' && c <= '9':
-		case c >= 'a' && c <= 'z':
-		case c >= 'A' && c <= 'Z':
-		case strings.ContainsRune("!#$%&'*+-.^_`|~", rune(c)):
-		default:
-			return false
-		}
-	}
-	return true
-}
-
-const maxHeaderValueBytes = 8 * 1024
-
-func isSafeHeaderValue(s string) bool {
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c == '\r' || c == '\n' || c == 0 {
-			return false
-		}
-		if c < 0x20 && c != '\t' {
-			return false
-		}
-		if c == 0x7f {
-			return false
-		}
-	}
-	return true
-}
-
-func isDisallowedTransformedHeader(name string) bool {
-	switch http.CanonicalHeaderKey(name) {
-	case "Connection",
-		"Proxy-Connection",
-		"Keep-Alive",
-		"Proxy-Authenticate",
-		"Proxy-Authorization",
-		"Te",
-		"Trailer",
-		"Transfer-Encoding",
-		"Upgrade",
-		"Content-Length",
-		"Host":
-		return true
-	default:
-		return false
-	}
+	return control.NormalizeHeaderName(field, raw)
 }
