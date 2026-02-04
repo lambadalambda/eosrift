@@ -24,8 +24,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 12 — HTTP upstream HTTPS
 - [x] Milestone 13 — Per-tunnel access control
 - [x] Milestone 14 — Reserved TCP ports
+- [x] Milestone 15 — HTTP header transforms
 
-Current focus: **Milestone 15**.
+Current focus: **Milestone 16**.
 
 ## Guiding principles
 
@@ -290,9 +291,10 @@ websockets, streaming, and the local inspector working.
 
 **Goal:** cover a few common ngrok “traffic policy” style needs without implementing a full policy engine.
 
-- [ ] Request header add/remove (per tunnel): `--request-header-add`, `--request-header-remove`, config under `tunnels.*`.
-- [ ] Response header add/remove (per tunnel): `--response-header-add`, `--response-header-remove`, config under `tunnels.*`.
-- [ ] (Optional) Method/path allowlist (per tunnel) for simple “public endpoint only” tunnels.
+**Status:** done (2026-02-04)
+
+- [x] Request header add/remove (per tunnel): `--request-header-add`, `--request-header-remove`, config under `tunnels.*`.
+- [x] Response header add/remove (per tunnel): `--response-header-add`, `--response-header-remove`, config under `tunnels.*`.
 
 **Acceptance tests**
 
@@ -317,3 +319,16 @@ websockets, streaming, and the local inspector working.
 
 - [ ] `eosrift tls <local-port|local-addr>` as a thin wrapper around `tcp` (byte proxying).
 - [ ] Docs explaining common use cases (mTLS, custom certs, etc.).
+
+## Milestone 18 — HTTP request allow/deny (traffic policy lite)
+
+**Goal:** support a small subset of ngrok-style “only expose these endpoints” behavior for HTTP tunnels.
+
+- [ ] Per-tunnel method allowlist: `--allow-method GET` (repeatable) and config under `tunnels.*`.
+- [ ] Per-tunnel path allowlist: `--allow-path /healthz` (repeatable) and config under `tunnels.*`.
+- [ ] (Optional) Simple prefix matching: `--allow-path-prefix /api/`.
+
+**Acceptance tests**
+
+- Unit tests for parsing/validation and enforcement.
+- Integration test proving disallowed requests are rejected on the edge.
