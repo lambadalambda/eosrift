@@ -7,6 +7,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-02-04
+
 ### Added
 
 - CLI help output now includes examples for `--domain` and `--subdomain`.

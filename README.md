@@ -4,7 +4,7 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** alpha (`v0.1.0`). TCP + HTTP tunnels work, but expect rough edges and breaking changes.
+**Status:** alpha. TCP + HTTP tunnels work, but expect rough edges and breaking changes.
 
 This project is close to being “useful by default”, but it is not a 1.0-quality, battle-tested
 service yet:
@@ -66,7 +66,7 @@ service yet:
 
 Notes:
 
-- By default, `docker-compose.yml` builds the server image locally. If you prefer a prebuilt image, use `ghcr.io/lambadalambda/eosrift-server:v0.1.0`.
+- By default, `docker-compose.yml` builds the server image locally. If you prefer a prebuilt image, use `ghcr.io/lambadalambda/eosrift-server:v0.1.1`.
 - TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
 - `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
 - `docker-compose.yml` defaults `EOSRIFT_TRUST_PROXY_HEADERS=1` (safe with the default localhost-only server bind + Caddy in front). If you expose the server directly to untrusted clients, set it to `0` to prevent `X-Forwarded-*` spoofing.
@@ -84,7 +84,7 @@ This repo doesn’t require Go on your host; you can build with Docker:
 Release artifacts are built by GitHub Actions on tags (`v*`). Install the client on macOS/Linux using:
 
 - Latest release: `./scripts/install.sh`
-- Specific version: `./scripts/install.sh --version v0.1.0`
+- Specific version: `./scripts/install.sh --version v0.1.1`
 
 By default, this installs to `~/.local/bin/eosrift` (override with `--dir`).
 

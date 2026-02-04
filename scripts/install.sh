@@ -9,8 +9,8 @@ Usage:
   ./scripts/install.sh [--version <tag>] [--repo <owner/repo>] [--dir <install-dir>]
 
 Examples:
-  ./scripts/install.sh --version v0.1.0
-  ./scripts/install.sh --repo your-org/eosrift --version v0.1.0 --dir ~/.local/bin
+  ./scripts/install.sh --version v0.1.1
+  ./scripts/install.sh --repo your-org/eosrift --version v0.1.1 --dir ~/.local/bin
 
 Notes:
   - If --version is omitted, this script installs the latest GitHub release.
