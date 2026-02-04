@@ -31,15 +31,19 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 		Inspect:    &inspect,
 		Tunnels: map[string]Tunnel{
 			"web": {
-				Proto:       "http",
-				Addr:        "127.0.0.1:3000",
-				Domain:      "demo.tunnel.example.com",
-				BasicAuth:   "user:pass",
-				AllowCIDR:   []string{"1.2.3.0/24"},
-				DenyCIDR:    []string{"1.2.3.4/32"},
-				HostHeader:  "rewrite",
-				Inspect:     &tunnelInspect,
-				InspectAddr: "127.0.0.1:4041",
+				Proto:                "http",
+				Addr:                 "127.0.0.1:3000",
+				Domain:               "demo.tunnel.example.com",
+				BasicAuth:            "user:pass",
+				AllowCIDR:            []string{"1.2.3.0/24"},
+				DenyCIDR:             []string{"1.2.3.4/32"},
+				RequestHeaderAdd:     HeaderAddList{"X-Req: yes"},
+				RequestHeaderRemove:  []string{"X-Remove"},
+				ResponseHeaderAdd:    HeaderAddList{"X-Resp: ok"},
+				ResponseHeaderRemove: []string{"X-Upstream"},
+				HostHeader:           "rewrite",
+				Inspect:              &tunnelInspect,
+				InspectAddr:          "127.0.0.1:4041",
 			},
 		},
 	}
@@ -92,6 +96,18 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	if len(web.DenyCIDR) != 1 || web.DenyCIDR[0] != "1.2.3.4/32" {
 		t.Fatalf("web deny_cidr = %#v, want %q", web.DenyCIDR, "1.2.3.4/32")
 	}
+	if len(web.RequestHeaderAdd) != 1 || web.RequestHeaderAdd[0] != "X-Req: yes" {
+		t.Fatalf("web request_header_add = %#v, want %q", web.RequestHeaderAdd, "X-Req: yes")
+	}
+	if len(web.RequestHeaderRemove) != 1 || web.RequestHeaderRemove[0] != "X-Remove" {
+		t.Fatalf("web request_header_remove = %#v, want %q", web.RequestHeaderRemove, "X-Remove")
+	}
+	if len(web.ResponseHeaderAdd) != 1 || web.ResponseHeaderAdd[0] != "X-Resp: ok" {
+		t.Fatalf("web response_header_add = %#v, want %q", web.ResponseHeaderAdd, "X-Resp: ok")
+	}
+	if len(web.ResponseHeaderRemove) != 1 || web.ResponseHeaderRemove[0] != "X-Upstream" {
+		t.Fatalf("web response_header_remove = %#v, want %q", web.ResponseHeaderRemove, "X-Upstream")
+	}
 	if web.Inspect == nil || *web.Inspect != false || web.InspectAddr != "127.0.0.1:4041" {
 		t.Fatalf("web inspect = %+v, want inspect=false inspect_addr=127.0.0.1:4041", web)
 	}
@@ -114,6 +130,14 @@ tunnels:
     basic_auth: user:pass
     allow_cidr:
       - 1.2.3.0/24
+    request_header_add:
+      - X-Req: yes
+    request_header_remove:
+      - X-Remove
+    response_header_add:
+      - X-Resp: ok
+    response_header_remove:
+      - X-Upstream
   db:
     proto: tcp
     addr: 127.0.0.1:5432
@@ -147,6 +171,18 @@ tunnels:
 	}
 	if len(web.AllowCIDR) != 1 || web.AllowCIDR[0] != "1.2.3.0/24" {
 		t.Fatalf("web allow_cidr = %#v, want %q", web.AllowCIDR, "1.2.3.0/24")
+	}
+	if len(web.RequestHeaderAdd) != 1 || web.RequestHeaderAdd[0] != "X-Req: yes" {
+		t.Fatalf("web request_header_add = %#v, want %q", web.RequestHeaderAdd, "X-Req: yes")
+	}
+	if len(web.RequestHeaderRemove) != 1 || web.RequestHeaderRemove[0] != "X-Remove" {
+		t.Fatalf("web request_header_remove = %#v, want %q", web.RequestHeaderRemove, "X-Remove")
+	}
+	if len(web.ResponseHeaderAdd) != 1 || web.ResponseHeaderAdd[0] != "X-Resp: ok" {
+		t.Fatalf("web response_header_add = %#v, want %q", web.ResponseHeaderAdd, "X-Resp: ok")
+	}
+	if len(web.ResponseHeaderRemove) != 1 || web.ResponseHeaderRemove[0] != "X-Upstream" {
+		t.Fatalf("web response_header_remove = %#v, want %q", web.ResponseHeaderRemove, "X-Upstream")
 	}
 
 	db := cfg.Tunnels["db"]

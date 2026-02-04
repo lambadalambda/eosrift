@@ -73,6 +73,14 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	fs.Var(&allowCIDR, "allow-cidr", "Allow client IPs matching CIDR or IP (repeatable)")
 	var denyCIDR stringSliceFlag
 	fs.Var(&denyCIDR, "deny-cidr", "Deny client IPs matching CIDR or IP (repeatable)")
+	var requestHeaderAdd stringListFlag
+	fs.Var(&requestHeaderAdd, "request-header-add", "Add/override a request header (repeatable, \"Name: value\")")
+	var requestHeaderRemove stringListFlag
+	fs.Var(&requestHeaderRemove, "request-header-remove", "Remove a request header (repeatable, \"Name\")")
+	var responseHeaderAdd stringListFlag
+	fs.Var(&responseHeaderAdd, "response-header-add", "Add/override a response header (repeatable, \"Name: value\")")
+	var responseHeaderRemove stringListFlag
+	fs.Var(&responseHeaderRemove, "response-header-remove", "Remove a response header (repeatable, \"Name\")")
 	hostHeader := fs.String("host-header", hostHeaderDefault, "Host header mode: preserve (default), rewrite, or a literal value")
 	upstreamTLSSkipVerify := fs.Bool("upstream-tls-skip-verify", false, "Disable certificate verification for HTTPS upstreams")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector")
@@ -93,6 +101,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		fmt.Fprintln(out, "  eosrift http 3000 --subdomain demo")
 		fmt.Fprintln(out, "  eosrift http 3000 --basic-auth user:pass")
 		fmt.Fprintln(out, "  eosrift http 3000 --allow-cidr 203.0.113.0/24")
+		fmt.Fprintln(out, "  eosrift http 3000 --request-header-add \"X-API-Key: secret\"")
 		fmt.Fprintln(out, "  eosrift http 3000 --host-header=rewrite")
 		fmt.Fprintln(out, "  eosrift http https://127.0.0.1:8443 --upstream-tls-skip-verify")
 	}
@@ -127,6 +136,27 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		return 2
 	}
 
+	parsedRequestHeaderAdd, err := parseHeaderAddList("request_header_add", []string(requestHeaderAdd))
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+	parsedRequestHeaderRemove, err := parseHeaderRemoveList("request_header_remove", []string(requestHeaderRemove))
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+	parsedResponseHeaderAdd, err := parseHeaderAddList("response_header_add", []string(responseHeaderAdd))
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+	parsedResponseHeaderRemove, err := parseHeaderRemoveList("response_header_remove", []string(responseHeaderRemove))
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+
 	upstreamScheme, localAddr, err := parseHTTPUpstreamTarget(fs.Arg(0))
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -151,6 +181,10 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		BasicAuth:             *basicAuth,
 		AllowCIDRs:            []string(allowCIDR),
 		DenyCIDRs:             []string(denyCIDR),
+		RequestHeaderAdd:      parsedRequestHeaderAdd,
+		RequestHeaderRemove:   parsedRequestHeaderRemove,
+		ResponseHeaderAdd:     parsedResponseHeaderAdd,
+		ResponseHeaderRemove:  parsedResponseHeaderRemove,
 		HostHeader:            *hostHeader,
 		UpstreamScheme:        upstreamScheme,
 		UpstreamTLSSkipVerify: *upstreamTLSSkipVerify,

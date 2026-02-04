@@ -30,12 +30,16 @@ type Tunnel struct {
 	Addr  string `yaml:"addr,omitempty"`
 
 	// HTTP-only options.
-	Domain     string   `yaml:"domain,omitempty"`
-	Subdomain  string   `yaml:"subdomain,omitempty"`
-	BasicAuth  string   `yaml:"basic_auth,omitempty"`
-	AllowCIDR  []string `yaml:"allow_cidr,omitempty"`
-	DenyCIDR   []string `yaml:"deny_cidr,omitempty"`
-	HostHeader string   `yaml:"host_header,omitempty"`
+	Domain               string        `yaml:"domain,omitempty"`
+	Subdomain            string        `yaml:"subdomain,omitempty"`
+	BasicAuth            string        `yaml:"basic_auth,omitempty"`
+	AllowCIDR            []string      `yaml:"allow_cidr,omitempty"`
+	DenyCIDR             []string      `yaml:"deny_cidr,omitempty"`
+	RequestHeaderAdd     HeaderAddList `yaml:"request_header_add,omitempty"`
+	RequestHeaderRemove  []string      `yaml:"request_header_remove,omitempty"`
+	ResponseHeaderAdd    HeaderAddList `yaml:"response_header_add,omitempty"`
+	ResponseHeaderRemove []string      `yaml:"response_header_remove,omitempty"`
+	HostHeader           string        `yaml:"host_header,omitempty"`
 
 	// TCP-only options.
 	RemotePort int `yaml:"remote_port,omitempty"`

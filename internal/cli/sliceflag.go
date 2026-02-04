@@ -24,3 +24,17 @@ func (f *stringSliceFlag) Set(value string) error {
 	}
 	return nil
 }
+
+type stringListFlag []string
+
+func (f *stringListFlag) String() string {
+	if f == nil {
+		return ""
+	}
+	return strings.Join(*f, ",")
+}
+
+func (f *stringListFlag) Set(value string) error {
+	*f = append(*f, value)
+	return nil
+}

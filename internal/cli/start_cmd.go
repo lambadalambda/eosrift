@@ -254,6 +254,18 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			if err := validateCIDRs("deny_cidr", t.Tunnel.DenyCIDR); err != nil {
 				return fmt.Errorf("tunnel %q: %w", t.Name, err)
 			}
+			if _, err := parseHeaderAddList("request_header_add", []string(t.Tunnel.RequestHeaderAdd)); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			if _, err := parseHeaderRemoveList("request_header_remove", t.Tunnel.RequestHeaderRemove); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			if _, err := parseHeaderAddList("response_header_add", []string(t.Tunnel.ResponseHeaderAdd)); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			if _, err := parseHeaderRemoveList("response_header_remove", t.Tunnel.ResponseHeaderRemove); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
 			if t.Tunnel.RemotePort != 0 {
 				return fmt.Errorf("tunnel %q: remote_port is only valid for tcp tunnels", t.Name)
 			}
@@ -278,6 +290,18 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			}
 			if len(t.Tunnel.DenyCIDR) != 0 {
 				return fmt.Errorf("tunnel %q: deny_cidr is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.RequestHeaderAdd) != 0 {
+				return fmt.Errorf("tunnel %q: request_header_add is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.RequestHeaderRemove) != 0 {
+				return fmt.Errorf("tunnel %q: request_header_remove is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.ResponseHeaderAdd) != 0 {
+				return fmt.Errorf("tunnel %q: response_header_add is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.ResponseHeaderRemove) != 0 {
+				return fmt.Errorf("tunnel %q: response_header_remove is only valid for http tunnels", t.Name)
 			}
 			if strings.TrimSpace(t.Tunnel.HostHeader) != "" {
 				return fmt.Errorf("tunnel %q: host_header is only valid for http tunnels", t.Name)
@@ -430,6 +454,23 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				hostHeader = "preserve"
 			}
 
+			requestHeaderAdd, err := parseHeaderAddList("request_header_add", []string(t.Tunnel.RequestHeaderAdd))
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			requestHeaderRemove, err := parseHeaderRemoveList("request_header_remove", t.Tunnel.RequestHeaderRemove)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			responseHeaderAdd, err := parseHeaderAddList("response_header_add", []string(t.Tunnel.ResponseHeaderAdd))
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			responseHeaderRemove, err := parseHeaderRemoveList("response_header_remove", t.Tunnel.ResponseHeaderRemove)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+
 			tun, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
 				Authtoken:             authtoken,
 				Domain:                strings.TrimSpace(t.Tunnel.Domain),
@@ -437,6 +478,10 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				BasicAuth:             strings.TrimSpace(t.Tunnel.BasicAuth),
 				AllowCIDRs:            t.Tunnel.AllowCIDR,
 				DenyCIDRs:             t.Tunnel.DenyCIDR,
+				RequestHeaderAdd:      requestHeaderAdd,
+				RequestHeaderRemove:   requestHeaderRemove,
+				ResponseHeaderAdd:     responseHeaderAdd,
+				ResponseHeaderRemove:  responseHeaderRemove,
 				HostHeader:            hostHeader,
 				UpstreamScheme:        upstreamScheme,
 				UpstreamTLSSkipVerify: upstreamTLSSkipVerify,
