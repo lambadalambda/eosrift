@@ -26,37 +26,10 @@ func runStart(ctx context.Context, args []string, configPath string, stdout, std
 		return 1
 	}
 
-	serverDefault := getenv("EOSRIFT_SERVER_ADDR", "")
-	if serverDefault == "" {
-		serverDefault = getenv("EOSRIFT_CONTROL_URL", "")
-	}
-	if serverDefault == "" {
-		serverDefault = cfg.ServerAddr
-	}
-	if serverDefault == "" {
-		serverDefault = "https://eosrift.com"
-	}
-
-	authtokenDefault := getenv("EOSRIFT_AUTHTOKEN", "")
-	if authtokenDefault == "" {
-		authtokenDefault = getenv("EOSRIFT_AUTH_TOKEN", "")
-	}
-	if authtokenDefault == "" {
-		authtokenDefault = cfg.Authtoken
-	}
-
-	inspectDefault := true
-	if cfg.Inspect != nil {
-		inspectDefault = *cfg.Inspect
-	}
-
-	inspectAddrDefault := getenv("EOSRIFT_INSPECT_ADDR", "")
-	if inspectAddrDefault == "" {
-		inspectAddrDefault = cfg.InspectAddr
-	}
-	if inspectAddrDefault == "" {
-		inspectAddrDefault = "127.0.0.1:4040"
-	}
+	serverDefault := resolveServerAddrDefault(cfg)
+	authtokenDefault := resolveAuthtokenDefault(cfg)
+	inspectDefault := resolveInspectEnabledDefault(cfg)
+	inspectAddrDefault := resolveInspectAddrDefault(cfg)
 
 	fs := flag.NewFlagSet("start", flag.ContinueOnError)
 	fs.SetOutput(stderr)

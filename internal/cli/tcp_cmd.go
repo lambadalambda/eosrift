@@ -19,24 +19,8 @@ func runTCP(ctx context.Context, args []string, configPath string, stdout, stder
 		return 1
 	}
 
-	serverDefault := getenv("EOSRIFT_SERVER_ADDR", "")
-	if serverDefault == "" {
-		serverDefault = getenv("EOSRIFT_CONTROL_URL", "")
-	}
-	if serverDefault == "" {
-		serverDefault = cfg.ServerAddr
-	}
-	if serverDefault == "" {
-		serverDefault = "https://eosrift.com"
-	}
-
-	authtokenDefault := getenv("EOSRIFT_AUTHTOKEN", "")
-	if authtokenDefault == "" {
-		authtokenDefault = getenv("EOSRIFT_AUTH_TOKEN", "")
-	}
-	if authtokenDefault == "" {
-		authtokenDefault = cfg.Authtoken
-	}
+	serverDefault := resolveServerAddrDefault(cfg)
+	authtokenDefault := resolveAuthtokenDefault(cfg)
 
 	fs := flag.NewFlagSet("tcp", flag.ContinueOnError)
 	fs.SetOutput(stderr)
