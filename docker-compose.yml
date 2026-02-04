@@ -15,6 +15,8 @@ services:
       EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN: "${EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN:-0}"
       EOSRIFT_AUTH_TOKEN: "${EOSRIFT_AUTH_TOKEN:-}"
       EOSRIFT_METRICS_TOKEN: "${EOSRIFT_METRICS_TOKEN:-}"
+      EOSRIFT_LOG_FORMAT: "${EOSRIFT_LOG_FORMAT:-text}"
+      EOSRIFT_LOG_LEVEL: "${EOSRIFT_LOG_LEVEL:-info}"
       EOSRIFT_DB_PATH: "/data/eosrift.db"
     volumes:
       - eosrift-data:/data

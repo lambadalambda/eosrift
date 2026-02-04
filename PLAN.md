@@ -141,7 +141,7 @@ Current focus: **Milestone 7**.
 - [ ] Reconnect/backoff and session resumption (beyond initial dial retries)
 - [x] Health checks (`/healthz`)
 - [x] Metrics endpoint (`/metrics`, Prometheus text format; token-gated)
-- [ ] Structured logs (JSON) and log levels
+- [x] Structured logs (JSON) and log levels
 - [ ] Load testing harness in Docker
 - [x] Security review checklist (auth, input validation, SSRF/host header concerns)
 

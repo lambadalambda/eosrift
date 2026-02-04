@@ -14,6 +14,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Caddy on-demand TLS `ask` endpoint (`/caddy/ask`).
 - Optional `/metrics` endpoint (Prometheus text format), gated by `EOSRIFT_METRICS_TOKEN`.
 - Security review checklist and threat model (`SECURITY.md`).
+- Structured server logging with levels and optional JSON format (`EOSRIFT_LOG_LEVEL`, `EOSRIFT_LOG_FORMAT`).
 - Embedded landing page on the base domain (`GET /` + `GET /style.css`).
 - GitHub Actions release workflow (builds client/server binaries on tags).
 - GitHub Actions release workflow now signs `checksums.txt` with keyless Sigstore/cosign.

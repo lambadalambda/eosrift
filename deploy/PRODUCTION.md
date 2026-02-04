@@ -89,6 +89,13 @@ Example (local, via the `127.0.0.1:8080` bind in `docker-compose.yml`):
 
 - `curl -fsS -H 'Authorization: Bearer <token>' http://127.0.0.1:8080/metrics`
 
+## Optional: structured logs
+
+The server supports structured JSON logs:
+
+- `EOSRIFT_LOG_FORMAT=json`
+- `EOSRIFT_LOG_LEVEL=info` (or `debug`, `warn`, `error`)
+
 ## 6) Create an authtoken and remove bootstrap (recommended)
 
 Create a real token for your client:
