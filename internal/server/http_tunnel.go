@@ -28,6 +28,10 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 			return
 		}
 
+		if !cfg.TrustProxyHeaders {
+			stripForwardedHeaders(r.Header)
+		}
+
 		transport := &http.Transport{
 			Proxy:               http.ProxyFromEnvironment,
 			DialContext:         func(ctx context.Context, network, addr string) (net.Conn, error) { return session.OpenStream() },
@@ -54,6 +58,16 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 
 		proxy.ServeHTTP(w, r)
 	}
+}
+
+func stripForwardedHeaders(h http.Header) {
+	// Avoid trusting proxy-provided headers from untrusted clients.
+	h.Del("Forwarded")
+	h.Del("X-Forwarded-For")
+	h.Del("X-Forwarded-Host")
+	h.Del("X-Forwarded-Proto")
+	h.Del("X-Forwarded-Port")
+	h.Del("X-Real-IP")
 }
 
 func tunnelIDFromHost(host, tunnelDomain string) (string, bool) {

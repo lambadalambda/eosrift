@@ -18,6 +18,12 @@ type Config struct {
 	BaseDomain   string
 	TunnelDomain string
 
+	// TrustProxyHeaders controls whether to pass through proxy-provided headers
+	// like X-Forwarded-For/Proto/Host. If false, the server strips these headers
+	// from inbound requests before proxying to tunneled upstreams to prevent
+	// spoofing.
+	TrustProxyHeaders bool
+
 	TCPPortRangeStart int
 	TCPPortRangeEnd   int
 
@@ -44,6 +50,8 @@ func ConfigFromEnv() Config {
 	return Config{
 		BaseDomain:   os.Getenv("EOSRIFT_BASE_DOMAIN"),
 		TunnelDomain: os.Getenv("EOSRIFT_TUNNEL_DOMAIN"),
+
+		TrustProxyHeaders: getenvBool("EOSRIFT_TRUST_PROXY_HEADERS", false),
 
 		TCPPortRangeStart: getenvInt("EOSRIFT_TCP_PORT_RANGE_START", 20000),
 		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
@@ -233,4 +241,16 @@ func getenvInt(key string, fallback int) int {
 		return fallback
 	}
 	return n
+}
+
+func getenvBool(key string, fallback bool) bool {
+	v := strings.TrimSpace(os.Getenv(key))
+	if v == "" {
+		return fallback
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		return fallback
+	}
+	return b
 }
