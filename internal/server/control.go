@@ -238,7 +238,10 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 
 	// Ensure listener is closed on websocket disconnect.
 	go func() {
-		<-ctx.Done()
+		select {
+		case <-ctx.Done():
+		case <-session.CloseChan():
+		}
 		_ = ln.Close()
 		_ = session.Close()
 	}()
@@ -368,7 +371,10 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 	_ = ctrlStream.Close()
 
-	<-ctx.Done()
+	select {
+	case <-ctx.Done():
+	case <-session.CloseChan():
+	}
 	_ = session.Close()
 }
 

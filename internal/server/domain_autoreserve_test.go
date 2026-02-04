@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"eosrift.com/eosrift/internal/auth"
 	"eosrift.com/eosrift/internal/control"
@@ -128,6 +129,125 @@ func TestControlHTTP_Domain_AutoReservesOnFirstUse(t *testing.T) {
 	}
 }
 
+func TestControlHTTP_Domain_CanReuseAfterDisconnect(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	store, err := auth.Open(ctx, ":memory:")
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+
+	_, token, err := store.CreateToken(ctx, "owner")
+	if err != nil {
+		t.Fatalf("create token: %v", err)
+	}
+
+	srv := httptest.NewServer(NewHandler(Config{
+		TunnelDomain: "tunnel.example.com",
+	}, Dependencies{
+		TokenValidator: store,
+		TokenResolver:  store,
+		Reservations:   store,
+	}))
+	t.Cleanup(srv.Close)
+
+	{
+		ws, session := dialTestControl(t, srv.URL)
+		stream, err := session.OpenStream()
+		if err != nil {
+			_ = session.Close()
+			_ = ws.Close(websocket.StatusInternalError, "open stream error")
+			t.Fatalf("open stream: %v", err)
+		}
+
+		if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+			Type:      "http",
+			Authtoken: token,
+			Domain:    "demo.tunnel.example.com",
+		}); err != nil {
+			_ = stream.Close()
+			_ = session.Close()
+			_ = ws.Close(websocket.StatusInternalError, "encode error")
+			t.Fatalf("encode: %v", err)
+		}
+
+		var resp control.CreateHTTPTunnelResponse
+		if err := json.NewDecoder(stream).Decode(&resp); err != nil {
+			_ = stream.Close()
+			_ = session.Close()
+			_ = ws.Close(websocket.StatusInternalError, "decode error")
+			t.Fatalf("decode: %v", err)
+		}
+
+		_ = stream.Close()
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusNormalClosure, "closed")
+
+		if resp.Error != "" {
+			t.Fatalf("error = %q, want empty", resp.Error)
+		}
+		if resp.ID != "demo" {
+			t.Fatalf("id = %q, want %q", resp.ID, "demo")
+		}
+	}
+
+	// The server should clean up the active tunnel registration when the control
+	// connection ends, allowing a subsequent session to reuse the domain.
+	deadline := time.Now().Add(2 * time.Second)
+	var lastErr string
+	for time.Now().Before(deadline) {
+		ws, session := dialTestControl(t, srv.URL)
+
+		stream, err := session.OpenStream()
+		if err != nil {
+			_ = session.Close()
+			_ = ws.Close(websocket.StatusInternalError, "open stream error")
+			t.Fatalf("open stream2: %v", err)
+		}
+
+		if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+			Type:      "http",
+			Authtoken: token,
+			Domain:    "demo.tunnel.example.com",
+		}); err != nil {
+			_ = stream.Close()
+			_ = session.Close()
+			_ = ws.Close(websocket.StatusInternalError, "encode error")
+			t.Fatalf("encode2: %v", err)
+		}
+
+		var resp control.CreateHTTPTunnelResponse
+		if err := json.NewDecoder(stream).Decode(&resp); err != nil {
+			_ = stream.Close()
+			_ = session.Close()
+			_ = ws.Close(websocket.StatusInternalError, "decode error")
+			t.Fatalf("decode2: %v", err)
+		}
+
+		_ = stream.Close()
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusNormalClosure, "closed")
+
+		if resp.Error == "" {
+			if resp.ID != "demo" {
+				t.Fatalf("id = %q, want %q", resp.ID, "demo")
+			}
+			if resp.URL != "https://demo.tunnel.example.com" {
+				t.Fatalf("url = %q, want %q", resp.URL, "https://demo.tunnel.example.com")
+			}
+			return
+		}
+
+		lastErr = resp.Error
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	t.Fatalf("domain reuse did not succeed before deadline (last error=%q)", lastErr)
+}
+
 func TestControlHTTP_Domain_RejectsNonTunnelDomain(t *testing.T) {
 	t.Parallel()
 
@@ -182,4 +302,3 @@ func TestControlHTTP_Domain_RejectsNonTunnelDomain(t *testing.T) {
 		t.Fatalf("error = %q, want non-empty", resp.Error)
 	}
 }
-
