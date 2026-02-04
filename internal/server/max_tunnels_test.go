@@ -47,7 +47,7 @@ func TestControl_MaxTunnelsPerToken_RejectsSecondHTTP(t *testing.T) {
 	}
 	defer stream1.Close()
 
-	if err := json.NewEncoder(stream1).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream1, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: token,
 	}); err != nil {
@@ -74,7 +74,7 @@ func TestControl_MaxTunnelsPerToken_RejectsSecondHTTP(t *testing.T) {
 	}
 	defer stream2.Close()
 
-	if err := json.NewEncoder(stream2).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream2, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: token,
 	}); err != nil {
@@ -128,7 +128,7 @@ func TestControl_MaxTunnelsPerToken_AppliesBeforeTCPAlloc(t *testing.T) {
 	}
 	defer stream1.Close()
 
-	if err := json.NewEncoder(stream1).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream1, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: token,
 	}); err != nil {
@@ -155,7 +155,7 @@ func TestControl_MaxTunnelsPerToken_AppliesBeforeTCPAlloc(t *testing.T) {
 	}
 	defer stream2.Close()
 
-	if err := json.NewEncoder(stream2).Encode(control.CreateTCPTunnelRequest{
+	if err := control.WriteJSON(stream2, control.CreateTCPTunnelRequest{
 		Type:      "tcp",
 		Authtoken: token,
 	}); err != nil {
@@ -170,4 +170,3 @@ func TestControl_MaxTunnelsPerToken_AppliesBeforeTCPAlloc(t *testing.T) {
 		t.Fatalf("resp2 error = %q, want %q", resp2.Error, "too many active tunnels")
 	}
 }
-

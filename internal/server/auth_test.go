@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"eosrift.com/eosrift/internal/control"
+	"eosrift.com/eosrift/internal/mux"
 	"github.com/hashicorp/yamux"
 	"nhooyr.io/websocket"
 )
@@ -112,7 +113,7 @@ func dialTestControl(t *testing.T, httpBaseURL string) (*websocket.Conn, *yamux.
 	}
 
 	netConn := websocket.NetConn(ctx, ws, websocket.MessageBinary)
-	session, err := yamux.Client(netConn, nil)
+	session, err := yamux.Client(netConn, mux.QuietYamuxConfig())
 	if err != nil {
 		_ = ws.Close(websocket.StatusInternalError, "yamux error")
 		t.Fatalf("yamux client: %v", err)

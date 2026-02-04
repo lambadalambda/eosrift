@@ -324,7 +324,7 @@ func createHTTPTunnel(ctx context.Context, controlURL string, req control.Create
 		return nil, nil, resp, err
 	}
 
-	if err := json.NewEncoder(ctrlStream).Encode(req); err != nil {
+	if err := control.WriteJSON(ctrlStream, req); err != nil {
 		_ = ctrlStream.Close()
 		_ = session.Close()
 		_ = ws.Close(websocket.StatusInternalError, "control error")
