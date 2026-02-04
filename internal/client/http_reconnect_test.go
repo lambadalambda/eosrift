@@ -20,6 +20,14 @@ func TestHTTPTunnel_ControlRequestForReconnect(t *testing.T) {
 		denyCIDRs: []string{
 			"10.0.0.0/8",
 		},
+		requestHeaderAdd: []HeaderKV{
+			{Name: "X-Req", Value: "yes"},
+		},
+		requestHeaderRemove: []string{"X-Remove"},
+		responseHeaderAdd: []HeaderKV{
+			{Name: "X-Resp", Value: "ok"},
+		},
+		responseHeaderRemove: []string{"X-Upstream"},
 	}
 
 	got := tun.controlRequestForReconnect()
@@ -30,6 +38,14 @@ func TestHTTPTunnel_ControlRequestForReconnect(t *testing.T) {
 		BasicAuth: "user:pass",
 		AllowCIDR: []string{"1.2.3.4/32"},
 		DenyCIDR:  []string{"10.0.0.0/8"},
+		RequestHeaderAdd: []control.HeaderKV{
+			{Name: "X-Req", Value: "yes"},
+		},
+		RequestHeaderRemove: []string{"X-Remove"},
+		ResponseHeaderAdd: []control.HeaderKV{
+			{Name: "X-Resp", Value: "ok"},
+		},
+		ResponseHeaderRemove: []string{"X-Upstream"},
 	}
 
 	if !reflect.DeepEqual(got, want) {

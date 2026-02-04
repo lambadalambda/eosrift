@@ -18,14 +18,23 @@ import (
 	"nhooyr.io/websocket"
 )
 
+type HeaderKV struct {
+	Name  string
+	Value string
+}
+
 type HTTPTunnelOptions struct {
-	Authtoken  string
-	Subdomain  string
-	Domain     string
-	BasicAuth  string
-	AllowCIDRs []string
-	DenyCIDRs  []string
-	HostHeader string
+	Authtoken            string
+	Subdomain            string
+	Domain               string
+	BasicAuth            string
+	AllowCIDRs           []string
+	DenyCIDRs            []string
+	RequestHeaderAdd     []HeaderKV
+	RequestHeaderRemove  []string
+	ResponseHeaderAdd    []HeaderKV
+	ResponseHeaderRemove []string
+	HostHeader           string
 
 	// UpstreamScheme is the scheme used when dialing the local upstream.
 	// Supported values: "http" (default) and "https".
@@ -46,15 +55,19 @@ type HTTPTunnel struct {
 	ID  string
 	URL string
 
-	localAddr  string
-	controlURL string
-	authtoken  string
-	subdomain  string
-	domain     string
-	basicAuth  string
-	allowCIDRs []string
-	denyCIDRs  []string
-	hostHeader string
+	localAddr            string
+	controlURL           string
+	authtoken            string
+	subdomain            string
+	domain               string
+	basicAuth            string
+	allowCIDRs           []string
+	denyCIDRs            []string
+	requestHeaderAdd     []HeaderKV
+	requestHeaderRemove  []string
+	responseHeaderAdd    []HeaderKV
+	responseHeaderRemove []string
+	hostHeader           string
 
 	upstreamScheme        string
 	upstreamTLSSkipVerify bool
@@ -91,13 +104,17 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 	}
 
 	ws, session, resp, err := createHTTPTunnel(ctx, controlURL, control.CreateHTTPTunnelRequest{
-		Type:      "http",
-		Authtoken: opts.Authtoken,
-		Subdomain: opts.Subdomain,
-		Domain:    opts.Domain,
-		BasicAuth: opts.BasicAuth,
-		AllowCIDR: opts.AllowCIDRs,
-		DenyCIDR:  opts.DenyCIDRs,
+		Type:                 "http",
+		Authtoken:            opts.Authtoken,
+		Subdomain:            opts.Subdomain,
+		Domain:               opts.Domain,
+		BasicAuth:            opts.BasicAuth,
+		AllowCIDR:            opts.AllowCIDRs,
+		DenyCIDR:             opts.DenyCIDRs,
+		RequestHeaderAdd:     toControlHeaderKVs(opts.RequestHeaderAdd),
+		RequestHeaderRemove:  append([]string(nil), opts.RequestHeaderRemove...),
+		ResponseHeaderAdd:    toControlHeaderKVs(opts.ResponseHeaderAdd),
+		ResponseHeaderRemove: append([]string(nil), opts.ResponseHeaderRemove...),
 	})
 	if err != nil {
 		return nil, err
@@ -114,6 +131,10 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		basicAuth:             opts.BasicAuth,
 		allowCIDRs:            append([]string(nil), opts.AllowCIDRs...),
 		denyCIDRs:             append([]string(nil), opts.DenyCIDRs...),
+		requestHeaderAdd:      append([]HeaderKV(nil), opts.RequestHeaderAdd...),
+		requestHeaderRemove:   append([]string(nil), opts.RequestHeaderRemove...),
+		responseHeaderAdd:     append([]HeaderKV(nil), opts.ResponseHeaderAdd...),
+		responseHeaderRemove:  append([]string(nil), opts.ResponseHeaderRemove...),
 		hostHeader:            opts.HostHeader,
 		upstreamScheme:        upstreamScheme,
 		upstreamTLSSkipVerify: opts.UpstreamTLSSkipVerify,
@@ -354,13 +375,17 @@ func (t *HTTPTunnel) setConn(ws *websocket.Conn, session *yamux.Session) (*webso
 
 func (t *HTTPTunnel) controlRequestForReconnect() control.CreateHTTPTunnelRequest {
 	req := control.CreateHTTPTunnelRequest{
-		Type:      "http",
-		Authtoken: t.authtoken,
-		Subdomain: t.subdomain,
-		Domain:    t.domain,
-		BasicAuth: t.basicAuth,
-		AllowCIDR: append([]string(nil), t.allowCIDRs...),
-		DenyCIDR:  append([]string(nil), t.denyCIDRs...),
+		Type:                 "http",
+		Authtoken:            t.authtoken,
+		Subdomain:            t.subdomain,
+		Domain:               t.domain,
+		BasicAuth:            t.basicAuth,
+		AllowCIDR:            append([]string(nil), t.allowCIDRs...),
+		DenyCIDR:             append([]string(nil), t.denyCIDRs...),
+		RequestHeaderAdd:     toControlHeaderKVs(t.requestHeaderAdd),
+		RequestHeaderRemove:  append([]string(nil), t.requestHeaderRemove...),
+		ResponseHeaderAdd:    toControlHeaderKVs(t.responseHeaderAdd),
+		ResponseHeaderRemove: append([]string(nil), t.responseHeaderRemove...),
 	}
 
 	if strings.TrimSpace(req.Domain) == "" && strings.TrimSpace(req.Subdomain) == "" {
@@ -368,6 +393,21 @@ func (t *HTTPTunnel) controlRequestForReconnect() control.CreateHTTPTunnelReques
 	}
 
 	return req
+}
+
+func toControlHeaderKVs(values []HeaderKV) []control.HeaderKV {
+	if len(values) == 0 {
+		return nil
+	}
+
+	out := make([]control.HeaderKV, 0, len(values))
+	for _, kv := range values {
+		out = append(out, control.HeaderKV{
+			Name:  kv.Name,
+			Value: kv.Value,
+		})
+	}
+	return out
 }
 
 func (t *HTTPTunnel) reconnect(ctx context.Context) error {
