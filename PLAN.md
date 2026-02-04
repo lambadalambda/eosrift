@@ -15,10 +15,10 @@ Last updated: **2026-02-04**
 - [x] Milestone 3 — Local inspector (`localhost:4040` equivalent)
 - [x] Milestone 4 — CLI + config compatibility
 - [x] Milestone 5 — Auth + reserved names (SQLite-backed)
-- [ ] Milestone 6 — Packaging + deployment polish
+- [x] Milestone 6 — Packaging + deployment polish
 - [ ] Milestone 7 — Hardening + observability
 
-Current focus: **Milestone 6**.
+Current focus: **Milestone 7**.
 
 ## Guiding principles
 
@@ -130,7 +130,7 @@ Current focus: **Milestone 6**.
 **Goal:** easy “install and run” across environments.
 
 - [x] Multi-arch server Docker images (linux/amd64 + linux/arm64)
-- [ ] Signed client releases (macOS + Linux), single-file binaries
+- [x] Signed client releases (macOS + Linux), single-file binaries
 - [x] Install script (GitHub Release artifacts)
 - [x] Production docs: firewall ports, Caddy wildcard cert setup
 
