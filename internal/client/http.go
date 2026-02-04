@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"net"
@@ -23,6 +24,14 @@ type HTTPTunnelOptions struct {
 	Domain     string
 	HostHeader string
 
+	// UpstreamScheme is the scheme used when dialing the local upstream.
+	// Supported values: "http" (default) and "https".
+	UpstreamScheme string
+
+	// UpstreamTLSSkipVerify disables certificate verification for HTTPS upstreams.
+	// Ignored for non-HTTPS upstreams.
+	UpstreamTLSSkipVerify bool
+
 	Inspector *inspect.Store
 
 	// CaptureBytes is the maximum number of bytes to keep for request and response
@@ -40,6 +49,9 @@ type HTTPTunnel struct {
 	subdomain  string
 	domain     string
 	hostHeader string
+
+	upstreamScheme        string
+	upstreamTLSSkipVerify bool
 
 	mu        sync.Mutex
 	ws        *websocket.Conn
@@ -62,6 +74,16 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		return nil, err
 	}
 
+	upstreamScheme := strings.ToLower(strings.TrimSpace(opts.UpstreamScheme))
+	if upstreamScheme == "" {
+		upstreamScheme = "http"
+	}
+	switch upstreamScheme {
+	case "http", "https":
+	default:
+		return nil, errors.New("unsupported upstream scheme")
+	}
+
 	ws, session, resp, err := createHTTPTunnel(ctx, controlURL, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: opts.Authtoken,
@@ -73,17 +95,19 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 	}
 
 	t := &HTTPTunnel{
-		ID:         resp.ID,
-		URL:        resp.URL,
-		localAddr:  localAddr,
-		controlURL: controlURL,
-		authtoken:  opts.Authtoken,
-		subdomain:  opts.Subdomain,
-		domain:     opts.Domain,
-		hostHeader: opts.HostHeader,
-		ws:         ws,
-		session:    session,
-		inspector:  opts.Inspector,
+		ID:                    resp.ID,
+		URL:                   resp.URL,
+		localAddr:             localAddr,
+		controlURL:            controlURL,
+		authtoken:             opts.Authtoken,
+		subdomain:             opts.Subdomain,
+		domain:                opts.Domain,
+		hostHeader:            opts.HostHeader,
+		upstreamScheme:        upstreamScheme,
+		upstreamTLSSkipVerify: opts.UpstreamTLSSkipVerify,
+		ws:                    ws,
+		session:               session,
+		inspector:             opts.Inspector,
 		captureBytes: func() int {
 			if opts.CaptureBytes > 0 {
 				return opts.CaptureBytes
@@ -165,7 +189,7 @@ func (t *HTTPTunnel) finish(err error) {
 func (t *HTTPTunnel) handleStream(ctx context.Context, stream net.Conn) {
 	defer stream.Close()
 
-	upstream, err := net.Dial("tcp", t.localAddr)
+	upstream, err := dialHTTPUpstream(ctx, t.upstreamScheme, t.localAddr, t.upstreamTLSSkipVerify)
 	if err != nil {
 		return
 	}
@@ -219,6 +243,37 @@ func (t *HTTPTunnel) handleStream(ctx context.Context, stream net.Conn) {
 		RequestHeaders:  s.RequestHeaders,
 		ResponseHeaders: s.ResponseHeaders,
 	})
+}
+
+func dialHTTPUpstream(ctx context.Context, scheme, addr string, tlsSkipVerify bool) (net.Conn, error) {
+	dialer := &net.Dialer{}
+
+	conn, err := dialer.DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return nil, err
+	}
+
+	if scheme != "https" {
+		return conn, nil
+	}
+
+	host, _, err := net.SplitHostPort(addr)
+	if err != nil {
+		_ = conn.Close()
+		return nil, err
+	}
+
+	tlsConn := tls.Client(conn, &tls.Config{
+		ServerName:         host,
+		InsecureSkipVerify: tlsSkipVerify,
+	})
+
+	if err := tlsConn.HandshakeContext(ctx); err != nil {
+		_ = tlsConn.Close()
+		return nil, err
+	}
+
+	return tlsConn, nil
 }
 
 func createHTTPTunnel(ctx context.Context, controlURL string, req control.CreateHTTPTunnelRequest) (*websocket.Conn, *yamux.Session, control.CreateHTTPTunnelResponse, error) {
