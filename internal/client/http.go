@@ -48,7 +48,7 @@ func StartHTTPTunnel(ctx context.Context, controlURL, localAddr string) (*HTTPTu
 }
 
 func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts HTTPTunnelOptions) (*HTTPTunnel, error) {
-	ws, session, err := dialControl(ctx, controlURL)
+	ws, session, err := dialControlWithRetry(ctx, controlURL)
 	if err != nil {
 		return nil, err
 	}

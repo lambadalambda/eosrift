@@ -37,7 +37,7 @@ type TCPTunnelOptions struct {
 }
 
 func StartTCPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts TCPTunnelOptions) (*TCPTunnel, error) {
-	ws, session, err := dialControl(ctx, controlURL)
+	ws, session, err := dialControlWithRetry(ctx, controlURL)
 	if err != nil {
 		return nil, err
 	}

@@ -36,6 +36,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `eosrift version` now prints `eosrift version <version>` (release builds inject the version via `-ldflags -X`).
 - Default client server is now `https://eosrift.com` (override via `--server`, `EOSRIFT_SERVER_ADDR`, or `server_addr` in config).
 - `eosrift http` / `eosrift tcp` now print an ngrok-like session summary (including forwarding URL and inspector URL).
+- The client now retries initial control connection dials with exponential backoff until canceled.
 
 ### Fixed
 
