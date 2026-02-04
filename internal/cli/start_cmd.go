@@ -6,9 +6,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -133,6 +135,11 @@ func runStart(ctx context.Context, args []string, configPath string, stdout, std
 		})
 	}
 
+	if err := validateNamedTunnels(selected); err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 1
+	}
+
 	controlURL, err := config.ControlURLFromServerAddr(*serverAddr)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -205,6 +212,67 @@ func runStart(ctx context.Context, args []string, configPath string, stdout, std
 type namedTunnel struct {
 	Name   string
 	Tunnel config.Tunnel
+}
+
+func validateNamedTunnels(tunnels []namedTunnel) error {
+	for _, t := range tunnels {
+		tn := strings.TrimSpace(t.Name)
+		if tn == "" {
+			return errors.New("tunnel name is empty")
+		}
+
+		addr := strings.TrimSpace(t.Tunnel.Addr)
+		if addr == "" {
+			return fmt.Errorf("tunnel %q: addr is required", t.Name)
+		}
+
+		normalizedAddr := addr
+		if !strings.Contains(normalizedAddr, ":") {
+			normalizedAddr = "127.0.0.1:" + normalizedAddr
+		}
+		_, port, err := net.SplitHostPort(normalizedAddr)
+		if err != nil {
+			return fmt.Errorf("tunnel %q: invalid addr %q: %v", t.Name, addr, err)
+		}
+		portNum, err := strconv.Atoi(port)
+		if err != nil || portNum < 1 || portNum > 65535 {
+			return fmt.Errorf("tunnel %q: invalid addr %q: invalid port", t.Name, addr)
+		}
+
+		proto := strings.ToLower(strings.TrimSpace(t.Tunnel.Proto))
+		if proto == "" {
+			return fmt.Errorf("tunnel %q: proto is required (http|tcp)", t.Name)
+		}
+
+		switch proto {
+		case "http":
+			domain := strings.TrimSpace(t.Tunnel.Domain)
+			subdomain := strings.TrimSpace(t.Tunnel.Subdomain)
+			if domain != "" && subdomain != "" {
+				return fmt.Errorf("tunnel %q: only one of domain or subdomain may be set", t.Name)
+			}
+			if t.Tunnel.RemotePort != 0 {
+				return fmt.Errorf("tunnel %q: remote_port is only valid for tcp tunnels", t.Name)
+			}
+		case "tcp":
+			if t.Tunnel.RemotePort < 0 {
+				return fmt.Errorf("tunnel %q: remote_port must be >= 0", t.Name)
+			}
+			if strings.TrimSpace(t.Tunnel.Domain) != "" {
+				return fmt.Errorf("tunnel %q: domain is only valid for http tunnels", t.Name)
+			}
+			if strings.TrimSpace(t.Tunnel.Subdomain) != "" {
+				return fmt.Errorf("tunnel %q: subdomain is only valid for http tunnels", t.Name)
+			}
+			if strings.TrimSpace(t.Tunnel.HostHeader) != "" {
+				return fmt.Errorf("tunnel %q: host_header is only valid for http tunnels", t.Name)
+			}
+		default:
+			return fmt.Errorf("tunnel %q: unsupported proto %q", t.Name, proto)
+		}
+	}
+
+	return nil
 }
 
 type inspectorConfig struct {

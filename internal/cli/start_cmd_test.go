@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"eosrift.com/eosrift/internal/config"
 )
@@ -96,5 +97,129 @@ func TestRun_Start_UnknownTunnel_IsUsageError(t *testing.T) {
 	}
 	if !strings.Contains(stderr.String(), "unknown tunnel") {
 		t.Fatalf("stderr missing unknown tunnel: %q", stderr.String())
+	}
+}
+
+func TestRun_Start_HTTPDomainAndSubdomain_IsError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := config.Save(path, config.File{
+		Version: 1,
+		Tunnels: map[string]config.Tunnel{
+			"web": {Proto: "http", Addr: "3000", Domain: "demo.tunnel.eosrift.com", Subdomain: "demo"},
+		},
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(ctx, []string{"--config", path, "start", "--inspect=false", "web"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 1, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "only one of") {
+		t.Fatalf("stderr missing domain/subdomain conflict: %q", stderr.String())
+	}
+}
+
+func TestRun_Start_HTTPRemotePort_IsError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := config.Save(path, config.File{
+		Version: 1,
+		Tunnels: map[string]config.Tunnel{
+			"web": {Proto: "http", Addr: "3000", RemotePort: 20005},
+		},
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(ctx, []string{"--config", path, "start", "--inspect=false", "web"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 1, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "remote_port") {
+		t.Fatalf("stderr missing remote_port error: %q", stderr.String())
+	}
+}
+
+func TestRun_Start_TCPDomain_IsError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := config.Save(path, config.File{
+		Version: 1,
+		Tunnels: map[string]config.Tunnel{
+			"db": {Proto: "tcp", Addr: "5432", Domain: "demo.tunnel.eosrift.com"},
+		},
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(ctx, []string{"--config", path, "start", "--inspect=false", "db"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 1, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "domain") {
+		t.Fatalf("stderr missing tcp domain error: %q", stderr.String())
+	}
+}
+
+func TestRun_Start_InvalidAddr_IsError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := config.Save(path, config.File{
+		Version: 1,
+		Tunnels: map[string]config.Tunnel{
+			"web": {Proto: "http", Addr: "abc"},
+		},
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(ctx, []string{"--config", path, "start", "--inspect=false", "web"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 1, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "invalid addr") {
+		t.Fatalf("stderr missing invalid addr error: %q", stderr.String())
 	}
 }
