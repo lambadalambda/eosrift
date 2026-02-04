@@ -38,14 +38,15 @@ func StartTCPTunnel(ctx context.Context, controlURL, localAddr string) (*TCPTunn
 }
 
 type TCPTunnelOptions struct {
-	Authtoken string
+	Authtoken  string
+	RemotePort int
 }
 
 func StartTCPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts TCPTunnelOptions) (*TCPTunnel, error) {
 	ws, session, resp, err := createTCPTunnel(ctx, controlURL, control.CreateTCPTunnelRequest{
 		Type:       "tcp",
 		Authtoken:  opts.Authtoken,
-		RemotePort: 0,
+		RemotePort: opts.RemotePort,
 	})
 	if err != nil {
 		return nil, err
