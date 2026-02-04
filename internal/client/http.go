@@ -21,6 +21,7 @@ type HTTPTunnelOptions struct {
 	Authtoken string
 	Subdomain string
 	Domain    string
+	HostHeader string
 
 	Inspector *inspect.Store
 
@@ -38,6 +39,7 @@ type HTTPTunnel struct {
 	authtoken  string
 	subdomain  string
 	domain     string
+	hostHeader string
 
 	mu        sync.Mutex
 	ws        *websocket.Conn
@@ -74,6 +76,7 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		authtoken:  opts.Authtoken,
 		subdomain:  opts.Subdomain,
 		domain:     opts.Domain,
+		hostHeader: opts.HostHeader,
 		ws:         ws,
 		session:    session,
 		inspector:  opts.Inspector,
@@ -164,8 +167,20 @@ func (t *HTTPTunnel) handleStream(ctx context.Context, stream net.Conn) {
 	}
 	defer upstream.Close()
 
+	hostHeader := strings.TrimSpace(t.hostHeader)
+	if strings.EqualFold(hostHeader, "preserve") {
+		hostHeader = ""
+	}
+	if strings.EqualFold(hostHeader, "rewrite") {
+		hostHeader = t.localAddr
+	}
+
 	if t.inspector == nil {
-		_ = proxyBidirectional(ctx, upstream, stream)
+		if hostHeader == "" {
+			_ = proxyBidirectional(ctx, upstream, stream)
+		} else {
+			_, _, _ = proxyBidirectionalWithHostRewrite(ctx, upstream, stream, nil, nil, hostHeader)
+		}
 		return
 	}
 
@@ -174,7 +189,12 @@ func (t *HTTPTunnel) handleStream(ctx context.Context, stream net.Conn) {
 	reqCap := newPreviewCapture(t.captureBytes)
 	respCap := newPreviewCapture(t.captureBytes)
 
-	bytesIn, bytesOut, _ := proxyBidirectionalWithCapture(ctx, upstream, stream, reqCap, respCap)
+	var bytesIn, bytesOut int64
+	if hostHeader == "" {
+		bytesIn, bytesOut, _ = proxyBidirectionalWithCapture(ctx, upstream, stream, reqCap, respCap)
+	} else {
+		bytesIn, bytesOut, _ = proxyBidirectionalWithHostRewrite(ctx, upstream, stream, reqCap, respCap, hostHeader)
+	}
 	duration := time.Since(startedAt)
 
 	s, ok := summarizeHTTPExchange(reqCap.Bytes(), respCap.Bytes())
