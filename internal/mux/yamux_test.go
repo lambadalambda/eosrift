@@ -3,6 +3,7 @@ package mux
 import (
 	"io"
 	"testing"
+	"time"
 )
 
 func TestQuietYamuxConfig(t *testing.T) {
@@ -20,5 +21,12 @@ func TestQuietYamuxConfig(t *testing.T) {
 	if cfg.Logger != nil {
 		t.Fatalf("Logger = %v, want nil", cfg.Logger)
 	}
-}
 
+	if cfg.EnableKeepAlive != true {
+		t.Fatalf("EnableKeepAlive = %v, want true", cfg.EnableKeepAlive)
+	}
+
+	if got, want := cfg.KeepAliveInterval, 25*time.Second; got != want {
+		t.Fatalf("KeepAliveInterval = %s, want %s", got, want)
+	}
+}
