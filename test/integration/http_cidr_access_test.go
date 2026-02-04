@@ -40,7 +40,7 @@ func TestHTTPTunnel_CIDRAccessControl(t *testing.T) {
 
 		tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL(), ln.Addr().String(), client.HTTPTunnelOptions{
 			Authtoken:   getenv("EOSRIFT_AUTHTOKEN", ""),
-			AllowCIDRs:  []string{"10.231.0.0/24"},
+			AllowCIDRs:  []string{testNetworkCIDR()},
 			HostHeader:  "preserve",
 		})
 		if err != nil {
@@ -72,7 +72,7 @@ func TestHTTPTunnel_CIDRAccessControl(t *testing.T) {
 
 		tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL(), ln.Addr().String(), client.HTTPTunnelOptions{
 			Authtoken:  getenv("EOSRIFT_AUTHTOKEN", ""),
-			DenyCIDRs:  []string{"10.231.0.0/24"},
+			DenyCIDRs:  []string{testNetworkCIDR()},
 			HostHeader: "preserve",
 		})
 		if err != nil {
@@ -131,4 +131,3 @@ func TestHTTPTunnel_CIDRAccessControl(t *testing.T) {
 		}
 	})
 }
-

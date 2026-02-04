@@ -37,6 +37,7 @@ services:
       EOSRIFT_TCP_DIAL_HOST: "server"
       EOSRIFT_AUTHTOKEN: "test-token"
       EOSRIFT_DB_PATH: "/tmp/eosrift-test.db"
+      EOSRIFT_TEST_CIDR: "10.233.0.0/24"
     depends_on:
       - server
       - caddy

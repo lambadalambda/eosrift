@@ -76,3 +76,9 @@ func wsURL(path string) string {
 func tcpDialHost() string {
 	return getenv("EOSRIFT_TCP_DIAL_HOST", "server")
 }
+
+func testNetworkCIDR() string {
+	// Kept as an env var so our integration tests can run in multiple Compose
+	// networks (e.g. with and without Caddy in front).
+	return getenv("EOSRIFT_TEST_CIDR", "10.231.0.0/24")
+}

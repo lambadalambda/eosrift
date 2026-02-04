@@ -25,6 +25,7 @@ services:
       EOSRIFT_SERVER_URL: "http://server:8080"
       EOSRIFT_AUTHTOKEN: "test-token"
       EOSRIFT_DB_PATH: "/tmp/eosrift-test.db"
+      EOSRIFT_TEST_CIDR: "10.231.0.0/24"
     depends_on:
       - server
     command: ["go", "test", "./...", "-tags=integration"]
