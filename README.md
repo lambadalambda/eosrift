@@ -4,7 +4,7 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** pre-alpha (TCP + HTTP tunnels work; inspector is alpha; auth/custom domains coming).
+**Status:** pre-alpha (TCP + HTTP tunnels work; inspector is alpha; auth + reserved names are alpha).
 
 ## Goals
 
@@ -26,7 +26,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 
 - **Go** (server + client): static binaries, great networking, fast iteration
 - **Caddy**: TLS/HTTPS for `*.tunnel.<yourdomain>` (recommended: wildcard cert via DNS challenge)
-- **SQLite**: persistence (pure-Go driver planned to avoid CGO)
+- **SQLite**: persistence (pure-Go driver via `modernc.org/sqlite`, no CGO)
 - Optional later: **React SPA** for admin UI (server stays API-first)
 
 ## What “ngrok-like” means here
@@ -34,7 +34,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - `http` and `tcp` tunnels with similar command structure and flags
 - Local inspector UI (ngrok’s `localhost:4040` equivalent)
 - YAML config file support (ngrok-style, at least a compatible subset)
-- Authtokens and reserved names (later milestone)
+- Authtokens and reserved names (alpha)
 
 ## Documentation
 
@@ -55,6 +55,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 
 Notes:
 
+- By default, `docker-compose.yml` builds the server image locally. If you prefer a prebuilt image, use `ghcr.io/<your-gh-org>/eosrift-server:<tag>`.
 - TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
 - `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
 - Once deployed with DNS + Caddy, `https://<EOSRIFT_BASE_DOMAIN>/` serves a small landing page (the tunnel subdomains still route to tunnels).

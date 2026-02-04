@@ -7,18 +7,18 @@ Examples may reference `eosrift.com`; self-hosters can substitute their own doma
 
 ## Milestone tracker (keep updated)
 
-Last updated: **2026-02-03**
+Last updated: **2026-02-04**
 
 - [x] Milestone 0 — Repository + delivery scaffolding
 - [x] Milestone 1 — Control plane + TCP tunnel (end-to-end MVP)
 - [x] Milestone 2 — HTTP tunnel with host routing (alpha)
 - [x] Milestone 3 — Local inspector (`localhost:4040` equivalent)
 - [x] Milestone 4 — CLI + config compatibility
-- [ ] Milestone 5 — Auth + reserved names (SQLite-backed)
+- [x] Milestone 5 — Auth + reserved names (SQLite-backed)
 - [ ] Milestone 6 — Packaging + deployment polish
 - [ ] Milestone 7 — Hardening + observability
 
-Current focus: **Milestone 5**.
+Current focus: **Milestone 6**.
 
 ## Guiding principles
 
@@ -116,7 +116,7 @@ Current focus: **Milestone 5**.
 
 **Goal:** multi-user support with durable configuration.
 
-**Status:** in progress (2026-02-03, alpha)
+**Status:** done (2026-02-04, alpha)
 
 - [x] Authtokens stored/validated server-side (SQLite-backed)
 - [x] Token management CLI (`eosrift-server token create|list|revoke`)

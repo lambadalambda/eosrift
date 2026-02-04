@@ -115,7 +115,9 @@ SQLite is used for durable configuration:
 
 - users/accounts (optional early on; can start single-tenant)
 - authtokens
-- reserved subdomains (implemented) / custom domains (later milestone)
+- reserved subdomains (implemented)
+- requested domains under `EOSRIFT_TUNNEL_DOMAIN` (implemented; auto-reserved to the first token that uses them)
+- arbitrary custom domains (later milestone)
 - reserved TCP ports (optional)
 - audit log / minimal telemetry (optional; keep privacy-respecting by default)
 
@@ -133,7 +135,7 @@ clients reconnect.
 
 - External TLS terminates at Caddy (Let’s Encrypt).
 - Agents authenticate with authtokens; tokens are stored/validated server-side.
-- Server enforces per-token limits (tunnels, ports, bandwidth) in later milestones.
+- Server enforces per-token limits (max active tunnels, basic create rate limiting); more in later milestones.
 - Host header routing is validated to prevent confusion/poisoning attacks.
 - Default stance: no public admin UI; admin happens via CLI/API behind auth.
 
