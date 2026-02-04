@@ -11,6 +11,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Named tunnels in `eosrift.yml` (`tunnels:`) and `eosrift start` / `eosrift start --all`.
 - TCP tunnel `remote_port` support: `eosrift tcp --remote-port` and `tunnels.*.remote_port`.
+- Reserved TCP ports (SQLite-backed): `eosrift-server tcp-reserve ...` and auto-reserve on first `--remote-port` use.
 - HTTP tunnels can now forward to local HTTPS upstreams (pass a `https://...` local URL).
 - HTTP tunnel basic auth (per tunnel): `eosrift http --basic-auth user:pass` and `tunnels.*.basic_auth`.
 - HTTP tunnel CIDR access control (per tunnel): `--allow-cidr` / `--deny-cidr` and `tunnels.*.allow_cidr` / `tunnels.*.deny_cidr`.

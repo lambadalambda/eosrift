@@ -176,6 +176,11 @@ Expose a local TCP port through the server:
 
 The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>:20001 -> 127.0.0.1:8080`.
 
+Notes:
+
+- If `--remote-port` is unused, the server auto-reserves it to your authtoken on first use.
+- Manage reservations on the server with `eosrift-server tcp-reserve add|list|remove`.
+
 ### HTTP tunnel (alpha)
 
 Expose a local HTTP port through the server:

@@ -23,9 +23,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 11 — `start` polish + TCP remote ports
 - [x] Milestone 12 — HTTP upstream HTTPS
 - [x] Milestone 13 — Per-tunnel access control
-- [ ] Milestone 14 — Reserved TCP ports
+- [x] Milestone 14 — Reserved TCP ports
 
-Current focus: **Milestone 14**.
+Current focus: **Milestone 15**.
 
 ## Guiding principles
 
@@ -275,16 +275,16 @@ websockets, streaming, and the local inspector working.
 
 **Goal:** ngrok-like “stable TCP address” by reserving ports to authtokens in SQLite.
 
-- [ ] Add SQLite persistence for TCP port reservations (token_id ↔ port).
-- [ ] Server CLI to manage reservations: list/add/remove (mirrors subdomain reservations).
-- [ ] Control plane enforces reservations:
+- [x] Add SQLite persistence for TCP port reservations (token_id ↔ port).
+- [x] Server CLI to manage reservations: list/add/remove (mirrors subdomain reservations).
+- [x] Control plane enforces reservations:
   - If a port is reserved for another token: reject.
-  - Optionally auto-reserve on first successful use, similar to `--domain`.
+  - Auto-reserve on first use, similar to `--domain`.
 
 **Acceptance tests**
 
 - Unit tests for reservation store behavior.
-- Integration test that a reserved port can be claimed only by its owning token.
+- Server control-plane tests proving a port can be claimed only by its owning token.
 
 ## Milestone 15 — HTTP header transforms (traffic policy lite)
 
