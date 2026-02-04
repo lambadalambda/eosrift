@@ -58,10 +58,6 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 			r.Header.Del("Authorization")
 		}
 
-		if !cfg.TrustProxyHeaders {
-			stripForwardedHeaders(r.Header)
-		}
-
 		transport := &http.Transport{
 			Proxy:               http.ProxyFromEnvironment,
 			DialContext:         func(ctx context.Context, network, addr string) (net.Conn, error) { return entry.session.OpenStream() },
@@ -71,13 +67,26 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 		}
 
 		proxy := &httputil.ReverseProxy{
-			Director: func(req *http.Request) {
+			Rewrite: func(pr *httputil.ProxyRequest) {
 				// Preserve original host (ngrok-like) but send the request over a
 				// tunneled TCP stream to the local upstream.
-				req.URL.Scheme = target.Scheme
-				req.URL.Host = target.Host
+				pr.SetURL(target)
+				pr.Out.Host = pr.In.Host
+
+				if cfg.TrustProxyHeaders {
+					copyProxyForwardedHeaders(pr.Out.Header, pr.In.Header)
+				} else {
+					stripForwardedHeaders(pr.Out.Header)
+					pr.SetXForwarded()
+				}
+
+				applyHeaderTransforms(pr.Out.Header, entry.requestHeaderRemove, entry.requestHeaderAdd)
 			},
 			Transport: transport,
+			ModifyResponse: func(resp *http.Response) error {
+				applyHeaderTransforms(resp.Header, entry.responseHeaderRemove, entry.responseHeaderAdd)
+				return nil
+			},
 			ErrorHandler: func(rw http.ResponseWriter, req *http.Request, err error) {
 				http.Error(rw, "bad gateway", http.StatusBadGateway)
 			},
@@ -87,6 +96,33 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 		defer transport.CloseIdleConnections()
 
 		proxy.ServeHTTP(w, r)
+	}
+}
+
+func applyHeaderTransforms(h http.Header, remove []string, add []headerKV) {
+	for _, k := range remove {
+		k = strings.TrimSpace(k)
+		if k == "" {
+			continue
+		}
+		h.Del(k)
+	}
+	for _, kv := range add {
+		k := strings.TrimSpace(kv.Name)
+		if k == "" {
+			continue
+		}
+		h.Set(k, kv.Value)
+	}
+}
+
+func copyProxyForwardedHeaders(dst, src http.Header) {
+	// ReverseProxy strips these before calling Rewrite; restore them from the
+	// inbound request when proxy headers are trusted.
+	for _, k := range []string{"Forwarded", "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto"} {
+		if v, ok := src[k]; ok {
+			dst[k] = append([]string(nil), v...)
+		}
 	}
 }
 

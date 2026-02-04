@@ -17,7 +17,9 @@ func TestHTTPTunnel_IPAccessControl(t *testing.T) {
 		sess := &recordingSession{}
 
 		allow := []netip.Prefix{netip.MustParsePrefix("1.2.3.0/24")}
-		if err := registry.RegisterHTTPTunnel("abcd1234", sess, nil, allow, nil); err != nil {
+		if err := registry.RegisterHTTPTunnel("abcd1234", sess, httpTunnelOptions{
+			AllowCIDRs: allow,
+		}); err != nil {
 			t.Fatalf("register: %v", err)
 		}
 
@@ -42,7 +44,9 @@ func TestHTTPTunnel_IPAccessControl(t *testing.T) {
 		sess := &recordingSession{}
 
 		deny := []netip.Prefix{netip.MustParsePrefix("1.2.3.4/32")}
-		if err := registry.RegisterHTTPTunnel("abcd1234", sess, nil, nil, deny); err != nil {
+		if err := registry.RegisterHTTPTunnel("abcd1234", sess, httpTunnelOptions{
+			DenyCIDRs: deny,
+		}); err != nil {
 			t.Fatalf("register: %v", err)
 		}
 
@@ -67,7 +71,9 @@ func TestHTTPTunnel_IPAccessControl(t *testing.T) {
 		sess := &recordingSession{}
 
 		allow := []netip.Prefix{netip.MustParsePrefix("1.2.3.4/32")}
-		if err := registry.RegisterHTTPTunnel("abcd1234", sess, nil, allow, nil); err != nil {
+		if err := registry.RegisterHTTPTunnel("abcd1234", sess, httpTunnelOptions{
+			AllowCIDRs: allow,
+		}); err != nil {
 			t.Fatalf("register: %v", err)
 		}
 
@@ -93,7 +99,9 @@ func TestHTTPTunnel_IPAccessControl(t *testing.T) {
 		sess := &recordingSession{}
 
 		allow := []netip.Prefix{netip.MustParsePrefix("1.2.3.4/32")}
-		if err := registry.RegisterHTTPTunnel("abcd1234", sess, nil, allow, nil); err != nil {
+		if err := registry.RegisterHTTPTunnel("abcd1234", sess, httpTunnelOptions{
+			AllowCIDRs: allow,
+		}); err != nil {
 			t.Fatalf("register: %v", err)
 		}
 
@@ -112,4 +120,3 @@ func TestHTTPTunnel_IPAccessControl(t *testing.T) {
 		}
 	})
 }
-

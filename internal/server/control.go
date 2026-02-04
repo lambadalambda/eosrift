@@ -46,6 +46,11 @@ type baseRequest struct {
 
 	AllowCIDR []string `json:"allow_cidr,omitempty"`
 	DenyCIDR  []string `json:"deny_cidr,omitempty"`
+
+	RequestHeaderAdd     []control.HeaderKV `json:"request_header_add,omitempty"`
+	RequestHeaderRemove  []string           `json:"request_header_remove,omitempty"`
+	ResponseHeaderAdd    []control.HeaderKV `json:"response_header_add,omitempty"`
+	ResponseHeaderRemove []string           `json:"response_header_remove,omitempty"`
 }
 
 func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, limiter *tokenTunnelLimiter, rateLimiter *tokenRateLimiter, metrics *metrics) http.HandlerFunc {
@@ -241,13 +246,17 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 			return
 		case "http":
 			handleHTTPControl(ctx, session, ctrlStream, control.CreateHTTPTunnelRequest{
-				Type:      "http",
-				Authtoken: req.Authtoken,
-				Subdomain: req.Subdomain,
-				Domain:    req.Domain,
-				BasicAuth: req.BasicAuth,
-				AllowCIDR: req.AllowCIDR,
-				DenyCIDR:  req.DenyCIDR,
+				Type:                 "http",
+				Authtoken:            req.Authtoken,
+				Subdomain:            req.Subdomain,
+				Domain:               req.Domain,
+				BasicAuth:            req.BasicAuth,
+				AllowCIDR:            req.AllowCIDR,
+				DenyCIDR:             req.DenyCIDR,
+				RequestHeaderAdd:     req.RequestHeaderAdd,
+				RequestHeaderRemove:  req.RequestHeaderRemove,
+				ResponseHeaderAdd:    req.ResponseHeaderAdd,
+				ResponseHeaderRemove: req.ResponseHeaderRemove,
 			}, cfg, registry, deps, tokenID, metrics)
 			return
 		default:
@@ -419,7 +428,54 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 
-	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, basicAuth, allowCIDRs, denyCIDRs); err != nil {
+	requestHeaderRemove, err := parseHeaderNameList("request_header_remove", req.RequestHeaderRemove)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+	requestHeaderAdd, err := parseHeaderKVList("request_header_add", req.RequestHeaderAdd)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+
+	responseHeaderRemove, err := parseHeaderNameList("response_header_remove", req.ResponseHeaderRemove)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+	responseHeaderAdd, err := parseHeaderKVList("response_header_add", req.ResponseHeaderAdd)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+
+	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, httpTunnelOptions{
+		BasicAuth:  basicAuth,
+		AllowCIDRs: allowCIDRs,
+		DenyCIDRs:  denyCIDRs,
+
+		RequestHeaderAdd:     requestHeaderAdd,
+		RequestHeaderRemove:  requestHeaderRemove,
+		ResponseHeaderAdd:    responseHeaderAdd,
+		ResponseHeaderRemove: responseHeaderRemove,
+	}); err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: "failed to register tunnel",
@@ -507,6 +563,89 @@ func parseCIDRList(field string, values []string) ([]netip.Prefix, error) {
 	}
 
 	return out, nil
+}
+
+func parseHeaderNameList(field string, values []string) ([]string, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	out := make([]string, 0, len(values))
+	for _, v := range values {
+		name, err := normalizeHeaderName(field, v)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, name)
+	}
+	return out, nil
+}
+
+func parseHeaderKVList(field string, values []control.HeaderKV) ([]headerKV, error) {
+	if len(values) == 0 {
+		return nil, nil
+	}
+
+	out := make([]headerKV, 0, len(values))
+	for _, kv := range values {
+		name, err := normalizeHeaderName(field, kv.Name)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, headerKV{
+			Name:  name,
+			Value: strings.TrimSpace(kv.Value),
+		})
+	}
+	return out, nil
+}
+
+func normalizeHeaderName(field string, raw string) (string, error) {
+	s := strings.TrimSpace(raw)
+	if s == "" || !isValidHeaderToken(s) {
+		return "", fmt.Errorf("invalid %s: %q", field, raw)
+	}
+
+	s = http.CanonicalHeaderKey(s)
+	if isDisallowedTransformedHeader(s) {
+		return "", fmt.Errorf("invalid %s: %q", field, raw)
+	}
+
+	return s, nil
+}
+
+func isValidHeaderToken(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c >= '0' && c <= '9':
+		case c >= 'a' && c <= 'z':
+		case c >= 'A' && c <= 'Z':
+		case strings.ContainsRune("!#$%&'*+-.^_`|~", rune(c)):
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+func isDisallowedTransformedHeader(name string) bool {
+	switch http.CanonicalHeaderKey(name) {
+	case "Connection",
+		"Proxy-Connection",
+		"Keep-Alive",
+		"Proxy-Authenticate",
+		"Proxy-Authorization",
+		"Te",
+		"Trailer",
+		"Transfer-Encoding",
+		"Upgrade",
+		"Content-Length",
+		"Host":
+		return true
+	default:
+		return false
+	}
 }
 
 func writeControlTCPError(w io.Writer, msg string) error {

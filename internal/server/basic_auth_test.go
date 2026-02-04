@@ -48,7 +48,9 @@ func TestHTTPTunnel_BasicAuth(t *testing.T) {
 	registry := NewTunnelRegistry()
 	sess := &recordingSession{authCh: make(chan string, 1)}
 
-	if err := registry.RegisterHTTPTunnel("abcd1234", sess, &basicAuthCredential{Username: "user", Password: "pass"}, nil, nil); err != nil {
+	if err := registry.RegisterHTTPTunnel("abcd1234", sess, httpTunnelOptions{
+		BasicAuth: &basicAuthCredential{Username: "user", Password: "pass"},
+	}); err != nil {
 		t.Fatalf("register: %v", err)
 	}
 

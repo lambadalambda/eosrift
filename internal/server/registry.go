@@ -21,11 +21,33 @@ type httpTunnelEntry struct {
 
 	allowCIDRs []netip.Prefix
 	denyCIDRs  []netip.Prefix
+
+	requestHeaderAdd     []headerKV
+	requestHeaderRemove  []string
+	responseHeaderAdd    []headerKV
+	responseHeaderRemove []string
 }
 
 type basicAuthCredential struct {
 	Username string
 	Password string
+}
+
+type headerKV struct {
+	Name  string
+	Value string
+}
+
+type httpTunnelOptions struct {
+	BasicAuth *basicAuthCredential
+
+	AllowCIDRs []netip.Prefix
+	DenyCIDRs  []netip.Prefix
+
+	RequestHeaderAdd     []headerKV
+	RequestHeaderRemove  []string
+	ResponseHeaderAdd    []headerKV
+	ResponseHeaderRemove []string
 }
 
 // streamSession is intentionally minimal and only supports opening a stream.
@@ -41,7 +63,7 @@ func NewTunnelRegistry() *TunnelRegistry {
 	}
 }
 
-func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, basicAuth *basicAuthCredential, allowCIDRs, denyCIDRs []netip.Prefix) error {
+func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, opts httpTunnelOptions) error {
 	id = strings.TrimSpace(strings.ToLower(id))
 	if id == "" {
 		return errors.New("empty tunnel id")
@@ -59,9 +81,14 @@ func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, ba
 
 	r.httpTunnels[id] = httpTunnelEntry{
 		session:    session,
-		basicAuth:  basicAuth,
-		allowCIDRs: allowCIDRs,
-		denyCIDRs:  denyCIDRs,
+		basicAuth:  opts.BasicAuth,
+		allowCIDRs: opts.AllowCIDRs,
+		denyCIDRs:  opts.DenyCIDRs,
+
+		requestHeaderAdd:     opts.RequestHeaderAdd,
+		requestHeaderRemove:  opts.RequestHeaderRemove,
+		responseHeaderAdd:    opts.ResponseHeaderAdd,
+		responseHeaderRemove: opts.ResponseHeaderRemove,
 	}
 	return nil
 }
