@@ -44,6 +44,7 @@ Set (at minimum):
 Optional (recommended for first-time setup):
 
 - `EOSRIFT_AUTH_TOKEN=<bootstrap token>` (used once to create the first authtoken)
+- `EOSRIFT_TRUST_PROXY_HEADERS=1` (recommended behind Caddy; keep the server bound to localhost-only)
 
 ## 4) Caddy TLS strategy
 

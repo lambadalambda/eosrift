@@ -68,6 +68,7 @@ Notes:
 - By default, `docker-compose.yml` builds the server image locally. If you prefer a prebuilt image, use `ghcr.io/<your-gh-org>/eosrift-server:<tag>`.
 - TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
 - `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
+- `docker-compose.yml` defaults `EOSRIFT_TRUST_PROXY_HEADERS=1` (safe with the default localhost-only server bind + Caddy in front). If you expose the server directly to untrusted clients, set it to `0` to prevent `X-Forwarded-*` spoofing.
 - Once deployed with DNS + Caddy, `https://<EOSRIFT_BASE_DOMAIN>/` serves a small landing page (the tunnel subdomains still route to tunnels).
 
 ### Client (build, recommended for now)

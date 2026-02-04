@@ -15,6 +15,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Optional `/metrics` endpoint (Prometheus text format), gated by `EOSRIFT_METRICS_TOKEN`.
 - Security review checklist and threat model (`SECURITY.md`).
 - Structured server logging with levels and optional JSON format (`EOSRIFT_LOG_LEVEL`, `EOSRIFT_LOG_FORMAT`).
+- `EOSRIFT_TRUST_PROXY_HEADERS` to control whether the server trusts `Forwarded` / `X-Forwarded-*` headers from an upstream proxy.
 - Embedded landing page on the base domain (`GET /` + `GET /style.css`).
 - GitHub Actions release workflow (builds client/server binaries on tags).
 - GitHub Actions release workflow now signs `checksums.txt` with keyless Sigstore/cosign.
@@ -51,6 +52,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `eosrift http|tcp|config --help` (and `-h`) now prints help to stdout and exits 0.
 - `deploy/Caddyfile` now uses the correct `on_demand_tls { ask ... }` placement for Caddy.
 - `/caddy/ask` now only allows on-demand TLS issuance for active or reserved tunnel subdomains (prevents arbitrary ACME issuance abuse).
+- Prevent `X-Forwarded-For` spoofing on HTTP tunnels by stripping `Forwarded` / `X-Forwarded-*` unless proxy headers are trusted.
 - Ctrl-C shutdown no longer prints spurious tunnel errors.
 - Suppress noisy yamux shutdown logs (e.g. `Failed to read header: ... context canceled`) on normal disconnects.
 - Local inspector now auto-increments ports until it can bind (up to `:5000`).
