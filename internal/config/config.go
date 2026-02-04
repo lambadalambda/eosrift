@@ -21,6 +21,25 @@ type File struct {
 
 	Inspect     *bool  `yaml:"inspect,omitempty"`
 	InspectAddr string `yaml:"inspect_addr,omitempty"`
+
+	Tunnels map[string]Tunnel `yaml:"tunnels,omitempty"`
+}
+
+type Tunnel struct {
+	Proto string `yaml:"proto,omitempty"`
+	Addr  string `yaml:"addr,omitempty"`
+
+	// HTTP-only options.
+	Domain     string `yaml:"domain,omitempty"`
+	Subdomain  string `yaml:"subdomain,omitempty"`
+	HostHeader string `yaml:"host_header,omitempty"`
+
+	// TCP-only options.
+	RemotePort int `yaml:"remote_port,omitempty"`
+
+	// Optional per-tunnel inspector overrides.
+	Inspect     *bool  `yaml:"inspect,omitempty"`
+	InspectAddr string `yaml:"inspect_addr,omitempty"`
 }
 
 func DefaultPath() string {

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -21,12 +22,23 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	path := filepath.Join(dir, "eosrift.yml")
 
 	inspect := true
+	tunnelInspect := false
 	in := File{
 		Version:    1,
 		Authtoken:  "token-123",
 		ServerAddr: "https://example.com",
 		HostHeader: "rewrite",
 		Inspect:    &inspect,
+		Tunnels: map[string]Tunnel{
+			"web": {
+				Proto:       "http",
+				Addr:        "127.0.0.1:3000",
+				Domain:      "demo.tunnel.example.com",
+				HostHeader:  "rewrite",
+				Inspect:     &tunnelInspect,
+				InspectAddr: "127.0.0.1:4041",
+			},
+		},
 	}
 
 	if err := Save(path, in); err != nil {
@@ -54,6 +66,74 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	}
 	if out.Inspect == nil || *out.Inspect != *in.Inspect {
 		t.Fatalf("inspect = %v, want %v", out.Inspect, in.Inspect)
+	}
+	if len(out.Tunnels) != 1 {
+		t.Fatalf("tunnels len = %d, want %d", len(out.Tunnels), 1)
+	}
+	web, ok := out.Tunnels["web"]
+	if !ok {
+		t.Fatalf("tunnels missing key %q", "web")
+	}
+	if web.Proto != "http" || web.Addr != "127.0.0.1:3000" {
+		t.Fatalf("web tunnel = %+v, want proto=http addr=127.0.0.1:3000", web)
+	}
+	if web.Domain != "demo.tunnel.example.com" || web.HostHeader != "rewrite" {
+		t.Fatalf("web http opts = %+v, want domain/host_header set", web)
+	}
+	if web.Inspect == nil || *web.Inspect != false || web.InspectAddr != "127.0.0.1:4041" {
+		t.Fatalf("web inspect = %+v, want inspect=false inspect_addr=127.0.0.1:4041", web)
+	}
+}
+
+func TestLoad_Tunnels(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := os.WriteFile(path, []byte(`version: 1
+authtoken: token-123
+server_addr: https://example.com
+tunnels:
+  web:
+    proto: http
+    addr: 127.0.0.1:3000
+    domain: demo.tunnel.example.com
+  db:
+    proto: tcp
+    addr: 127.0.0.1:5432
+    remote_port: 20001
+`), 0o600); err != nil {
+		t.Fatalf("WriteFile: %v", err)
+	}
+
+	cfg, ok, err := Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Load ok = false, want true")
+	}
+
+	if cfg.Authtoken != "token-123" {
+		t.Fatalf("authtoken = %q, want %q", cfg.Authtoken, "token-123")
+	}
+	if cfg.ServerAddr != "https://example.com" {
+		t.Fatalf("server_addr = %q, want %q", cfg.ServerAddr, "https://example.com")
+	}
+
+	if len(cfg.Tunnels) != 2 {
+		t.Fatalf("tunnels len = %d, want %d", len(cfg.Tunnels), 2)
+	}
+
+	web := cfg.Tunnels["web"]
+	if web.Proto != "http" || web.Addr != "127.0.0.1:3000" || web.Domain != "demo.tunnel.example.com" {
+		t.Fatalf("web tunnel = %+v, want http tunnel fields set", web)
+	}
+
+	db := cfg.Tunnels["db"]
+	if db.Proto != "tcp" || db.Addr != "127.0.0.1:5432" || db.RemotePort != 20001 {
+		t.Fatalf("db tunnel = %+v, want tcp tunnel fields set", db)
 	}
 }
 
