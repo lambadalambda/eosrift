@@ -17,9 +17,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 5 — Auth + reserved names (SQLite-backed)
 - [x] Milestone 6 — Packaging + deployment polish
 - [x] Milestone 7 — Hardening + observability
-- [ ] Milestone 8 — Next milestone (TBD)
+- [ ] Milestone 8 — RC track (HTTP correctness + compat)
 
-Current focus: **Milestone 8 (TBD)**.
+Current focus: **Milestone 8**.
 
 ## Guiding principles
 
@@ -151,3 +151,20 @@ Current focus: **Milestone 8 (TBD)**.
 - Keep `ARCHITECTURE.md` accurate as implementation evolves
 - Keep `CHANGELOG.md` updated per release
 - Keep changes reviewable: small PRs/commits, tests required for behavior changes
+
+## Milestone 8 — RC track (HTTP correctness + compat)
+
+**Goal:** close the biggest “real-world” gaps before tagging anything. No stability promises yet,
+but this milestone should make the system feel solid in daily use.
+
+- [ ] WebSocket support over HTTP tunnels (end-to-end)
+- [ ] Streaming/chunked responses over HTTP tunnels (end-to-end)
+- [ ] Control-plane keepalive so idle sessions survive NAT/proxies
+- [ ] Proxy header hygiene (strip untrusted `X-Forwarded-*`, set our own consistently)
+- [ ] HTTP tunnel compat knobs (e.g. host header rewrite option for picky apps)
+- [ ] Pre-release checklist (what “v1.0-ready” means for EosRift)
+
+**Acceptance tests (Docker)**
+
+- HTTP tunnel WebSocket echo smoke test
+- HTTP tunnel streaming response does not buffer entire body before first bytes
