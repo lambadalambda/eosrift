@@ -23,6 +23,8 @@ type HTTPTunnelOptions struct {
 	Subdomain  string
 	Domain     string
 	BasicAuth  string
+	AllowCIDRs []string
+	DenyCIDRs  []string
 	HostHeader string
 
 	// UpstreamScheme is the scheme used when dialing the local upstream.
@@ -49,6 +51,9 @@ type HTTPTunnel struct {
 	authtoken  string
 	subdomain  string
 	domain     string
+	basicAuth  string
+	allowCIDRs []string
+	denyCIDRs  []string
 	hostHeader string
 
 	upstreamScheme        string
@@ -91,6 +96,8 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		Subdomain: opts.Subdomain,
 		Domain:    opts.Domain,
 		BasicAuth: opts.BasicAuth,
+		AllowCIDR: opts.AllowCIDRs,
+		DenyCIDR:  opts.DenyCIDRs,
 	})
 	if err != nil {
 		return nil, err
@@ -104,6 +111,9 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		authtoken:             opts.Authtoken,
 		subdomain:             opts.Subdomain,
 		domain:                opts.Domain,
+		basicAuth:             opts.BasicAuth,
+		allowCIDRs:            append([]string(nil), opts.AllowCIDRs...),
+		denyCIDRs:             append([]string(nil), opts.DenyCIDRs...),
 		hostHeader:            opts.HostHeader,
 		upstreamScheme:        upstreamScheme,
 		upstreamTLSSkipVerify: opts.UpstreamTLSSkipVerify,
@@ -342,6 +352,24 @@ func (t *HTTPTunnel) setConn(ws *websocket.Conn, session *yamux.Session) (*webso
 	return oldWS, oldSession
 }
 
+func (t *HTTPTunnel) controlRequestForReconnect() control.CreateHTTPTunnelRequest {
+	req := control.CreateHTTPTunnelRequest{
+		Type:      "http",
+		Authtoken: t.authtoken,
+		Subdomain: t.subdomain,
+		Domain:    t.domain,
+		BasicAuth: t.basicAuth,
+		AllowCIDR: append([]string(nil), t.allowCIDRs...),
+		DenyCIDR:  append([]string(nil), t.denyCIDRs...),
+	}
+
+	if strings.TrimSpace(req.Domain) == "" && strings.TrimSpace(req.Subdomain) == "" {
+		req.Domain = hostFromURL(t.URL)
+	}
+
+	return req
+}
+
 func (t *HTTPTunnel) reconnect(ctx context.Context) error {
 	delay := 250 * time.Millisecond
 	const maxDelay = 5 * time.Second
@@ -354,16 +382,7 @@ func (t *HTTPTunnel) reconnect(ctx context.Context) error {
 			return nil
 		}
 
-		req := control.CreateHTTPTunnelRequest{
-			Type:      "http",
-			Authtoken: t.authtoken,
-			Subdomain: t.subdomain,
-			Domain:    t.domain,
-		}
-
-		if strings.TrimSpace(req.Domain) == "" && strings.TrimSpace(req.Subdomain) == "" {
-			req.Domain = hostFromURL(t.URL)
-		}
+		req := t.controlRequestForReconnect()
 
 		ws, session, resp, err := createHTTPTunnel(ctx, t.controlURL, req)
 		if err == nil {
