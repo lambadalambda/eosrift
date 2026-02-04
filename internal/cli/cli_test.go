@@ -63,6 +63,30 @@ func TestRun_ConfigSetServer_WritesConfig(t *testing.T) {
 	}
 }
 
+func TestRun_ConfigSetHostHeader_WritesConfig(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "config", "set-host-header", "rewrite"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+
+	cfg, ok, err := config.Load(path)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if !ok {
+		t.Fatalf("Load ok = false, want true")
+	}
+	if cfg.HostHeader != "rewrite" {
+		t.Fatalf("host_header = %q, want %q", cfg.HostHeader, "rewrite")
+	}
+}
+
 func TestRun_HTTPHelp_PrintsToStdout(t *testing.T) {
 	t.Parallel()
 
@@ -79,6 +103,29 @@ func TestRun_HTTPHelp_PrintsToStdout(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "usage: eosrift http") {
 		t.Fatalf("stdout missing usage: %q", stdout.String())
+	}
+}
+
+func TestRun_HTTPHelp_UsesConfigHostHeaderDefault(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+	if err := config.Save(path, config.File{Version: 1, HostHeader: "rewrite"}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "http", "--help"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr not empty: %q", stderr.String())
+	}
+
+	if !strings.Contains(stdout.String(), "Host header mode: preserve (default), rewrite, or a literal value (default \"rewrite\")") {
+		t.Fatalf("stdout missing host-header default: %q", stdout.String())
 	}
 }
 

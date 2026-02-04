@@ -3,4 +3,5 @@ usage: eosrift config <command> [args]
 commands:
   add-authtoken   save authtoken to config
   set-server      save server address to config
+  set-host-header save host header mode for HTTP tunnels
   check           validate config file

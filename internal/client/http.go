@@ -18,9 +18,9 @@ import (
 )
 
 type HTTPTunnelOptions struct {
-	Authtoken string
-	Subdomain string
-	Domain    string
+	Authtoken  string
+	Subdomain  string
+	Domain     string
 	HostHeader string
 
 	Inspector *inspect.Store
@@ -58,6 +58,10 @@ func StartHTTPTunnel(ctx context.Context, controlURL, localAddr string) (*HTTPTu
 }
 
 func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts HTTPTunnelOptions) (*HTTPTunnel, error) {
+	if err := ValidateHostHeaderMode(opts.HostHeader); err != nil {
+		return nil, err
+	}
+
 	ws, session, resp, err := createHTTPTunnel(ctx, controlURL, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: opts.Authtoken,

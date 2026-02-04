@@ -27,7 +27,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Resource limits (alpha): `EOSRIFT_MAX_TUNNELS_PER_TOKEN` to cap concurrent tunnels per authtoken.
 - Basic rate limiting (alpha): `EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN` to cap tunnel create attempts per authtoken.
 - Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.
-- Client config (alpha): ngrok-style YAML config (`eosrift.yml`) + `eosrift config add-authtoken|set-server|check` and global `--config`.
+- Client config (alpha): ngrok-style YAML config (`eosrift.yml`) + `eosrift config add-authtoken|set-server|set-host-header|check` and global `--config`.
 - Local inspector (alpha): capture HTTP exchanges, redact common secrets, serve a web UI at `/`, expose `/api/requests`, and support best-effort replay.
 - Docker Compose-based integration test harness.
 - Docker-based load testing harness (`docker-compose.loadtest.yml` + `test/loadtest`).

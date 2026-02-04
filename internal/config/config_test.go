@@ -25,6 +25,7 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 		Version:    1,
 		Authtoken:  "token-123",
 		ServerAddr: "https://example.com",
+		HostHeader: "rewrite",
 		Inspect:    &inspect,
 	}
 
@@ -47,6 +48,9 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	}
 	if out.ServerAddr != in.ServerAddr {
 		t.Fatalf("server_addr = %q, want %q", out.ServerAddr, in.ServerAddr)
+	}
+	if out.HostHeader != in.HostHeader {
+		t.Fatalf("host_header = %q, want %q", out.HostHeader, in.HostHeader)
 	}
 	if out.Inspect == nil || *out.Inspect != *in.Inspect {
 		t.Fatalf("inspect = %v, want %v", out.Inspect, in.Inspect)

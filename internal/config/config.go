@@ -17,6 +17,7 @@ type File struct {
 
 	Authtoken  string `yaml:"authtoken,omitempty"`
 	ServerAddr string `yaml:"server_addr,omitempty"`
+	HostHeader string `yaml:"host_header,omitempty"`
 
 	Inspect     *bool  `yaml:"inspect,omitempty"`
 	InspectAddr string `yaml:"inspect_addr,omitempty"`

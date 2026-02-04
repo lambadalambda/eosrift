@@ -55,6 +55,11 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		inspectAddrDefault = "127.0.0.1:4040"
 	}
 
+	hostHeaderDefault := cfg.HostHeader
+	if strings.TrimSpace(hostHeaderDefault) == "" {
+		hostHeaderDefault = "preserve"
+	}
+
 	fs := flag.NewFlagSet("http", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 
@@ -62,7 +67,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	authtoken := fs.String("authtoken", authtokenDefault, "Auth token")
 	subdomain := fs.String("subdomain", "", "Reserved subdomain to request (requires server-side reservation)")
 	domain := fs.String("domain", "", "Domain to request (must be under the server tunnel domain; auto-reserved on first use)")
-	hostHeader := fs.String("host-header", "preserve", "Host header mode: preserve (default), rewrite, or a literal value")
+	hostHeader := fs.String("host-header", hostHeaderDefault, "Host header mode: preserve (default), rewrite, or a literal value")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector")
 	inspectAddr := fs.String("inspect-addr", inspectAddrDefault, "Inspector listen address")
 	help := fs.Bool("help", false, "Show help")
@@ -109,11 +114,11 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	}
 
 	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
-		Authtoken: *authtoken,
-		Subdomain: *subdomain,
-		Domain:    *domain,
+		Authtoken:  *authtoken,
+		Subdomain:  *subdomain,
+		Domain:     *domain,
 		HostHeader: *hostHeader,
-		Inspector: store,
+		Inspector:  store,
 	})
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)

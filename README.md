@@ -106,12 +106,18 @@ Set your default server (recommended for self-hosting):
 
 If unset, the client defaults to `https://eosrift.com`.
 
+Set your default host header mode (optional; ngrok-like):
+
+- `./bin/eosrift config set-host-header preserve`
+- `./bin/eosrift config set-host-header rewrite`
+- `./bin/eosrift config set-host-header <value>`
+
 Default config path:
 
 - Linux: `~/.config/eosrift/eosrift.yml` (or `$XDG_CONFIG_HOME/eosrift/eosrift.yml`)
 - macOS: `~/Library/Application Support/eosrift/eosrift.yml`
 
-Supported keys (compatible subset): `authtoken`, `server_addr`, `inspect`, `inspect_addr`.
+Supported keys (compatible subset): `authtoken`, `server_addr`, `host_header`, `inspect`, `inspect_addr`.
 
 Config precedence:
 
@@ -123,6 +129,8 @@ Config precedence:
 - Inspector:
   - `--inspect` > `inspect` > `true`
   - `--inspect-addr` > `EOSRIFT_INSPECT_ADDR` > `inspect_addr` > `127.0.0.1:4040` (tries up to `:5000`)
+- Host header (`--host-header`):
+  - `--host-header` > `host_header` > `preserve`
 
 ### TCP tunnel (alpha)
 

@@ -3,11 +3,29 @@ package client
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"net"
 	"strings"
 	"time"
 )
+
+func ValidateHostHeaderMode(mode string) error {
+	v := strings.TrimSpace(mode)
+	if v == "" {
+		return nil
+	}
+	if strings.EqualFold(v, "preserve") || strings.EqualFold(v, "rewrite") {
+		return nil
+	}
+	if strings.ContainsAny(v, "\r\n") {
+		return errors.New("host-header must not contain newlines")
+	}
+	if strings.ContainsAny(v, " \t") {
+		return errors.New("host-header must not contain whitespace")
+	}
+	return nil
+}
 
 func proxyBidirectionalWithHostRewrite(ctx context.Context, upstream, stream net.Conn, reqCap, respCap io.Writer, hostHeader string) (bytesIn, bytesOut int64, err error) {
 	resCh := make(chan copyResult, 2)
@@ -175,4 +193,3 @@ func rewriteHostHeader(header []byte, hostHeader string) []byte {
 
 	return out.Bytes()
 }
-
