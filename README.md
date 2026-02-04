@@ -121,7 +121,7 @@ Supported keys (compatible subset): `authtoken`, `server_addr`, `host_header`, `
 Named tunnel keys (alpha) live under `tunnels:`:
 
 - Per tunnel: `proto` (`http`/`tcp`), `addr`
-- HTTP-only: `domain`, `subdomain`, `basic_auth`, `host_header`
+- HTTP-only: `domain`, `subdomain`, `basic_auth`, `allow_cidr`, `deny_cidr`, `host_header`
 - TCP-only: `remote_port`
 - Optional: `inspect` (HTTP tunnels only)
 
@@ -153,6 +153,8 @@ tunnels:
     addr: 3000
     domain: demo.tunnel.eosrift.com
     basic_auth: user:pass
+    allow_cidr:
+      - 203.0.113.0/24
   db:
     proto: tcp
     addr: 5432
@@ -181,6 +183,7 @@ Expose a local HTTP port through the server:
 - `./bin/eosrift http 8080 --server https://<yourdomain>`
 - Request a stable domain (ngrok-like): `./bin/eosrift http --domain demo.tunnel.<yourdomain> 127.0.0.1:8080`
 - Require basic auth on the public URL: `./bin/eosrift http 8080 --basic-auth user:pass`
+- Allowlist client IPs (CIDR): `./bin/eosrift http 8080 --allow-cidr 203.0.113.0/24`
 - Host header rewriting (ngrok-like): `./bin/eosrift http --host-header=rewrite 127.0.0.1:8080`
 - Forward to a local HTTPS upstream: `./bin/eosrift http https://127.0.0.1:8443 --upstream-tls-skip-verify`
 

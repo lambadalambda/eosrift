@@ -22,10 +22,10 @@ Last updated: **2026-02-04**
 - [x] Milestone 10 — Named tunnels + `start` (ngrok-like)
 - [x] Milestone 11 — `start` polish + TCP remote ports
 - [x] Milestone 12 — HTTP upstream HTTPS
-- [ ] Milestone 13 — Per-tunnel access control
+- [x] Milestone 13 — Per-tunnel access control
 - [ ] Milestone 14 — Reserved TCP ports
 
-Current focus: **Milestone 13**.
+Current focus: **Milestone 14**.
 
 ## Guiding principles
 
@@ -256,17 +256,20 @@ websockets, streaming, and the local inspector working.
 
 **Goal:** add a small but useful subset of ngrok-style edge access control for HTTP tunnels.
 
-- [ ] Basic auth:
+- [x] Basic auth:
   - Client flag + config: `--basic-auth user:pass` (and `tunnels.*.basic_auth`).
   - Server enforces auth on inbound HTTP tunnel requests (before proxying).
-- [ ] IP allowlist/denylist:
-  - Client flag + config: `--allow-cidr ...` / `--deny-cidr ...` (optional; may start allow-only).
+- [x] IP allowlist/denylist:
+  - Client flag: `--allow-cidr ...` / `--deny-cidr ...` (repeatable; also accepts a bare IP).
+  - Config keys: `tunnels.*.allow_cidr` / `tunnels.*.deny_cidr`.
   - Must respect `EOSRIFT_TRUST_PROXY_HEADERS` so `X-Forwarded-For` can’t bypass rules.
 
 **Acceptance tests**
 
 - Unit tests for parsing/validation.
-- Integration test that rejects unauthenticated requests and allows authenticated ones.
+- Integration tests for:
+  - basic auth (401 without auth; 200 with auth)
+  - allow/deny CIDR rules (403 on deny; allowlist permits matching clients)
 
 ## Milestone 14 — Reserved TCP ports
 
@@ -282,3 +285,35 @@ websockets, streaming, and the local inspector working.
 
 - Unit tests for reservation store behavior.
 - Integration test that a reserved port can be claimed only by its owning token.
+
+## Milestone 15 — HTTP header transforms (traffic policy lite)
+
+**Goal:** cover a few common ngrok “traffic policy” style needs without implementing a full policy engine.
+
+- [ ] Request header add/remove (per tunnel): `--request-header-add`, `--request-header-remove`, config under `tunnels.*`.
+- [ ] Response header add/remove (per tunnel): `--response-header-add`, `--response-header-remove`, config under `tunnels.*`.
+- [ ] (Optional) Method/path allowlist (per tunnel) for simple “public endpoint only” tunnels.
+
+**Acceptance tests**
+
+- Unit tests for parsing/validation.
+- Integration test proving headers are modified as configured.
+
+## Milestone 16 — OAuth/OIDC edge auth (optional)
+
+**Goal:** an ngrok-like “login wall” for HTTP tunnels, suitable for self-hosting.
+
+- [ ] OAuth provider config (GitHub first), per-tunnel enable/disable.
+- [ ] Cookie/session handling on the server edge; no state stored in the client.
+
+**Acceptance tests**
+
+- Unit tests for config parsing.
+- Integration smoke test for redirect + callback flow (best-effort; may require a mocked provider).
+
+## Milestone 17 — TLS tunnels (optional)
+
+**Goal:** ngrok-like `tls` command convenience for exposing local TLS services.
+
+- [ ] `eosrift tls <local-port|local-addr>` as a thin wrapper around `tcp` (byte proxying).
+- [ ] Docs explaining common use cases (mTLS, custom certs, etc.).

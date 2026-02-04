@@ -13,10 +13,15 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - TCP tunnel `remote_port` support: `eosrift tcp --remote-port` and `tunnels.*.remote_port`.
 - HTTP tunnels can now forward to local HTTPS upstreams (pass a `https://...` local URL).
 - HTTP tunnel basic auth (per tunnel): `eosrift http --basic-auth user:pass` and `tunnels.*.basic_auth`.
+- HTTP tunnel CIDR access control (per tunnel): `--allow-cidr` / `--deny-cidr` and `tunnels.*.allow_cidr` / `tunnels.*.deny_cidr`.
 
 ### Changed
 
 - `eosrift start` now validates `tunnels:` config and fails fast on common mistakes (invalid `addr`, invalid option combinations).
+
+### Fixed
+
+- HTTP tunnel reconnect now preserves per-tunnel access control settings (basic auth and CIDR rules).
 
 ## [0.1.1] - 2026-02-04
 
