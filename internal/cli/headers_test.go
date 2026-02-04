@@ -42,6 +42,14 @@ func TestParseHeaderKV(t *testing.T) {
 			t.Fatalf("err = nil, want non-nil")
 		}
 	})
+
+	t.Run("rejects newline injection", func(t *testing.T) {
+		t.Parallel()
+
+		if _, err := parseHeaderKV("request_header_add", "X-Test: ok\r\nX-Evil: 1"); err == nil {
+			t.Fatalf("err = nil, want non-nil")
+		}
+	})
 }
 
 func TestParseHeaderRemoveList(t *testing.T) {

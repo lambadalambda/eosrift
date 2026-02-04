@@ -59,9 +59,14 @@ func parseHeaderKV(field string, raw string) (client.HeaderKV, error) {
 		return client.HeaderKV{}, err
 	}
 
+	normValue, err := normalizeHeaderValue(field, raw, value)
+	if err != nil {
+		return client.HeaderKV{}, err
+	}
+
 	return client.HeaderKV{
 		Name:  normName,
-		Value: strings.TrimSpace(value),
+		Value: normValue,
 	}, nil
 }
 
@@ -78,6 +83,14 @@ func normalizeHeaderName(field string, raw string) (string, error) {
 	return s, nil
 }
 
+func normalizeHeaderValue(field, raw, value string) (string, error) {
+	v := strings.TrimSpace(value)
+	if len(v) > maxHeaderValueBytes || !isSafeHeaderValue(v) {
+		return "", fmt.Errorf("invalid %s: %q", field, raw)
+	}
+	return v, nil
+}
+
 func isValidHeaderToken(s string) bool {
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -87,6 +100,24 @@ func isValidHeaderToken(s string) bool {
 		case c >= 'A' && c <= 'Z':
 		case strings.ContainsRune("!#$%&'*+-.^_`|~", rune(c)):
 		default:
+			return false
+		}
+	}
+	return true
+}
+
+const maxHeaderValueBytes = 8 * 1024
+
+func isSafeHeaderValue(s string) bool {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\r' || c == '\n' || c == 0 {
+			return false
+		}
+		if c < 0x20 && c != '\t' {
+			return false
+		}
+		if c == 0x7f {
 			return false
 		}
 	}
