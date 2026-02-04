@@ -28,6 +28,9 @@ func main() {
 		case "reserve", "reservations":
 			reserveCmd(logger, os.Args[2:])
 			return
+		case "tcp-reserve", "tcp-reservations":
+			tcpReserveCmd(logger, os.Args[2:])
+			return
 		}
 	}
 
@@ -315,6 +318,123 @@ func reserveRemoveCmd(logger logging.Logger, args []string) {
 	}
 
 	fmt.Printf("unreserved %s\n", subdomain)
+}
+
+func tcpReserveCmd(logger logging.Logger, args []string) {
+	if len(args) < 1 {
+		tcpReserveUsage()
+		os.Exit(2)
+	}
+
+	switch args[0] {
+	case "add":
+		tcpReserveAddCmd(logger, args[1:])
+	case "list":
+		tcpReserveListCmd(logger, args[1:])
+	case "remove", "rm", "delete":
+		tcpReserveRemoveCmd(logger, args[1:])
+	default:
+		tcpReserveUsage()
+		os.Exit(2)
+	}
+}
+
+func tcpReserveUsage() {
+	fmt.Fprintln(os.Stderr, "usage: eosrift-server tcp-reserve <command> [args]")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "commands:")
+	fmt.Fprintln(os.Stderr, "  add      reserve a TCP port for a token id")
+	fmt.Fprintln(os.Stderr, "  list     list reserved TCP ports")
+	fmt.Fprintln(os.Stderr, "  remove   remove a reserved TCP port")
+	fmt.Fprintln(os.Stderr, "")
+	fmt.Fprintln(os.Stderr, "env:")
+	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
+}
+
+func tcpReserveAddCmd(logger logging.Logger, args []string) {
+	fs := flag.NewFlagSet("tcp-reserve add", flag.ExitOnError)
+	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
+	tokenID := fs.Int64("token-id", 0, "Token id to bind the port to")
+	_ = fs.Parse(args)
+
+	if *tokenID <= 0 || fs.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "usage: eosrift-server tcp-reserve add --token-id <id> [--db path] <port>")
+		os.Exit(2)
+	}
+
+	port, err := strconv.Atoi(fs.Arg(0))
+	if err != nil || port <= 0 {
+		fatal(logger, "invalid port", logging.F("port", fs.Arg(0)))
+	}
+
+	ctx := context.Background()
+	store, err := auth.Open(ctx, *dbPath)
+	if err != nil {
+		fatal(logger, "open db", logging.F("err", err))
+	}
+	defer store.Close()
+
+	if err := store.ReserveTCPPort(ctx, *tokenID, port); err != nil {
+		fatal(logger, "reserve tcp port", logging.F("err", err))
+	}
+
+	fmt.Printf("reserved %d\n", port)
+}
+
+func tcpReserveListCmd(logger logging.Logger, args []string) {
+	fs := flag.NewFlagSet("tcp-reserve list", flag.ExitOnError)
+	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
+	_ = fs.Parse(args)
+
+	ctx := context.Background()
+	store, err := auth.Open(ctx, *dbPath)
+	if err != nil {
+		fatal(logger, "open db", logging.F("err", err))
+	}
+	defer store.Close()
+
+	list, err := store.ListReservedTCPPorts(ctx)
+	if err != nil {
+		fatal(logger, "list reserved tcp ports", logging.F("err", err))
+	}
+
+	if len(list) == 0 {
+		fmt.Println("no reserved tcp ports")
+		return
+	}
+
+	for _, r := range list {
+		fmt.Printf("%d\t%d\t%s\n", r.Port, r.TokenID, r.TokenPrefix)
+	}
+}
+
+func tcpReserveRemoveCmd(logger logging.Logger, args []string) {
+	fs := flag.NewFlagSet("tcp-reserve remove", flag.ExitOnError)
+	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
+	_ = fs.Parse(args)
+
+	if fs.NArg() != 1 {
+		fmt.Fprintln(os.Stderr, "usage: eosrift-server tcp-reserve remove [--db path] <port>")
+		os.Exit(2)
+	}
+
+	port, err := strconv.Atoi(fs.Arg(0))
+	if err != nil || port <= 0 {
+		fatal(logger, "invalid port", logging.F("port", fs.Arg(0)))
+	}
+
+	ctx := context.Background()
+	store, err := auth.Open(ctx, *dbPath)
+	if err != nil {
+		fatal(logger, "open db", logging.F("err", err))
+	}
+	defer store.Close()
+
+	if err := store.UnreserveTCPPort(ctx, port); err != nil {
+		fatal(logger, "unreserve tcp port", logging.F("err", err))
+	}
+
+	fmt.Printf("unreserved %d\n", port)
 }
 
 func newLogger() logging.Logger {
