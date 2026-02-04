@@ -80,7 +80,10 @@ func runStart(ctx context.Context, args []string, configPath string, stdout, std
 		fmt.Fprintln(out, "")
 		fmt.Fprintln(out, "examples:")
 		fmt.Fprintln(out, "  eosrift start web")
+		fmt.Fprintln(out, "  eosrift start web db")
 		fmt.Fprintln(out, "  eosrift start --all")
+		fmt.Fprintln(out, "  eosrift start --all --server https://eosrift.com")
+		fmt.Fprintln(out, "  eosrift start --all --inspect=false")
 	}
 
 	if err := parseInterspersedFlags(fs, args); err != nil {
