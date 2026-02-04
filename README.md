@@ -137,6 +137,7 @@ Expose a local HTTP port through the server:
 
 - `./bin/eosrift http 8080 --server https://<yourdomain>`
 - Request a stable domain (ngrok-like): `./bin/eosrift http --domain demo.tunnel.<yourdomain> 127.0.0.1:8080`
+- Host header rewriting (ngrok-like): `./bin/eosrift http --host-header=rewrite 127.0.0.1:8080`
 
 The client prints the public URL, e.g. `Forwarding https://abcd1234.tunnel.<yourdomain> -> 127.0.0.1:8080`.
 

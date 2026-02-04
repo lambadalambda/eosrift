@@ -23,6 +23,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
 - Reserved subdomains (alpha): `eosrift-server reserve ...` + `eosrift http --subdomain ...` (stable tunnel URLs).
 - ngrok-like custom domain flag: `eosrift http --domain <name>.<EOSRIFT_TUNNEL_DOMAIN>` auto-reserves on first use.
+- Host header rewriting (alpha): `eosrift http --host-header=preserve|rewrite|<value>`.
 - Resource limits (alpha): `EOSRIFT_MAX_TUNNELS_PER_TOKEN` to cap concurrent tunnels per authtoken.
 - Basic rate limiting (alpha): `EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN` to cap tunnel create attempts per authtoken.
 - Control plane auth (alpha): SQLite-backed authtokens (create/list/revoke via `eosrift-server token ...`) and `--authtoken` / `EOSRIFT_AUTHTOKEN` on the client.

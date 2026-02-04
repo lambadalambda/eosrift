@@ -161,7 +161,7 @@ but this milestone should make the system feel solid in daily use.
 - [x] Streaming/chunked responses over HTTP tunnels (end-to-end)
 - [x] Control-plane keepalive so idle sessions survive NAT/proxies
 - [x] Proxy header hygiene (strip `Forwarded` / `X-Forwarded-*` unless proxy headers are trusted)
-- [ ] HTTP tunnel compat knobs (e.g. host header rewrite option for picky apps)
+- [x] HTTP tunnel compat knobs (host header rewriting)
 - [ ] Pre-release checklist (what “v1.0-ready” means for EosRift)
 
 **Acceptance tests (Docker)**
