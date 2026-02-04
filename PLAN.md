@@ -129,10 +129,10 @@ Current focus: **Milestone 6**.
 
 **Goal:** easy “install and run” across environments.
 
-- Multi-arch server Docker images (linux/amd64 + linux/arm64)
-- Signed client releases (macOS + Linux), single-file binaries
-- Optional Homebrew tap / install script
-- Production docs: firewall ports, Caddy wildcard cert setup
+- [x] Multi-arch server Docker images (linux/amd64 + linux/arm64)
+- [ ] Signed client releases (macOS + Linux), single-file binaries
+- [x] Install script (GitHub Release artifacts)
+- [x] Production docs: firewall ports, Caddy wildcard cert setup
 
 ## Milestone 7 — Hardening + observability
 
