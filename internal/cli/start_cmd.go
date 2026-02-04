@@ -2,15 +2,14 @@ package cli
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
-	"net"
 	"net/http"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -67,6 +66,7 @@ func runStart(ctx context.Context, args []string, configPath string, stdout, std
 	all := fs.Bool("all", false, "Start all tunnels defined in config")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector (HTTP tunnels)")
 	inspectAddr := fs.String("inspect-addr", inspectAddrDefault, "Inspector listen address")
+	upstreamTLSSkipVerify := fs.Bool("upstream-tls-skip-verify", false, "Disable certificate verification for HTTPS upstreams (HTTP tunnels)")
 	help := fs.Bool("help", false, "Show help")
 	fs.BoolVar(help, "h", false, "Show help")
 
@@ -183,7 +183,7 @@ func runStart(ctx context.Context, args []string, configPath string, stdout, std
 		defer stopInspector()
 	}
 
-	started, err := startNamedTunnels(ctx, controlURL, *authtoken, defaultHostHeader, selected, inspectorCfg.Enabled, store, &replayMap)
+	started, err := startNamedTunnels(ctx, controlURL, *authtoken, defaultHostHeader, selected, inspectorCfg.Enabled, store, &replayMap, *upstreamTLSSkipVerify)
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
 		return 1
@@ -224,31 +224,22 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			return errors.New("tunnel name is empty")
 		}
 
-		addr := strings.TrimSpace(t.Tunnel.Addr)
-		if addr == "" {
-			return fmt.Errorf("tunnel %q: addr is required", t.Name)
-		}
-
-		normalizedAddr := addr
-		if !strings.Contains(normalizedAddr, ":") {
-			normalizedAddr = "127.0.0.1:" + normalizedAddr
-		}
-		_, port, err := net.SplitHostPort(normalizedAddr)
-		if err != nil {
-			return fmt.Errorf("tunnel %q: invalid addr %q: %v", t.Name, addr, err)
-		}
-		portNum, err := strconv.Atoi(port)
-		if err != nil || portNum < 1 || portNum > 65535 {
-			return fmt.Errorf("tunnel %q: invalid addr %q: invalid port", t.Name, addr)
-		}
-
 		proto := strings.ToLower(strings.TrimSpace(t.Tunnel.Proto))
 		if proto == "" {
 			return fmt.Errorf("tunnel %q: proto is required (http|tcp)", t.Name)
 		}
 
+		addr := strings.TrimSpace(t.Tunnel.Addr)
+		if addr == "" {
+			return fmt.Errorf("tunnel %q: addr is required", t.Name)
+		}
+
 		switch proto {
 		case "http":
+			if _, _, err := parseHTTPUpstreamTarget(addr); err != nil {
+				return fmt.Errorf("tunnel %q: invalid addr %q: %v", t.Name, addr, err)
+			}
+
 			domain := strings.TrimSpace(t.Tunnel.Domain)
 			subdomain := strings.TrimSpace(t.Tunnel.Subdomain)
 			if domain != "" && subdomain != "" {
@@ -258,6 +249,9 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 				return fmt.Errorf("tunnel %q: remote_port is only valid for tcp tunnels", t.Name)
 			}
 		case "tcp":
+			if _, err := parseTCPUpstreamAddr(addr); err != nil {
+				return fmt.Errorf("tunnel %q: invalid addr %q: %v", t.Name, addr, err)
+			}
 			if t.Tunnel.RemotePort < 0 {
 				return fmt.Errorf("tunnel %q: remote_port must be >= 0", t.Name)
 			}
@@ -384,7 +378,7 @@ func startInspectorServer(ctx context.Context, store *inspect.Store, addr string
 	return inspectorURL, stop, nil
 }
 
-func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHeader string, tunnels []namedTunnel, inspectDefault bool, store *inspect.Store, replayMap *replayTargets) ([]startedTunnel, error) {
+func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHeader string, tunnels []namedTunnel, inspectDefault bool, store *inspect.Store, replayMap *replayTargets, upstreamTLSSkipVerify bool) ([]startedTunnel, error) {
 	var started []startedTunnel
 
 	for _, t := range tunnels {
@@ -398,16 +392,13 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 			return nil, fmt.Errorf("tunnel %q: proto is required (http|tcp)", t.Name)
 		}
 
-		localAddr := strings.TrimSpace(t.Tunnel.Addr)
-		if localAddr == "" {
-			return nil, fmt.Errorf("tunnel %q: addr is required", t.Name)
-		}
-		if !strings.Contains(localAddr, ":") {
-			localAddr = "127.0.0.1:" + localAddr
-		}
-
 		switch proto {
 		case "http":
+			upstreamScheme, localAddr, err := parseHTTPUpstreamTarget(t.Tunnel.Addr)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+
 			inspectEnabled := store != nil && inspectDefault
 			if t.Tunnel.Inspect != nil {
 				inspectEnabled = store != nil && *t.Tunnel.Inspect
@@ -422,10 +413,12 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 			}
 
 			tun, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
-				Authtoken:  authtoken,
-				Domain:     strings.TrimSpace(t.Tunnel.Domain),
-				Subdomain:  strings.TrimSpace(t.Tunnel.Subdomain),
-				HostHeader: hostHeader,
+				Authtoken:             authtoken,
+				Domain:                strings.TrimSpace(t.Tunnel.Domain),
+				Subdomain:             strings.TrimSpace(t.Tunnel.Subdomain),
+				HostHeader:            hostHeader,
+				UpstreamScheme:        upstreamScheme,
+				UpstreamTLSSkipVerify: upstreamTLSSkipVerify,
 				Inspector: func() *inspect.Store {
 					if inspectEnabled {
 						return store
@@ -438,7 +431,11 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 			}
 
 			if replayMap != nil {
-				replayMap.Set(tun.ID, localAddr)
+				replayMap.Set(tun.ID, replayTarget{
+					Scheme:        upstreamScheme,
+					Addr:          localAddr,
+					TLSSkipVerify: upstreamTLSSkipVerify,
+				})
 			}
 
 			started = append(started, startedTunnel{
@@ -449,6 +446,11 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				close:          tun.Close,
 			})
 		case "tcp":
+			localAddr, err := parseTCPUpstreamAddr(t.Tunnel.Addr)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+
 			if t.Tunnel.RemotePort < 0 {
 				return nil, fmt.Errorf("tunnel %q: remote_port must be >= 0", t.Name)
 			}
@@ -510,25 +512,32 @@ func waitAll(ctx context.Context, tunnels []startedTunnel) error {
 
 type replayTargets struct {
 	mu sync.RWMutex
-	m  map[string]string
+	m  map[string]replayTarget
 }
 
-func (t *replayTargets) Set(tunnelID, localAddr string) {
+type replayTarget struct {
+	Scheme string
+	Addr   string
+
+	TLSSkipVerify bool
+}
+
+func (t *replayTargets) Set(tunnelID string, target replayTarget) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	if t.m == nil {
-		t.m = make(map[string]string)
+		t.m = make(map[string]replayTarget)
 	}
-	t.m[tunnelID] = localAddr
+	t.m[tunnelID] = target
 }
 
-func (t *replayTargets) get(tunnelID string) (string, bool) {
+func (t *replayTargets) get(tunnelID string) (replayTarget, bool) {
 	t.mu.RLock()
 	defer t.mu.RUnlock()
 
 	if t.m == nil {
-		return "", false
+		return replayTarget{}, false
 	}
 	v, ok := t.m[tunnelID]
 	return v, ok
@@ -536,8 +545,8 @@ func (t *replayTargets) get(tunnelID string) (string, bool) {
 
 func (t *replayTargets) ReplayFunc() func(ctx context.Context, entry inspect.Entry) (inspect.ReplayResult, error) {
 	return func(ctx context.Context, entry inspect.Entry) (inspect.ReplayResult, error) {
-		localAddr, ok := t.get(entry.TunnelID)
-		if !ok || localAddr == "" {
+		target, ok := t.get(entry.TunnelID)
+		if !ok || target.Addr == "" {
 			return inspect.ReplayResult{}, errors.New("unknown tunnel")
 		}
 
@@ -547,8 +556,8 @@ func (t *replayTargets) ReplayFunc() func(ctx context.Context, entry inspect.Ent
 		}
 
 		dst := &url.URL{
-			Scheme:   "http",
-			Host:     localAddr,
+			Scheme:   target.Scheme,
+			Host:     target.Addr,
 			Path:     u.Path,
 			RawQuery: u.RawQuery,
 		}
@@ -568,6 +577,12 @@ func (t *replayTargets) ReplayFunc() func(ctx context.Context, entry inspect.Ent
 		req.Header.Del("Transfer-Encoding")
 
 		clientHTTP := &http.Client{Timeout: 10 * time.Second}
+		if target.Scheme == "https" && target.TLSSkipVerify {
+			clientHTTP.Transport = &http.Transport{
+				ForceAttemptHTTP2: false,
+				TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+			}
+		}
 		resp, err := clientHTTP.Do(req)
 		if err != nil {
 			return inspect.ReplayResult{}, err

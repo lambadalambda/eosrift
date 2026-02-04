@@ -104,6 +104,9 @@ func TestRun_HTTPHelp_PrintsToStdout(t *testing.T) {
 	if !strings.Contains(stdout.String(), "usage: eosrift http") {
 		t.Fatalf("stdout missing usage: %q", stdout.String())
 	}
+	if !strings.Contains(stdout.String(), "upstream-tls-skip-verify") {
+		t.Fatalf("stdout missing upstream-tls-skip-verify flag: %q", stdout.String())
+	}
 }
 
 func TestRun_HTTPHelp_UsesConfigHostHeaderDefault(t *testing.T) {

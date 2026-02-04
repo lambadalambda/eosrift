@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
@@ -68,6 +69,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	subdomain := fs.String("subdomain", "", "Reserved subdomain to request (requires server-side reservation)")
 	domain := fs.String("domain", "", "Domain to request (must be under the server tunnel domain; auto-reserved on first use)")
 	hostHeader := fs.String("host-header", hostHeaderDefault, "Host header mode: preserve (default), rewrite, or a literal value")
+	upstreamTLSSkipVerify := fs.Bool("upstream-tls-skip-verify", false, "Disable certificate verification for HTTPS upstreams")
 	inspectEnabled := fs.Bool("inspect", inspectDefault, "Enable local inspector")
 	inspectAddr := fs.String("inspect-addr", inspectAddrDefault, "Inspector listen address")
 	help := fs.Bool("help", false, "Show help")
@@ -75,7 +77,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 
 	fs.Usage = func() {
 		out := fs.Output()
-		fmt.Fprintln(out, "usage: eosrift http [flags] <local-port|local-addr>")
+		fmt.Fprintln(out, "usage: eosrift http [flags] <local-port|local-addr|local-url>")
 		fmt.Fprintln(out, "")
 		fmt.Fprintln(out, "flags may appear before or after <local-port|local-addr>")
 		fs.PrintDefaults()
@@ -85,6 +87,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		fmt.Fprintln(out, "  eosrift http 3000 --domain demo.tunnel.eosrift.com")
 		fmt.Fprintln(out, "  eosrift http 3000 --subdomain demo")
 		fmt.Fprintln(out, "  eosrift http 3000 --host-header=rewrite")
+		fmt.Fprintln(out, "  eosrift http https://127.0.0.1:8443 --upstream-tls-skip-verify")
 	}
 
 	if err := parseInterspersedFlags(fs, args); err != nil {
@@ -105,9 +108,10 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		return 2
 	}
 
-	localAddr := fs.Arg(0)
-	if !strings.Contains(localAddr, ":") {
-		localAddr = "127.0.0.1:" + localAddr
+	upstreamScheme, localAddr, err := parseHTTPUpstreamTarget(fs.Arg(0))
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
 	}
 
 	controlURL, err := config.ControlURLFromServerAddr(*serverAddr)
@@ -122,11 +126,13 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	}
 
 	tunnel, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
-		Authtoken:  *authtoken,
-		Subdomain:  *subdomain,
-		Domain:     *domain,
-		HostHeader: *hostHeader,
-		Inspector:  store,
+		Authtoken:             *authtoken,
+		Subdomain:             *subdomain,
+		Domain:                *domain,
+		HostHeader:            *hostHeader,
+		UpstreamScheme:        upstreamScheme,
+		UpstreamTLSSkipVerify: *upstreamTLSSkipVerify,
+		Inspector:             store,
 	})
 	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
@@ -151,7 +157,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 						}
 
 						dst := &url.URL{
-							Scheme:   "http",
+							Scheme:   upstreamScheme,
 							Host:     localAddr,
 							Path:     u.Path,
 							RawQuery: u.RawQuery,
@@ -172,6 +178,12 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 						req.Header.Del("Transfer-Encoding")
 
 						clientHTTP := &http.Client{Timeout: 10 * time.Second}
+						if upstreamScheme == "https" && *upstreamTLSSkipVerify {
+							clientHTTP.Transport = &http.Transport{
+								ForceAttemptHTTP2: false,
+								TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+							}
+						}
 						resp, err := clientHTTP.Do(req)
 						if err != nil {
 							return inspect.ReplayResult{}, err
