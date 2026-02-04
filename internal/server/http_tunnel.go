@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/subtle"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,6 +16,56 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 	target := &url.URL{
 		Scheme: "http",
 		Host:   "upstream",
+	}
+
+	transport := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			entry, ok := tunnelEntryFromContext(ctx)
+			if !ok || entry.session == nil {
+				return nil, errors.New("missing tunnel session")
+			}
+			return entry.session.OpenStream()
+		},
+		ForceAttemptHTTP2:   false,
+		DisableKeepAlives:   true,
+		MaxIdleConnsPerHost: -1,
+	}
+
+	proxy := &httputil.ReverseProxy{
+		Rewrite: func(pr *httputil.ProxyRequest) {
+			// Preserve original host (ngrok-like) but send the request over a
+			// tunneled TCP stream to the local upstream.
+			pr.SetURL(target)
+			pr.Out.Host = pr.In.Host
+
+			if cfg.TrustProxyHeaders {
+				copyProxyForwardedHeaders(pr.Out.Header, pr.In.Header)
+			} else {
+				stripForwardedHeaders(pr.Out.Header)
+				pr.SetXForwarded()
+			}
+
+			entry, ok := tunnelEntryFromContext(pr.In.Context())
+			if ok {
+				applyHeaderTransforms(pr.Out.Header, entry.requestHeaderRemove, entry.requestHeaderAdd)
+			}
+		},
+		Transport: transport,
+		ModifyResponse: func(resp *http.Response) error {
+			if resp == nil || resp.Request == nil {
+				return nil
+			}
+
+			entry, ok := tunnelEntryFromContext(resp.Request.Context())
+			if ok {
+				applyHeaderTransforms(resp.Header, entry.responseHeaderRemove, entry.responseHeaderAdd)
+			}
+			return nil
+		},
+		ErrorHandler: func(rw http.ResponseWriter, req *http.Request, err error) {
+			http.Error(rw, "bad gateway", http.StatusBadGateway)
+		},
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -58,43 +109,7 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 			r.Header.Del("Authorization")
 		}
 
-		transport := &http.Transport{
-			Proxy:               http.ProxyFromEnvironment,
-			DialContext:         func(ctx context.Context, network, addr string) (net.Conn, error) { return entry.session.OpenStream() },
-			ForceAttemptHTTP2:   false,
-			DisableKeepAlives:   true,
-			MaxIdleConnsPerHost: -1,
-		}
-
-		proxy := &httputil.ReverseProxy{
-			Rewrite: func(pr *httputil.ProxyRequest) {
-				// Preserve original host (ngrok-like) but send the request over a
-				// tunneled TCP stream to the local upstream.
-				pr.SetURL(target)
-				pr.Out.Host = pr.In.Host
-
-				if cfg.TrustProxyHeaders {
-					copyProxyForwardedHeaders(pr.Out.Header, pr.In.Header)
-				} else {
-					stripForwardedHeaders(pr.Out.Header)
-					pr.SetXForwarded()
-				}
-
-				applyHeaderTransforms(pr.Out.Header, entry.requestHeaderRemove, entry.requestHeaderAdd)
-			},
-			Transport: transport,
-			ModifyResponse: func(resp *http.Response) error {
-				applyHeaderTransforms(resp.Header, entry.responseHeaderRemove, entry.responseHeaderAdd)
-				return nil
-			},
-			ErrorHandler: func(rw http.ResponseWriter, req *http.Request, err error) {
-				http.Error(rw, "bad gateway", http.StatusBadGateway)
-			},
-		}
-
-		// Ensure we don't keep resources around for this transport.
-		defer transport.CloseIdleConnections()
-
+		r = withTunnelEntryContext(r, entry)
 		proxy.ServeHTTP(w, r)
 	}
 }
@@ -224,4 +239,19 @@ func cidrListContains(prefixes []netip.Prefix, ip netip.Addr) bool {
 		}
 	}
 	return false
+}
+
+type tunnelEntryContextKey struct{}
+
+func withTunnelEntryContext(r *http.Request, entry httpTunnelEntry) *http.Request {
+	return r.WithContext(context.WithValue(r.Context(), tunnelEntryContextKey{}, entry))
+}
+
+func tunnelEntryFromContext(ctx context.Context) (httpTunnelEntry, bool) {
+	v := ctx.Value(tunnelEntryContextKey{})
+	if v == nil {
+		return httpTunnelEntry{}, false
+	}
+	entry, ok := v.(httpTunnelEntry)
+	return entry, ok
 }
