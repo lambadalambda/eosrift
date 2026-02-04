@@ -1,7 +1,7 @@
 # Releasing EosRift
 
-This repo is pre-alpha; we are not cutting regular releases yet. This document captures what
-“release-ready” means for EosRift and provides a repeatable checklist when we decide to tag.
+This repo is alpha and releases are available, but expect rough edges and breaking changes.
+This document provides a repeatable checklist when we decide to tag.
 
 ## Versioning
 
@@ -24,6 +24,7 @@ Engineering:
 
 - [ ] `./scripts/go test ./...` is green.
 - [ ] `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit` is green.
+- [ ] `docker compose -f docker-compose.caddytest.yml up --build --exit-code-from test --abort-on-container-exit` is green.
 - [ ] Run a small smoke load test:
   - [ ] `EOSRIFT_LOAD_REQUESTS=200 EOSRIFT_LOAD_CONCURRENCY=20 docker compose -f docker-compose.loadtest.yml up --build --exit-code-from loadtest --abort-on-container-exit`
 - [ ] Docs reflect reality (`README.md`, `deploy/PRODUCTION.md`, `ARCHITECTURE.md`, `SECURITY.md`, `PLAN.md`).

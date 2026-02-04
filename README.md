@@ -4,7 +4,7 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** pre-alpha. TCP + HTTP tunnels work, but expect rough edges and breaking changes.
+**Status:** alpha (`v0.1.0`). TCP + HTTP tunnels work, but expect rough edges and breaking changes.
 
 This project is close to being “useful by default”, but it is not a 1.0-quality, battle-tested
 service yet:
@@ -66,7 +66,7 @@ service yet:
 
 Notes:
 
-- By default, `docker-compose.yml` builds the server image locally. If you prefer a prebuilt image, use `ghcr.io/<your-gh-org>/eosrift-server:<tag>`.
+- By default, `docker-compose.yml` builds the server image locally. If you prefer a prebuilt image, use `ghcr.io/lambadalambda/eosrift-server:v0.1.0`.
 - TCP tunnels require opening `EOSRIFT_TCP_PORT_RANGE_START..EOSRIFT_TCP_PORT_RANGE_END` in your firewall/security group.
 - `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
 - `docker-compose.yml` defaults `EOSRIFT_TRUST_PROXY_HEADERS=1` (safe with the default localhost-only server bind + Caddy in front). If you expose the server directly to untrusted clients, set it to `0` to prevent `X-Forwarded-*` spoofing.
@@ -79,17 +79,16 @@ This repo doesn’t require Go on your host; you can build with Docker:
 - Linux (example): `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 ./scripts/go build -o bin/eosrift ./cmd/client`
 - macOS (example): `CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 ./scripts/go build -o bin/eosrift ./cmd/client`
 
-### Client (install from GitHub Releases, planned)
+### Client (install from GitHub Releases)
 
-This repo includes GitHub Actions workflows to build release artifacts on tags (`v*`).
-
-We are not publishing regular releases yet; build locally for now. When releases start, you’ll
-be able to install the client on macOS/Linux using:
+Release artifacts are built by GitHub Actions on tags (`v*`). Install the client on macOS/Linux using:
 
 - Latest release: `./scripts/install.sh`
 - Specific version: `./scripts/install.sh --version v0.1.0`
 
 By default, this installs to `~/.local/bin/eosrift` (override with `--dir`).
+
+By default, the install script downloads from `lambadalambda/eosrift` (override with `--repo`).
 
 Release assets include `checksums.txt` so you can verify downloads.
 

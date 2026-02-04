@@ -18,7 +18,7 @@ Notes:
 EOF
 }
 
-repo="${EOSRIFT_INSTALL_REPO:-eosrift/eosrift}"
+repo="${EOSRIFT_INSTALL_REPO:-lambadalambda/eosrift}"
 version="${EOSRIFT_INSTALL_VERSION:-}"
 install_dir="${EOSRIFT_INSTALL_DIR:-$HOME/.local/bin}"
 
