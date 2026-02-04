@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/netip"
 	"net/url"
 	"strings"
 )
@@ -27,6 +28,22 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 		if !ok {
 			http.NotFound(w, r)
 			return
+		}
+
+		if len(entry.allowCIDRs) > 0 || len(entry.denyCIDRs) > 0 {
+			ip, ok := requestClientIP(r, cfg.TrustProxyHeaders)
+			if !ok {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			if cidrListContains(entry.denyCIDRs, ip) {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
+			if len(entry.allowCIDRs) > 0 && !cidrListContains(entry.allowCIDRs, ip) {
+				http.Error(w, "forbidden", http.StatusForbidden)
+				return
+			}
 		}
 
 		if entry.basicAuth != nil {
@@ -117,4 +134,58 @@ func normalizeDomain(domain string) string {
 		}
 	}
 	return domain
+}
+
+func requestClientIP(r *http.Request, trustProxyHeaders bool) (netip.Addr, bool) {
+	if trustProxyHeaders {
+		if v := strings.TrimSpace(r.Header.Get("X-Forwarded-For")); v != "" {
+			first := strings.TrimSpace(strings.Split(v, ",")[0])
+			if ip, ok := parseNetipAddr(first); ok {
+				return ip, true
+			}
+		}
+		if v := strings.TrimSpace(r.Header.Get("X-Real-IP")); v != "" {
+			if ip, ok := parseNetipAddr(v); ok {
+				return ip, true
+			}
+		}
+	}
+
+	host := strings.TrimSpace(r.RemoteAddr)
+	if host == "" {
+		return netip.Addr{}, false
+	}
+
+	// Best-effort host:port stripping.
+	if strings.Contains(host, ":") {
+		if h, _, err := net.SplitHostPort(host); err == nil {
+			host = h
+		}
+	}
+
+	return parseNetipAddr(host)
+}
+
+func parseNetipAddr(s string) (netip.Addr, bool) {
+	s = strings.TrimSpace(s)
+	s = strings.TrimPrefix(s, "[")
+	s = strings.TrimSuffix(s, "]")
+	if s == "" {
+		return netip.Addr{}, false
+	}
+	ip, err := netip.ParseAddr(s)
+	if err != nil {
+		return netip.Addr{}, false
+	}
+	return ip.Unmap(), true
+}
+
+func cidrListContains(prefixes []netip.Prefix, ip netip.Addr) bool {
+	ip = ip.Unmap()
+	for _, p := range prefixes {
+		if p.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }

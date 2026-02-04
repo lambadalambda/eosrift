@@ -356,7 +356,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 
-	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, basicAuth); err != nil {
+	if err := registry.RegisterHTTPTunnel(id, yamuxSession{s: session}, basicAuth, nil, nil); err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: "failed to register tunnel",

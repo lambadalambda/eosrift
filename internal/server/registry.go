@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"errors"
 	"net"
+	"net/netip"
 	"strings"
 	"sync"
 )
@@ -17,6 +18,9 @@ type TunnelRegistry struct {
 type httpTunnelEntry struct {
 	session   streamSession
 	basicAuth *basicAuthCredential
+
+	allowCIDRs []netip.Prefix
+	denyCIDRs  []netip.Prefix
 }
 
 type basicAuthCredential struct {
@@ -37,7 +41,7 @@ func NewTunnelRegistry() *TunnelRegistry {
 	}
 }
 
-func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, basicAuth *basicAuthCredential) error {
+func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, basicAuth *basicAuthCredential, allowCIDRs, denyCIDRs []netip.Prefix) error {
 	id = strings.TrimSpace(strings.ToLower(id))
 	if id == "" {
 		return errors.New("empty tunnel id")
@@ -54,8 +58,10 @@ func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, ba
 	}
 
 	r.httpTunnels[id] = httpTunnelEntry{
-		session:   session,
-		basicAuth: basicAuth,
+		session:    session,
+		basicAuth:  basicAuth,
+		allowCIDRs: allowCIDRs,
+		denyCIDRs:  denyCIDRs,
 	}
 	return nil
 }
