@@ -157,8 +157,8 @@ Current focus: **Milestone 8**.
 **Goal:** close the biggest “real-world” gaps before tagging anything. No stability promises yet,
 but this milestone should make the system feel solid in daily use.
 
-- [ ] WebSocket support over HTTP tunnels (end-to-end)
-- [ ] Streaming/chunked responses over HTTP tunnels (end-to-end)
+- [x] WebSocket support over HTTP tunnels (end-to-end)
+- [x] Streaming/chunked responses over HTTP tunnels (end-to-end)
 - [ ] Control-plane keepalive so idle sessions survive NAT/proxies
 - [ ] Proxy header hygiene (strip untrusted `X-Forwarded-*`, set our own consistently)
 - [ ] HTTP tunnel compat knobs (e.g. host header rewrite option for picky apps)
