@@ -16,9 +16,10 @@ Last updated: **2026-02-04**
 - [x] Milestone 4 — CLI + config compatibility
 - [x] Milestone 5 — Auth + reserved names (SQLite-backed)
 - [x] Milestone 6 — Packaging + deployment polish
-- [ ] Milestone 7 — Hardening + observability
+- [x] Milestone 7 — Hardening + observability
+- [ ] Milestone 8 — Next milestone (TBD)
 
-Current focus: **Milestone 7**.
+Current focus: **Milestone 8 (TBD)**.
 
 ## Guiding principles
 
@@ -142,7 +143,7 @@ Current focus: **Milestone 7**.
 - [x] Health checks (`/healthz`)
 - [x] Metrics endpoint (`/metrics`, Prometheus text format; token-gated)
 - [x] Structured logs (JSON) and log levels
-- [ ] Load testing harness in Docker
+- [x] Load testing harness in Docker
 - [x] Security review checklist (auth, input validation, SSRF/host header concerns)
 
 ## Ongoing

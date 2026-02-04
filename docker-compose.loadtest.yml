@@ -1,0 +1,40 @@
+name: eosrift-loadtest
+
+services:
+  server:
+    build:
+      context: .
+      target: server
+    environment:
+      EOSRIFT_LISTEN_ADDR: ":8080"
+      EOSRIFT_BASE_DOMAIN: "eosrift.test"
+      EOSRIFT_TUNNEL_DOMAIN: "tunnel.eosrift.test"
+      EOSRIFT_TCP_PORT_RANGE_START: "20000"
+      EOSRIFT_TCP_PORT_RANGE_END: "20010"
+      EOSRIFT_DB_PATH: "/tmp/eosrift-loadtest.db"
+      EOSRIFT_AUTH_TOKEN: "test-token"
+    expose:
+      - "8080"
+
+  loadtest:
+    image: golang:1.23
+    working_dir: /src
+    volumes:
+      - .:/src
+    environment:
+      EOSRIFT_SERVER_URL: "http://server:8080"
+      EOSRIFT_AUTHTOKEN: "test-token"
+      EOSRIFT_LOAD_MODE: "${EOSRIFT_LOAD_MODE:-http}" # http|tcp
+      EOSRIFT_LOAD_REQUESTS: "${EOSRIFT_LOAD_REQUESTS:-2000}"
+      EOSRIFT_LOAD_CONCURRENCY: "${EOSRIFT_LOAD_CONCURRENCY:-50}"
+      EOSRIFT_LOAD_TIMEOUT: "${EOSRIFT_LOAD_TIMEOUT:-5s}"
+      EOSRIFT_LOAD_TCP_PAYLOAD_BYTES: "${EOSRIFT_LOAD_TCP_PAYLOAD_BYTES:-1024}"
+    depends_on:
+      - server
+    command: ["go", "run", "./test/loadtest"]
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 10.232.0.0/24

@@ -28,6 +28,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Client config (alpha): ngrok-style YAML config (`eosrift.yml`) + `eosrift config add-authtoken|set-server|check` and global `--config`.
 - Local inspector (alpha): capture HTTP exchanges, redact common secrets, serve a web UI at `/`, expose `/api/requests`, and support best-effort replay.
 - Docker Compose-based integration test harness.
+- Docker-based load testing harness (`docker-compose.loadtest.yml` + `test/loadtest`).
 - GitHub Actions CI (unit tests + integration tests).
 - GitHub Actions workflow to publish multi-arch server Docker images to GHCR.
 - Production deployment docs (`deploy/PRODUCTION.md`) covering DNS, Caddy, and firewall ports.

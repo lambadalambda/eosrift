@@ -189,3 +189,24 @@ Notes:
 ## Trademarks
 
 ngrok is a trademark of its respective owners. This project is not affiliated with ngrok.
+
+## Development
+
+### Tests
+
+- Unit tests: `./scripts/go test ./...`
+- Integration tests (Docker): `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit`
+
+### Load testing (Docker)
+
+Run a small load test against a throwaway server in a Compose network:
+
+- HTTP: `docker compose -f docker-compose.loadtest.yml up --build --exit-code-from loadtest --abort-on-container-exit`
+- TCP: `EOSRIFT_LOAD_MODE=tcp docker compose -f docker-compose.loadtest.yml up --build --exit-code-from loadtest --abort-on-container-exit`
+
+Tune via env:
+
+- `EOSRIFT_LOAD_REQUESTS` (default `2000`)
+- `EOSRIFT_LOAD_CONCURRENCY` (default `50`)
+- `EOSRIFT_LOAD_TIMEOUT` (default `5s`)
+- `EOSRIFT_LOAD_TCP_PAYLOAD_BYTES` (default `1024`, TCP mode only)
