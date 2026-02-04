@@ -54,6 +54,8 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return runHTTP(ctx, rest[1:], *configPath, stdout, stderr)
 	case "tcp":
 		return runTCP(ctx, rest[1:], *configPath, stdout, stderr)
+	case "start":
+		return runStart(ctx, rest[1:], *configPath, stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "unknown command: %s\n\n", rest[0])
 		usage(stderr)
@@ -67,6 +69,7 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "commands:")
 	fmt.Fprintln(w, "  http      start an HTTP tunnel")
 	fmt.Fprintln(w, "  tcp       start a TCP tunnel")
+	fmt.Fprintln(w, "  start     start tunnels from config")
 	fmt.Fprintln(w, "  config    manage client config")
 	fmt.Fprintln(w, "  version   print version information")
 	fmt.Fprintln(w, "  help      show help")
@@ -82,6 +85,7 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "  eosrift config add-authtoken <token>")
 	fmt.Fprintln(w, "  eosrift config set-server https://eosrift.com")
 	fmt.Fprintln(w, "  eosrift config set-host-header rewrite")
+	fmt.Fprintln(w, "  eosrift start --all")
 	fmt.Fprintln(w, "  eosrift http 8080 --server https://eosrift.com")
 	fmt.Fprintln(w, "  eosrift http 3000 --domain demo.tunnel.eosrift.com")
 	fmt.Fprintln(w, "  eosrift http 3000 --subdomain demo")

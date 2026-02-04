@@ -129,6 +129,25 @@ func TestRun_HTTPHelp_UsesConfigHostHeaderDefault(t *testing.T) {
 	}
 }
 
+func TestRun_StartHelp_PrintsToStdout(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "start", "--help"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr not empty: %q", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "usage: eosrift start") {
+		t.Fatalf("stdout missing usage: %q", stdout.String())
+	}
+}
+
 func TestRun_TCPHelp_PrintsToStdout(t *testing.T) {
 	t.Parallel()
 
