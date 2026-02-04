@@ -4,7 +4,14 @@ Project domain: `eosrift.com`
 
 Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like UX.
 
-**Status:** pre-alpha (TCP + HTTP tunnels work; inspector is alpha; auth + reserved names are alpha).
+**Status:** pre-alpha. TCP + HTTP tunnels work, but expect rough edges and breaking changes.
+
+This project is close to being “useful by default”, but it is not a 1.0-quality, battle-tested
+service yet:
+
+- Backwards compatibility is **not** guaranteed until `v1.0.0`.
+- Treat internet exposure as risky until you’ve reviewed `SECURITY.md` and locked things down.
+- Default behavior and CLI/config may change as we approach the first stable release.
 
 ## Goals
 
@@ -41,12 +48,12 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - `PLAN.md` — milestones and TDD approach
 - `ARCHITECTURE.md` — proposed architecture and protocols
 - `CHANGELOG.md` — notable changes (Keep a Changelog format)
-- `deploy/PRODUCTION.md` — production deployment notes (DNS, Caddy, firewall)
+- `deploy/PRODUCTION.md` — deployment notes (DNS, Caddy, firewall)
 - `SECURITY.md` — threat model and security checklist
 
 ## Quickstart
 
-### Server (Docker)
+### Server (Docker, alpha)
 
 - `cp .env.example .env` (edit for your domain)
 - (Optional) Set `EOSRIFT_AUTH_TOKEN` in `.env` to bootstrap the first authtoken
@@ -63,25 +70,26 @@ Notes:
 - `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
 - Once deployed with DNS + Caddy, `https://<EOSRIFT_BASE_DOMAIN>/` serves a small landing page (the tunnel subdomains still route to tunnels).
 
-### Client (build)
+### Client (build, recommended for now)
 
 This repo doesn’t require Go on your host; you can build with Docker:
 
 - Linux (example): `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 ./scripts/go build -o bin/eosrift ./cmd/client`
 - macOS (example): `CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 ./scripts/go build -o bin/eosrift ./cmd/client`
 
-### Client (install from GitHub Releases)
+### Client (install from GitHub Releases, planned)
 
-If you tag releases (`v*`), GitHub Actions will upload release artifacts. You can install the
-client on macOS/Linux using:
+This repo includes GitHub Actions workflows to build release artifacts on tags (`v*`).
+
+We are not publishing regular releases yet; build locally for now. When releases start, you’ll
+be able to install the client on macOS/Linux using:
 
 - Latest release: `./scripts/install.sh`
 - Specific version: `./scripts/install.sh --version v0.1.0`
 
 By default, this installs to `~/.local/bin/eosrift` (override with `--dir`).
 
-Release assets include `checksums.txt` plus a Sigstore/cosign signature (`checksums.txt.sig` +
-`checksums.txt.pem`) so you can verify downloads.
+Release assets include `checksums.txt` so you can verify downloads.
 
 ### Client config (alpha)
 
