@@ -42,6 +42,7 @@ Self-hosted, Docker-first, open-source tunnel service aiming for an ngrok-like U
 - `ARCHITECTURE.md` — proposed architecture and protocols
 - `CHANGELOG.md` — notable changes (Keep a Changelog format)
 - `deploy/PRODUCTION.md` — production deployment notes (DNS, Caddy, firewall)
+- `SECURITY.md` — threat model and security checklist
 
 ## Quickstart
 
