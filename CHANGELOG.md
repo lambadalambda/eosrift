@@ -12,6 +12,10 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Named tunnels in `eosrift.yml` (`tunnels:`) and `eosrift start` / `eosrift start --all`.
 - TCP tunnel `remote_port` support: `eosrift tcp --remote-port` and `tunnels.*.remote_port`.
 
+### Changed
+
+- `eosrift start` now validates `tunnels:` config and fails fast on common mistakes (invalid `addr`, invalid option combinations).
+
 ## [0.1.1] - 2026-02-04
 
 ### Added

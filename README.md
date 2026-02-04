@@ -159,7 +159,9 @@ tunnels:
 ```
 
 - Start one: `./bin/eosrift start web`
+- Start many: `./bin/eosrift start web db`
 - Start all: `./bin/eosrift start --all`
+- Override server/token: `./bin/eosrift start --all --server https://<yourdomain> --authtoken <token>`
 
 ### TCP tunnel (alpha)
 
