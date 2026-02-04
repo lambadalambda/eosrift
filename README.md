@@ -68,6 +68,16 @@ This repo doesn’t require Go on your host; you can build with Docker:
 - Linux (example): `CGO_ENABLED=0 GOOS=linux GOARCH=amd64 ./scripts/go build -o bin/eosrift ./cmd/client`
 - macOS (example): `CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 ./scripts/go build -o bin/eosrift ./cmd/client`
 
+### Client (install from GitHub Releases)
+
+If you tag releases (`v*`), GitHub Actions will upload release artifacts. You can install the
+client on macOS/Linux using:
+
+- Latest release: `./scripts/install.sh`
+- Specific version: `./scripts/install.sh --version v0.1.0`
+
+By default, this installs to `~/.local/bin/eosrift` (override with `--dir`).
+
 ### Client config (alpha)
 
 Save your authtoken (ngrok-like):

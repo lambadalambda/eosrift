@@ -27,6 +27,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - GitHub Actions CI (unit tests + integration tests).
 - GitHub Actions workflow to publish multi-arch server Docker images to GHCR.
 - Production deployment docs (`deploy/PRODUCTION.md`) covering DNS, Caddy, and firewall ports.
+- Client install script (`scripts/install.sh`) for GitHub Release artifacts.
 
 ### Changed
 
