@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/netip"
 	"net/url"
 	"strings"
 	"time"
@@ -426,7 +425,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 
-	allowCIDRs, err := parseCIDRList("allow_cidr", req.AllowCIDR)
+	allowCIDRs, err := control.ParseCIDRList("allow_cidr", req.AllowCIDR, maxCIDREntries)
 	if err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
@@ -435,7 +434,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		_ = ctrlStream.Close()
 		return
 	}
-	denyCIDRs, err := parseCIDRList("deny_cidr", req.DenyCIDR)
+	denyCIDRs, err := control.ParseCIDRList("deny_cidr", req.DenyCIDR, maxCIDREntries)
 	if err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
 			Type:  "http",
@@ -542,47 +541,6 @@ func parseBasicAuthCredential(s string) (*basicAuthCredential, error) {
 	}
 
 	return &basicAuthCredential{Username: user, Password: pass}, nil
-}
-
-func parseCIDRList(field string, values []string) ([]netip.Prefix, error) {
-	if len(values) == 0 {
-		return nil, nil
-	}
-	if len(values) > maxCIDREntries {
-		return nil, fmt.Errorf("invalid %s: too many entries", field)
-	}
-
-	out := make([]netip.Prefix, 0, len(values))
-	for _, v := range values {
-		s := strings.TrimSpace(v)
-		if s == "" {
-			return nil, fmt.Errorf("invalid %s", field)
-		}
-
-		var p netip.Prefix
-		if strings.Contains(s, "/") {
-			parsed, err := netip.ParsePrefix(s)
-			if err != nil {
-				return nil, fmt.Errorf("invalid %s: %q", field, v)
-			}
-			p = parsed
-		} else {
-			a, err := netip.ParseAddr(s)
-			if err != nil {
-				return nil, fmt.Errorf("invalid %s: %q", field, v)
-			}
-			a = a.Unmap()
-			bits := 128
-			if a.Is4() {
-				bits = 32
-			}
-			p = netip.PrefixFrom(a, bits)
-		}
-
-		out = append(out, p.Masked())
-	}
-
-	return out, nil
 }
 
 func parseHeaderNameList(field string, values []string) ([]string, error) {

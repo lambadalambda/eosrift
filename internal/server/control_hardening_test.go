@@ -66,7 +66,7 @@ func TestParseCIDRList_RejectsTooManyEntries(t *testing.T) {
 		values = append(values, "1.2.3.4/32")
 	}
 
-	if _, err := parseCIDRList("allow_cidr", values); err == nil {
+	if _, err := control.ParseCIDRList("allow_cidr", values, maxCIDREntries); err == nil {
 		t.Fatalf("err = nil, want non-nil")
 	}
 }
