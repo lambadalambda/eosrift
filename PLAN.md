@@ -18,9 +18,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 6 — Packaging + deployment polish
 - [x] Milestone 7 — Hardening + observability
 - [x] Milestone 8 — RC track (HTTP correctness + compat)
-- [ ] Milestone 9 — Next milestone (TBD)
+- [ ] Milestone 9 — Config parity + Caddy smoke + release dry-run
 
-Current focus: **Milestone 9 (TBD)**.
+Current focus: **Milestone 9**.
 
 ## Guiding principles
 
@@ -169,3 +169,20 @@ but this milestone should make the system feel solid in daily use.
 
 - HTTP tunnel WebSocket echo smoke test
 - HTTP tunnel streaming response does not buffer entire body before first bytes
+
+## Milestone 9 — Config parity + Caddy smoke + release dry-run
+
+**Goal:** close a few remaining “ops and UX” gaps and make it easier to validate release builds
+before tagging.
+
+- [ ] Config parity: support `host_header` in `eosrift.yml` and add `eosrift config set-host-header ...`.
+- [ ] Add a Docker Compose smoke test that runs the existing integration tests through Caddy
+  (reverse proxy in front of the server) to catch proxy/websocket/streaming regressions.
+- [ ] Add a GitHub Actions “release dry-run” path (manual workflow dispatch) that builds the
+  same artifacts as tagged releases but uploads them as workflow artifacts (no tag required).
+
+**Acceptance tests**
+
+- Unit tests: `./scripts/go test ./...` is green.
+- Integration tests: `docker compose -f docker-compose.test.yml up --build --exit-code-from test` is green.
+- Caddy smoke: `docker compose -f docker-compose.caddytest.yml up --build --exit-code-from test` is green.
