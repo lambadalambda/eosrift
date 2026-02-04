@@ -122,6 +122,7 @@ Named tunnel keys (alpha) live under `tunnels:`:
 
 - Per tunnel: `proto` (`http`/`tcp`), `addr`
 - HTTP-only: `domain`, `subdomain`, `host_header`
+- TCP-only: `remote_port`
 - Optional: `inspect` (HTTP tunnels only)
 
 Config precedence:
@@ -154,6 +155,7 @@ tunnels:
   db:
     proto: tcp
     addr: 5432
+    remote_port: 20005
 ```
 
 - Start one: `./bin/eosrift start web`
@@ -164,6 +166,7 @@ tunnels:
 Expose a local TCP port through the server:
 
 - `./bin/eosrift tcp 8080 --server https://<yourdomain>`
+- Request a specific remote port: `./bin/eosrift tcp 8080 --remote-port 20005 --server https://<yourdomain>`
 
 The client prints the allocated remote port, e.g. `Forwarding tcp://<yourdomain>:20001 -> 127.0.0.1:8080`.
 
