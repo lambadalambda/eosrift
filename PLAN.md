@@ -45,7 +45,7 @@ kept in mind as we move toward `v1.0.0`.
 - [ ] Reduce duplication between CLI and server validation (CIDR parsing, header validation, etc.).
 - [ ] Deduplicate defaults/precedence logic across `http`, `tcp`, and `start` commands.
 - [ ] HTTP edge proxy perf: avoid per-request `Transport`/`ReverseProxy` construction; reuse per-tunnel where safe.
-- [ ] Control-plane hardening: limit initial JSON request bytes; cap list lengths (CIDRs/headers); validate header values.
+- [x] Control-plane hardening: limit initial JSON request bytes; cap list lengths (CIDRs/headers); validate header values.
 - [ ] Decide policy for allowing transforms on `Forwarded` / `X-Forwarded-*` (currently allowed).
 
 ## Milestone 0 — Repository + delivery scaffolding
