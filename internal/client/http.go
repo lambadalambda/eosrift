@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net"
+	"net/url"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -31,7 +33,13 @@ type HTTPTunnel struct {
 	ID  string
 	URL string
 
-	localAddr string
+	localAddr  string
+	controlURL string
+	authtoken  string
+	subdomain  string
+	domain     string
+
+	mu        sync.Mutex
 	ws        *websocket.Conn
 	session   *yamux.Session
 	inspector *inspect.Store
@@ -48,57 +56,27 @@ func StartHTTPTunnel(ctx context.Context, controlURL, localAddr string) (*HTTPTu
 }
 
 func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr string, opts HTTPTunnelOptions) (*HTTPTunnel, error) {
-	ws, session, err := dialControlWithRetry(ctx, controlURL)
-	if err != nil {
-		return nil, err
-	}
-
-	ctrlStream, err := session.OpenStream()
-	if err != nil {
-		_ = session.Close()
-		_ = ws.Close(websocket.StatusInternalError, "control error")
-		return nil, err
-	}
-
-	if err := json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelRequest{
+	ws, session, resp, err := createHTTPTunnel(ctx, controlURL, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: opts.Authtoken,
 		Subdomain: opts.Subdomain,
 		Domain:    opts.Domain,
-	}); err != nil {
-		_ = ctrlStream.Close()
-		_ = session.Close()
-		_ = ws.Close(websocket.StatusInternalError, "control error")
+	})
+	if err != nil {
 		return nil, err
-	}
-
-	var resp control.CreateHTTPTunnelResponse
-	if err := json.NewDecoder(ctrlStream).Decode(&resp); err != nil {
-		_ = ctrlStream.Close()
-		_ = session.Close()
-		_ = ws.Close(websocket.StatusInternalError, "control error")
-		return nil, err
-	}
-	_ = ctrlStream.Close()
-
-	if resp.Error != "" {
-		_ = session.Close()
-		_ = ws.Close(websocket.StatusPolicyViolation, resp.Error)
-		return nil, errors.New(resp.Error)
-	}
-	if resp.ID == "" || resp.URL == "" {
-		_ = session.Close()
-		_ = ws.Close(websocket.StatusInternalError, "invalid server response")
-		return nil, errors.New("invalid server response")
 	}
 
 	t := &HTTPTunnel{
-		ID:        resp.ID,
-		URL:       resp.URL,
-		localAddr: localAddr,
-		ws:        ws,
-		session:   session,
-		inspector: opts.Inspector,
+		ID:         resp.ID,
+		URL:        resp.URL,
+		localAddr:  localAddr,
+		controlURL: controlURL,
+		authtoken:  opts.Authtoken,
+		subdomain:  opts.Subdomain,
+		domain:     opts.Domain,
+		ws:         ws,
+		session:    session,
+		inspector:  opts.Inspector,
 		captureBytes: func() int {
 			if opts.CaptureBytes > 0 {
 				return opts.CaptureBytes
@@ -123,11 +101,12 @@ func (t *HTTPTunnel) Close() error {
 
 	t.closeOnce.Do(func() {
 		t.closing.Store(true)
-		if t.session != nil {
-			closeErr = t.session.Close()
+		ws, session := t.conn()
+		if session != nil {
+			closeErr = session.Close()
 		}
-		if t.ws != nil {
-			_ = t.ws.Close(websocket.StatusNormalClosure, "closed")
+		if ws != nil {
+			_ = ws.Close(websocket.StatusNormalClosure, "closed")
 		}
 	})
 
@@ -140,7 +119,13 @@ func (t *HTTPTunnel) Wait() error {
 
 func (t *HTTPTunnel) acceptStreams(ctx context.Context) {
 	for {
-		stream, err := t.session.AcceptStream()
+		session := t.currentSession()
+		if session == nil {
+			t.finish(errors.New("control session is nil"))
+			return
+		}
+
+		stream, err := session.AcceptStream()
 		if err != nil {
 			if t.closing.Load() || ctx.Err() != nil {
 				if ctx.Err() != nil {
@@ -150,8 +135,13 @@ func (t *HTTPTunnel) acceptStreams(ctx context.Context) {
 				}
 				return
 			}
-			t.finish(err)
-			return
+
+			if err := t.reconnect(ctx); err != nil {
+				t.finish(err)
+				return
+			}
+
+			continue
 		}
 
 		go t.handleStream(ctx, stream)
@@ -205,4 +195,164 @@ func (t *HTTPTunnel) handleStream(ctx context.Context, stream net.Conn) {
 		RequestHeaders:  s.RequestHeaders,
 		ResponseHeaders: s.ResponseHeaders,
 	})
+}
+
+func createHTTPTunnel(ctx context.Context, controlURL string, req control.CreateHTTPTunnelRequest) (*websocket.Conn, *yamux.Session, control.CreateHTTPTunnelResponse, error) {
+	var resp control.CreateHTTPTunnelResponse
+
+	ws, session, err := dialControlWithRetry(ctx, controlURL)
+	if err != nil {
+		return nil, nil, resp, err
+	}
+
+	ctrlStream, err := session.OpenStream()
+	if err != nil {
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusInternalError, "control error")
+		return nil, nil, resp, err
+	}
+
+	if err := json.NewEncoder(ctrlStream).Encode(req); err != nil {
+		_ = ctrlStream.Close()
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusInternalError, "control error")
+		return nil, nil, resp, err
+	}
+
+	if err := json.NewDecoder(ctrlStream).Decode(&resp); err != nil {
+		_ = ctrlStream.Close()
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusInternalError, "control error")
+		return nil, nil, resp, err
+	}
+	_ = ctrlStream.Close()
+
+	if resp.Error != "" {
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusPolicyViolation, resp.Error)
+		return nil, nil, resp, errors.New(resp.Error)
+	}
+	if resp.ID == "" || resp.URL == "" {
+		_ = session.Close()
+		_ = ws.Close(websocket.StatusInternalError, "invalid server response")
+		return nil, nil, resp, errors.New("invalid server response")
+	}
+
+	return ws, session, resp, nil
+}
+
+func (t *HTTPTunnel) conn() (*websocket.Conn, *yamux.Session) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.ws, t.session
+}
+
+func (t *HTTPTunnel) currentSession() *yamux.Session {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.session
+}
+
+func (t *HTTPTunnel) setConn(ws *websocket.Conn, session *yamux.Session) (*websocket.Conn, *yamux.Session) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	oldWS, oldSession := t.ws, t.session
+	t.ws, t.session = ws, session
+	return oldWS, oldSession
+}
+
+func (t *HTTPTunnel) reconnect(ctx context.Context) error {
+	delay := 250 * time.Millisecond
+	const maxDelay = 5 * time.Second
+
+	for {
+		if t.closing.Load() || ctx.Err() != nil {
+			if ctx.Err() != nil {
+				return ctx.Err()
+			}
+			return nil
+		}
+
+		req := control.CreateHTTPTunnelRequest{
+			Type:      "http",
+			Authtoken: t.authtoken,
+			Subdomain: t.subdomain,
+			Domain:    t.domain,
+		}
+
+		if strings.TrimSpace(req.Domain) == "" && strings.TrimSpace(req.Subdomain) == "" {
+			req.Domain = hostFromURL(t.URL)
+		}
+
+		ws, session, resp, err := createHTTPTunnel(ctx, t.controlURL, req)
+		if err == nil {
+			if t.closing.Load() || ctx.Err() != nil {
+				_ = session.Close()
+				_ = ws.Close(websocket.StatusNormalClosure, "closed")
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+				return nil
+			}
+
+			if resp.ID != t.ID || resp.URL != t.URL {
+				_ = session.Close()
+				_ = ws.Close(websocket.StatusInternalError, "resume mismatch")
+				return errors.New("resume mismatch")
+			}
+
+			oldWS, oldSession := t.setConn(ws, session)
+			if oldSession != nil {
+				_ = oldSession.Close()
+			}
+			if oldWS != nil {
+				_ = oldWS.Close(websocket.StatusGoingAway, "reconnected")
+			}
+			return nil
+		}
+
+		// Retry only for likely-transient server-side errors.
+		if isRetryableControlError(err) {
+			timer := time.NewTimer(delay)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return ctx.Err()
+			case <-timer.C:
+			}
+
+			delay *= 2
+			if delay > maxDelay {
+				delay = maxDelay
+			}
+			continue
+		}
+
+		return err
+	}
+}
+
+func isRetryableControlError(err error) bool {
+	if err == nil {
+		return false
+	}
+	switch strings.ToLower(strings.TrimSpace(err.Error())) {
+	case "too many active tunnels", "rate limit exceeded":
+		return true
+	default:
+		return false
+	}
+}
+
+func hostFromURL(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+
+	u, err := url.Parse(raw)
+	if err == nil && u.Host != "" {
+		return u.Host
+	}
+	return raw
 }

@@ -138,7 +138,7 @@ Current focus: **Milestone 7**.
 
 **Goal:** stability under real-world networks.
 
-- [ ] Reconnect/backoff and session resumption (beyond initial dial retries)
+- [x] Reconnect/backoff and session resumption (beyond initial dial retries)
 - [x] Health checks (`/healthz`)
 - [x] Metrics endpoint (`/metrics`, Prometheus text format; token-gated)
 - [x] Structured logs (JSON) and log levels
