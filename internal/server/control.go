@@ -24,7 +24,6 @@ const (
 	maxControlRequestBytes    = 64 * 1024
 	maxCIDREntries            = 64
 	maxHeaderTransformEntries = 64
-	maxHeaderValueBytes       = 8 * 1024
 )
 
 type yamuxSession struct {
@@ -596,7 +595,7 @@ func parseHeaderNameList(field string, values []string) ([]string, error) {
 
 	out := make([]string, 0, len(values))
 	for _, v := range values {
-		name, err := normalizeHeaderName(field, v)
+		name, err := control.NormalizeHeaderName(field, v)
 		if err != nil {
 			return nil, err
 		}
@@ -615,14 +614,14 @@ func parseHeaderKVList(field string, values []control.HeaderKV) ([]headerKV, err
 
 	out := make([]headerKV, 0, len(values))
 	for _, kv := range values {
-		name, err := normalizeHeaderName(field, kv.Name)
+		name, err := control.NormalizeHeaderName(field, kv.Name)
 		if err != nil {
 			return nil, err
 		}
 
-		val := strings.TrimSpace(kv.Value)
-		if len(val) > maxHeaderValueBytes || !isSafeHeaderValue(val) {
-			return nil, fmt.Errorf("invalid %s: %q", field, kv.Name)
+		val, err := control.ValidateHeaderValue(field, kv.Name, kv.Value)
+		if err != nil {
+			return nil, err
 		}
 		out = append(out, headerKV{
 			Name:  name,
@@ -630,70 +629,6 @@ func parseHeaderKVList(field string, values []control.HeaderKV) ([]headerKV, err
 		})
 	}
 	return out, nil
-}
-
-func normalizeHeaderName(field string, raw string) (string, error) {
-	s := strings.TrimSpace(raw)
-	if s == "" || !isValidHeaderToken(s) {
-		return "", fmt.Errorf("invalid %s: %q", field, raw)
-	}
-
-	s = http.CanonicalHeaderKey(s)
-	if isDisallowedTransformedHeader(s) {
-		return "", fmt.Errorf("invalid %s: %q", field, raw)
-	}
-
-	return s, nil
-}
-
-func isValidHeaderToken(s string) bool {
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		switch {
-		case c >= '0' && c <= '9':
-		case c >= 'a' && c <= 'z':
-		case c >= 'A' && c <= 'Z':
-		case strings.ContainsRune("!#$%&'*+-.^_`|~", rune(c)):
-		default:
-			return false
-		}
-	}
-	return true
-}
-
-func isSafeHeaderValue(s string) bool {
-	for i := 0; i < len(s); i++ {
-		c := s[i]
-		if c == '\r' || c == '\n' || c == 0 {
-			return false
-		}
-		if c < 0x20 && c != '\t' {
-			return false
-		}
-		if c == 0x7f {
-			return false
-		}
-	}
-	return true
-}
-
-func isDisallowedTransformedHeader(name string) bool {
-	switch http.CanonicalHeaderKey(name) {
-	case "Connection",
-		"Proxy-Connection",
-		"Keep-Alive",
-		"Proxy-Authenticate",
-		"Proxy-Authorization",
-		"Te",
-		"Trailer",
-		"Transfer-Encoding",
-		"Upgrade",
-		"Content-Length",
-		"Host":
-		return true
-	default:
-		return false
-	}
 }
 
 func writeControlTCPError(w io.Writer, msg string) error {
