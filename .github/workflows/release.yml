@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version string to embed in binaries (e.g. v0.1.0-dryrun)"
+        required: true
+        default: "v0.0.0-dryrun"
 
 permissions:
   contents: write
@@ -12,6 +18,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,7 +34,6 @@ jobs:
         run: |
           set -euo pipefail
 
-          VERSION="${GITHUB_REF_NAME}"
           DIST="dist"
           rm -rf "${DIST}"
           mkdir -p "${DIST}"
@@ -75,6 +82,7 @@ jobs:
             dist/checksums.txt
 
       - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -83,3 +91,11 @@ jobs:
             dist/checksums.txt.sig
             dist/checksums.txt.pem
           generate_release_notes: true
+
+      - name: Upload workflow artifacts (dry-run)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ env.VERSION }}
+          path: dist/
+          if-no-files-found: error

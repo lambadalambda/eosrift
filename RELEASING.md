@@ -41,3 +41,12 @@ Verification (post-tag):
 - [ ] Client install script works against the new release (`scripts/install.sh --version vX.Y.Z`).
 - [ ] Docker image workflow publishes multi-arch images (if enabled for that tag).
 
+## Dry-run release builds (no tag)
+
+To validate the release pipeline end-to-end without creating a tag:
+
+- Run the **Release** workflow via GitHub Actions → “Run workflow”.
+- Set `version` to something like `v0.1.0-dryrun` (this is embedded in the binaries).
+- Download the `dist-<version>` workflow artifact and verify:
+  - `checksums.txt` exists and has a `.sig` + `.pem` (cosign keyless signing)
+  - the tarballs contain the expected binaries (`eosrift`, `eosrift-server`)

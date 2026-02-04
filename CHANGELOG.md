@@ -19,6 +19,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Embedded landing page on the base domain (`GET /` + `GET /style.css`).
 - GitHub Actions release workflow (builds client/server binaries on tags).
 - GitHub Actions release workflow now signs `checksums.txt` with keyless Sigstore/cosign.
+- GitHub Actions release workflow now supports manual “dry-run” builds (no tag) via `workflow_dispatch`.
 - TCP tunneling (alpha): websocket control plane (`/control`) + `eosrift tcp`.
 - HTTP tunneling (alpha): host routing under `EOSRIFT_TUNNEL_DOMAIN` + `eosrift http`.
 - Reserved subdomains (alpha): `eosrift-server reserve ...` + `eosrift http --subdomain ...` (stable tunnel URLs).
