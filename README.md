@@ -78,6 +78,9 @@ client on macOS/Linux using:
 
 By default, this installs to `~/.local/bin/eosrift` (override with `--dir`).
 
+Release assets include `checksums.txt` plus a Sigstore/cosign signature (`checksums.txt.sig` +
+`checksums.txt.pem`) so you can verify downloads.
+
 ### Client config (alpha)
 
 Save your authtoken (ngrok-like):
