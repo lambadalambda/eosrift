@@ -7,6 +7,10 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Named tunnels in `eosrift.yml` (`tunnels:`) and `eosrift start` / `eosrift start --all`.
+
 ## [0.1.1] - 2026-02-04
 
 ### Added

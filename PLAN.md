@@ -19,9 +19,9 @@ Last updated: **2026-02-04**
 - [x] Milestone 7 — Hardening + observability
 - [x] Milestone 8 — RC track (HTTP correctness + compat)
 - [x] Milestone 9 — Config parity + Caddy smoke + release dry-run
-- [ ] Milestone 10 — Named tunnels + `start` (ngrok-like)
+- [x] Milestone 10 — Named tunnels + `start` (ngrok-like)
 
-Current focus: **Milestone 10**.
+Current focus: **Define Milestone 11**.
 
 ## Guiding principles
 
@@ -193,12 +193,12 @@ before tagging.
 **Goal:** run config-defined tunnels without repeating flags/args and get closer to ngrok’s “named
 tunnels” workflow.
 
-- [ ] Config: support an ngrok-like `tunnels:` map in `eosrift.yml`.
+- [x] Config: support an ngrok-like `tunnels:` map in `eosrift.yml`.
   - Each tunnel defines: `proto` (`http`/`tcp`), `addr`, and optional HTTP settings like
     `domain` / `subdomain` / `host_header`.
-- [ ] CLI: add `eosrift start <name>` and `eosrift start --all`.
-- [ ] Output: show a clear per-tunnel session summary (multiple tunnels should be readable).
-- [ ] Tests: unit tests for config parsing/validation + Docker integration coverage for `start`.
+- [x] CLI: add `eosrift start <name>` and `eosrift start --all`.
+- [x] Output: show a clear per-tunnel session summary (multiple tunnels should be readable).
+- [x] Tests: unit tests for config parsing/validation + Docker integration coverage for `start`.
 
 **Acceptance tests**
 

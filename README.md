@@ -118,6 +118,12 @@ Default config path:
 
 Supported keys (compatible subset): `authtoken`, `server_addr`, `host_header`, `inspect`, `inspect_addr`.
 
+Named tunnel keys (alpha) live under `tunnels:`:
+
+- Per tunnel: `proto` (`http`/`tcp`), `addr`
+- HTTP-only: `domain`, `subdomain`, `host_header`
+- Optional: `inspect` (HTTP tunnels only)
+
 Config precedence:
 
 - Flags > environment > config file > defaults
@@ -130,6 +136,28 @@ Config precedence:
   - `--inspect-addr` > `EOSRIFT_INSPECT_ADDR` > `inspect_addr` > `127.0.0.1:4040` (tries up to `:5000`)
 - Host header (`--host-header`):
   - `--host-header` > `host_header` > `preserve`
+
+### Named tunnels + `start` (alpha)
+
+Define tunnels in `eosrift.yml`, then start them by name (ngrok-like):
+
+```yaml
+version: 1
+server_addr: https://eosrift.com
+authtoken: <token>
+
+tunnels:
+  web:
+    proto: http
+    addr: 3000
+    domain: demo.tunnel.eosrift.com
+  db:
+    proto: tcp
+    addr: 5432
+```
+
+- Start one: `./bin/eosrift start web`
+- Start all: `./bin/eosrift start --all`
 
 ### TCP tunnel (alpha)
 
