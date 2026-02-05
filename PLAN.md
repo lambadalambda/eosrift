@@ -34,7 +34,7 @@ Current focus: **Milestone 16**.
 - **Docker-first testing:** prefer running integration tests inside `docker compose` networks.
 - **Caddy owns HTTPS:** the tunnel server runs plain HTTP behind Caddy for web traffic.
 - **Small, topical commits:** one logical change per commit; keep the changelog current.
-- **Linux server / macOS+Linux client:** server targets Linux only; client targets macOS + Linux.
+- **Linux server / macOS+Linux client:** server is tested/packaged for Linux; client targets macOS + Linux.
 
 ## Engineering backlog (rolling)
 

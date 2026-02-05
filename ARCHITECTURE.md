@@ -8,7 +8,7 @@ Examples use `eosrift.com` as the base domain; self-hosters can substitute their
 
 ## Terminology
 
-- **Edge / server:** publicly reachable service hosted on Linux.
+- **Edge / server:** publicly reachable service (tested/packaged on Linux; other Unix-like OSes may work but are untested).
 - **Agent / client:** CLI tool running on macOS/Linux that exposes local services.
 - **Tunnel:** mapping from a public endpoint (host/port) to a local upstream address.
 - **Session:** an authenticated, long-lived client connection to the server.
@@ -26,7 +26,7 @@ Examples use `eosrift.com` as the base domain; self-hosters can substitute their
   - `https://<base-domain>/control` (websocket upgrade) → server control handler
   - Optional: `https://<base-domain>/api/...` → server management API
 
-### 2) Server (Go, Linux)
+### 2) Server (Go, Linux target)
 
 Responsibilities:
 

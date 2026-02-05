@@ -102,7 +102,7 @@ const landingIndexHTML = `<!DOCTYPE html>
                         </div>
                         <div class="terminal-output">
                             <span class="output-label">Eosrift</span>
-                            <span class="output-version">v0.1.0</span>
+                            <span class="output-version">v0.1.1</span>
                         </div>
                         <div class="terminal-output">
                             <span class="output-dim">Session Status</span>
@@ -111,7 +111,7 @@ const landingIndexHTML = `<!DOCTYPE html>
                         <div class="terminal-output">
                             <span class="output-dim">Forwarding</span>
                             <span class="output-url">https://abc123.tunnel.eosrift.com</span>
-                            <span class="output-arrow">-></span>
+                            <span class="output-arrow">→</span>
                             <span>localhost:3000</span>
                         </div>
                         <div class="terminal-output">
@@ -211,7 +211,7 @@ const landingIndexHTML = `<!DOCTYPE html>
                             <div class="code-block">
                                 <code>export EOSRIFT_BASE_DOMAIN=eosrift.com</code>
                                 <code>export EOSRIFT_TUNNEL_DOMAIN=tunnel.eosrift.com</code>
-                                <code>docker compose up -d</code>
+                                <code>docker compose up -d --build</code>
                             </div>
                         </div>
                     </div>

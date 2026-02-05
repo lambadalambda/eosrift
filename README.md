@@ -18,7 +18,8 @@ service yet:
 - Functional, self-hostable “ngrok clone”
 - Easy deployment via **Docker / Docker Compose**
 - **HTTPS termination via Caddy**
-- **Linux-only server**, **Linux + macOS client**
+- **Server:** officially supported on Linux (Docker images + CI); likely works on other Unix-like OSes but not tested
+- **Client:** Linux + macOS
 - CLI UX as close to ngrok as practical (commands, flags, config, output)
 - Persistence via **SQLite** (no external DB dependencies)
 - Development via **TDD** (unit tests + Docker-based integration tests)
