@@ -27,6 +27,11 @@ type CreateHTTPTunnelRequest struct {
 
 	BasicAuth string `json:"basic_auth,omitempty"` // "user:pass"
 
+	// Optional allowlist-style filtering on the server edge.
+	AllowMethod     []string `json:"allow_method,omitempty"`
+	AllowPath       []string `json:"allow_path,omitempty"`
+	AllowPathPrefix []string `json:"allow_path_prefix,omitempty"`
+
 	// CIDR-based edge access control. If allow_cidr is non-empty, the server
 	// denies any request whose client IP does not match at least one entry.
 	// deny_cidr always takes precedence.
