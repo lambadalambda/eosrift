@@ -47,6 +47,7 @@ kept in mind as we move toward `v1.0.0`.
   - [x] `internal/client`: helper logic (no-network)
   - [x] `internal/client`: host header rewrite tests (no-network)
   - [x] `internal/server`: http tunnel helper tests (no-network)
+  - [x] `internal/logging`: parse + text formatting tests (no-network)
 - [x] Reduce duplication between CLI and server validation (header transforms: shared header name/value validation).
 - [x] Reduce duplication between CLI and server validation (CIDR parsing).
 - [x] Deduplicate defaults/precedence logic across `http`, `tcp`, and `start` commands.
