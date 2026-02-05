@@ -7,7 +7,7 @@ Examples may reference `eosrift.com`; self-hosters can substitute their own doma
 
 ## Milestone tracker (keep updated)
 
-Last updated: **2026-02-04**
+Last updated: **2026-02-05**
 
 - [x] Milestone 0 — Repository + delivery scaffolding
 - [x] Milestone 1 — Control plane + TCP tunnel (end-to-end MVP)
@@ -45,6 +45,7 @@ kept in mind as we move toward `v1.0.0`.
   - [x] `cmd/server`: admin commands (`token`, `reserve`, `tcp-reserve`)
   - [x] `internal/cli`: config + flag validation tests (no-network)
   - [x] `internal/client`: helper logic (no-network)
+  - [x] `internal/client`: host header rewrite tests (no-network)
   - [x] `internal/server`: http tunnel helper tests (no-network)
 - [x] Reduce duplication between CLI and server validation (header transforms: shared header name/value validation).
 - [x] Reduce duplication between CLI and server validation (CIDR parsing).
