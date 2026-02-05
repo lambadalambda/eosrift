@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -23,14 +24,11 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "token", "tokens":
-			tokenCmd(logger, os.Args[2:])
-			return
+			os.Exit(runTokenCmd(logger, os.Args[2:], os.Stdout, os.Stderr))
 		case "reserve", "reservations":
-			reserveCmd(logger, os.Args[2:])
-			return
+			os.Exit(runReserveCmd(logger, os.Args[2:], os.Stdout, os.Stderr))
 		case "tcp-reserve", "tcp-reservations":
-			tcpReserveCmd(logger, os.Args[2:])
-			return
+			os.Exit(runTCPReserveCmd(logger, os.Args[2:], os.Stdout, os.Stderr))
 		}
 	}
 
@@ -81,82 +79,89 @@ func main() {
 	}
 }
 
-func tokenCmd(logger logging.Logger, args []string) {
+func runTokenCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
 	if len(args) < 1 {
-		tokenUsage()
-		os.Exit(2)
+		tokenUsage(stderr)
+		return 2
 	}
 
 	switch args[0] {
 	case "create":
-		tokenCreateCmd(logger, args[1:])
+		return runTokenCreateCmd(logger, args[1:], stdout, stderr)
 	case "list":
-		tokenListCmd(logger, args[1:])
+		return runTokenListCmd(logger, args[1:], stdout, stderr)
 	case "revoke":
-		tokenRevokeCmd(logger, args[1:])
+		return runTokenRevokeCmd(logger, args[1:], stdout, stderr)
 	default:
-		tokenUsage()
-		os.Exit(2)
+		tokenUsage(stderr)
+		return 2
 	}
 }
 
-func tokenUsage() {
-	fmt.Fprintln(os.Stderr, "usage: eosrift-server token <command> [args]")
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "commands:")
-	fmt.Fprintln(os.Stderr, "  create   create a new authtoken")
-	fmt.Fprintln(os.Stderr, "  list     list authtokens")
-	fmt.Fprintln(os.Stderr, "  revoke   revoke an authtoken by id")
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "env:")
-	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
+func tokenUsage(w io.Writer) {
+	fmt.Fprintln(w, "usage: eosrift-server token <command> [args]")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "commands:")
+	fmt.Fprintln(w, "  create   create a new authtoken")
+	fmt.Fprintln(w, "  list     list authtokens")
+	fmt.Fprintln(w, "  revoke   revoke an authtoken by id")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "env:")
+	fmt.Fprintln(w, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
 }
 
-func tokenCreateCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("token create", flag.ExitOnError)
+func runTokenCreateCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("token create", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	label := fs.String("label", "", "Token label")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	rec, token, err := store.CreateToken(ctx, *label)
 	if err != nil {
-		fatal(logger, "create token", logging.F("err", err))
+		return adminError(logger, stderr, "create token", logging.F("err", err))
 	}
 
-	fmt.Printf("id: %d\n", rec.ID)
+	fmt.Fprintf(stdout, "id: %d\n", rec.ID)
 	if rec.Label != "" {
-		fmt.Printf("label: %s\n", rec.Label)
+		fmt.Fprintf(stdout, "label: %s\n", rec.Label)
 	}
-	fmt.Printf("token: %s\n", token)
+	fmt.Fprintf(stdout, "token: %s\n", token)
+	return 0
 }
 
-func tokenListCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("token list", flag.ExitOnError)
+func runTokenListCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("token list", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	tokens, err := store.ListTokens(ctx)
 	if err != nil {
-		fatal(logger, "list tokens", logging.F("err", err))
+		return adminError(logger, stderr, "list tokens", logging.F("err", err))
 	}
 
 	if len(tokens) == 0 {
-		fmt.Println("no tokens")
-		return
+		fmt.Fprintln(stdout, "no tokens")
+		return 0
 	}
 
 	for _, t := range tokens {
@@ -168,37 +173,42 @@ func tokenListCmd(logger logging.Logger, args []string) {
 		if label == "" {
 			label = "-"
 		}
-		fmt.Printf("%d\t%s\t%s\t%s\n", t.ID, t.Prefix, label, status)
+		fmt.Fprintf(stdout, "%d\t%s\t%s\t%s\n", t.ID, t.Prefix, label, status)
 	}
+	return 0
 }
 
-func tokenRevokeCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("token revoke", flag.ExitOnError)
+func runTokenRevokeCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("token revoke", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: eosrift-server token revoke [--db path] <id>")
-		os.Exit(2)
+		fmt.Fprintln(stderr, "usage: eosrift-server token revoke [--db path] <id>")
+		return 2
 	}
 
 	id, err := strconv.ParseInt(fs.Arg(0), 10, 64)
 	if err != nil || id <= 0 {
-		fatal(logger, "invalid id", logging.F("id", fs.Arg(0)))
+		return adminError(logger, stderr, "invalid id", logging.F("id", fs.Arg(0)))
 	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.RevokeToken(ctx, id); err != nil {
-		fatal(logger, "revoke token", logging.F("err", err))
+		return adminError(logger, stderr, "revoke token", logging.F("err", err))
 	}
 
-	fmt.Printf("revoked %d\n", id)
+	fmt.Fprintf(stdout, "revoked %d\n", id)
+	return 0
 }
 
 func getenv(key, fallback string) string {
@@ -209,46 +219,49 @@ func getenv(key, fallback string) string {
 	return v
 }
 
-func reserveCmd(logger logging.Logger, args []string) {
+func runReserveCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
 	if len(args) < 1 {
-		reserveUsage()
-		os.Exit(2)
+		reserveUsage(stderr)
+		return 2
 	}
 
 	switch args[0] {
 	case "add":
-		reserveAddCmd(logger, args[1:])
+		return runReserveAddCmd(logger, args[1:], stdout, stderr)
 	case "list":
-		reserveListCmd(logger, args[1:])
+		return runReserveListCmd(logger, args[1:], stdout, stderr)
 	case "remove", "rm", "delete":
-		reserveRemoveCmd(logger, args[1:])
+		return runReserveRemoveCmd(logger, args[1:], stdout, stderr)
 	default:
-		reserveUsage()
-		os.Exit(2)
+		reserveUsage(stderr)
+		return 2
 	}
 }
 
-func reserveUsage() {
-	fmt.Fprintln(os.Stderr, "usage: eosrift-server reserve <command> [args]")
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "commands:")
-	fmt.Fprintln(os.Stderr, "  add      reserve a subdomain for a token id")
-	fmt.Fprintln(os.Stderr, "  list     list reserved subdomains")
-	fmt.Fprintln(os.Stderr, "  remove   remove a reserved subdomain")
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "env:")
-	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
+func reserveUsage(w io.Writer) {
+	fmt.Fprintln(w, "usage: eosrift-server reserve <command> [args]")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "commands:")
+	fmt.Fprintln(w, "  add      reserve a subdomain for a token id")
+	fmt.Fprintln(w, "  list     list reserved subdomains")
+	fmt.Fprintln(w, "  remove   remove a reserved subdomain")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "env:")
+	fmt.Fprintln(w, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
 }
 
-func reserveAddCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("reserve add", flag.ExitOnError)
+func runReserveAddCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("reserve add", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	tokenID := fs.Int64("token-id", 0, "Token id to bind the subdomain to")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if *tokenID <= 0 || fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: eosrift-server reserve add --token-id <id> [--db path] <subdomain>")
-		os.Exit(2)
+		fmt.Fprintln(stderr, "usage: eosrift-server reserve add --token-id <id> [--db path] <subdomain>")
+		return 2
 	}
 
 	subdomain := fs.Arg(0)
@@ -256,52 +269,60 @@ func reserveAddCmd(logger logging.Logger, args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.ReserveSubdomain(ctx, *tokenID, subdomain); err != nil {
-		fatal(logger, "reserve subdomain", logging.F("err", err))
+		return adminError(logger, stderr, "reserve subdomain", logging.F("err", err))
 	}
 
-	fmt.Printf("reserved %s\n", subdomain)
+	fmt.Fprintf(stdout, "reserved %s\n", subdomain)
+	return 0
 }
 
-func reserveListCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("reserve list", flag.ExitOnError)
+func runReserveListCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("reserve list", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	list, err := store.ListReservedSubdomains(ctx)
 	if err != nil {
-		fatal(logger, "list reserved subdomains", logging.F("err", err))
+		return adminError(logger, stderr, "list reserved subdomains", logging.F("err", err))
 	}
 
 	if len(list) == 0 {
-		fmt.Println("no reserved subdomains")
-		return
+		fmt.Fprintln(stdout, "no reserved subdomains")
+		return 0
 	}
 
 	for _, r := range list {
-		fmt.Printf("%s\t%d\t%s\n", r.Subdomain, r.TokenID, r.TokenPrefix)
+		fmt.Fprintf(stdout, "%s\t%d\t%s\n", r.Subdomain, r.TokenID, r.TokenPrefix)
 	}
+	return 0
 }
 
-func reserveRemoveCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("reserve remove", flag.ExitOnError)
+func runReserveRemoveCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("reserve remove", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: eosrift-server reserve remove [--db path] <subdomain>")
-		os.Exit(2)
+		fmt.Fprintln(stderr, "usage: eosrift-server reserve remove [--db path] <subdomain>")
+		return 2
 	}
 
 	subdomain := fs.Arg(0)
@@ -309,132 +330,145 @@ func reserveRemoveCmd(logger logging.Logger, args []string) {
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.UnreserveSubdomain(ctx, subdomain); err != nil {
-		fatal(logger, "unreserve subdomain", logging.F("err", err))
+		return adminError(logger, stderr, "unreserve subdomain", logging.F("err", err))
 	}
 
-	fmt.Printf("unreserved %s\n", subdomain)
+	fmt.Fprintf(stdout, "unreserved %s\n", subdomain)
+	return 0
 }
 
-func tcpReserveCmd(logger logging.Logger, args []string) {
+func runTCPReserveCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
 	if len(args) < 1 {
-		tcpReserveUsage()
-		os.Exit(2)
+		tcpReserveUsage(stderr)
+		return 2
 	}
 
 	switch args[0] {
 	case "add":
-		tcpReserveAddCmd(logger, args[1:])
+		return runTCPReserveAddCmd(logger, args[1:], stdout, stderr)
 	case "list":
-		tcpReserveListCmd(logger, args[1:])
+		return runTCPReserveListCmd(logger, args[1:], stdout, stderr)
 	case "remove", "rm", "delete":
-		tcpReserveRemoveCmd(logger, args[1:])
+		return runTCPReserveRemoveCmd(logger, args[1:], stdout, stderr)
 	default:
-		tcpReserveUsage()
-		os.Exit(2)
+		tcpReserveUsage(stderr)
+		return 2
 	}
 }
 
-func tcpReserveUsage() {
-	fmt.Fprintln(os.Stderr, "usage: eosrift-server tcp-reserve <command> [args]")
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "commands:")
-	fmt.Fprintln(os.Stderr, "  add      reserve a TCP port for a token id")
-	fmt.Fprintln(os.Stderr, "  list     list reserved TCP ports")
-	fmt.Fprintln(os.Stderr, "  remove   remove a reserved TCP port")
-	fmt.Fprintln(os.Stderr, "")
-	fmt.Fprintln(os.Stderr, "env:")
-	fmt.Fprintln(os.Stderr, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
+func tcpReserveUsage(w io.Writer) {
+	fmt.Fprintln(w, "usage: eosrift-server tcp-reserve <command> [args]")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "commands:")
+	fmt.Fprintln(w, "  add      reserve a TCP port for a token id")
+	fmt.Fprintln(w, "  list     list reserved TCP ports")
+	fmt.Fprintln(w, "  remove   remove a reserved TCP port")
+	fmt.Fprintln(w, "")
+	fmt.Fprintln(w, "env:")
+	fmt.Fprintln(w, "  EOSRIFT_DB_PATH  sqlite db path (default: /data/eosrift.db)")
 }
 
-func tcpReserveAddCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("tcp-reserve add", flag.ExitOnError)
+func runTCPReserveAddCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("tcp-reserve add", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
 	tokenID := fs.Int64("token-id", 0, "Token id to bind the port to")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if *tokenID <= 0 || fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: eosrift-server tcp-reserve add --token-id <id> [--db path] <port>")
-		os.Exit(2)
+		fmt.Fprintln(stderr, "usage: eosrift-server tcp-reserve add --token-id <id> [--db path] <port>")
+		return 2
 	}
 
 	port, err := strconv.Atoi(fs.Arg(0))
 	if err != nil || port <= 0 {
-		fatal(logger, "invalid port", logging.F("port", fs.Arg(0)))
+		return adminError(logger, stderr, "invalid port", logging.F("port", fs.Arg(0)))
 	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.ReserveTCPPort(ctx, *tokenID, port); err != nil {
-		fatal(logger, "reserve tcp port", logging.F("err", err))
+		return adminError(logger, stderr, "reserve tcp port", logging.F("err", err))
 	}
 
-	fmt.Printf("reserved %d\n", port)
+	fmt.Fprintf(stdout, "reserved %d\n", port)
+	return 0
 }
 
-func tcpReserveListCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("tcp-reserve list", flag.ExitOnError)
+func runTCPReserveListCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("tcp-reserve list", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	list, err := store.ListReservedTCPPorts(ctx)
 	if err != nil {
-		fatal(logger, "list reserved tcp ports", logging.F("err", err))
+		return adminError(logger, stderr, "list reserved tcp ports", logging.F("err", err))
 	}
 
 	if len(list) == 0 {
-		fmt.Println("no reserved tcp ports")
-		return
+		fmt.Fprintln(stdout, "no reserved tcp ports")
+		return 0
 	}
 
 	for _, r := range list {
-		fmt.Printf("%d\t%d\t%s\n", r.Port, r.TokenID, r.TokenPrefix)
+		fmt.Fprintf(stdout, "%d\t%d\t%s\n", r.Port, r.TokenID, r.TokenPrefix)
 	}
+	return 0
 }
 
-func tcpReserveRemoveCmd(logger logging.Logger, args []string) {
-	fs := flag.NewFlagSet("tcp-reserve remove", flag.ExitOnError)
+func runTCPReserveRemoveCmd(logger logging.Logger, args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("tcp-reserve remove", flag.ContinueOnError)
+	fs.SetOutput(stderr)
 	dbPath := fs.String("db", getenv("EOSRIFT_DB_PATH", "/data/eosrift.db"), "SQLite DB path")
-	_ = fs.Parse(args)
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
 
 	if fs.NArg() != 1 {
-		fmt.Fprintln(os.Stderr, "usage: eosrift-server tcp-reserve remove [--db path] <port>")
-		os.Exit(2)
+		fmt.Fprintln(stderr, "usage: eosrift-server tcp-reserve remove [--db path] <port>")
+		return 2
 	}
 
 	port, err := strconv.Atoi(fs.Arg(0))
 	if err != nil || port <= 0 {
-		fatal(logger, "invalid port", logging.F("port", fs.Arg(0)))
+		return adminError(logger, stderr, "invalid port", logging.F("port", fs.Arg(0)))
 	}
 
 	ctx := context.Background()
 	store, err := auth.Open(ctx, *dbPath)
 	if err != nil {
-		fatal(logger, "open db", logging.F("err", err))
+		return adminError(logger, stderr, "open db", logging.F("err", err))
 	}
 	defer store.Close()
 
 	if err := store.UnreserveTCPPort(ctx, port); err != nil {
-		fatal(logger, "unreserve tcp port", logging.F("err", err))
+		return adminError(logger, stderr, "unreserve tcp port", logging.F("err", err))
 	}
 
-	fmt.Printf("unreserved %d\n", port)
+	fmt.Fprintf(stdout, "unreserved %d\n", port)
+	return 0
 }
 
 func newLogger() logging.Logger {
@@ -455,4 +489,13 @@ func fatal(logger logging.Logger, msg string, fields ...logging.Field) {
 		fmt.Fprintln(os.Stderr, msg)
 	}
 	os.Exit(1)
+}
+
+func adminError(logger logging.Logger, stderr io.Writer, msg string, fields ...logging.Field) int {
+	if logger != nil {
+		logger.Error(msg, fields...)
+	} else {
+		fmt.Fprintln(stderr, msg)
+	}
+	return 1
 }
