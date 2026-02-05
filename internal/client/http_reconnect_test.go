@@ -14,6 +14,16 @@ func TestHTTPTunnel_ControlRequestForReconnect(t *testing.T) {
 		URL:       "https://abcd1234.tunnel.eosrift.test",
 		authtoken: "tok-123",
 		basicAuth: "user:pass",
+		allowMethods: []string{
+			"GET",
+			"POST",
+		},
+		allowPaths: []string{
+			"/healthz",
+		},
+		allowPathPrefixes: []string{
+			"/api/",
+		},
 		allowCIDRs: []string{
 			"1.2.3.4/32",
 		},
@@ -36,6 +46,16 @@ func TestHTTPTunnel_ControlRequestForReconnect(t *testing.T) {
 		Authtoken: "tok-123",
 		Domain:    "abcd1234.tunnel.eosrift.test",
 		BasicAuth: "user:pass",
+		AllowMethod: []string{
+			"GET",
+			"POST",
+		},
+		AllowPath: []string{
+			"/healthz",
+		},
+		AllowPathPrefix: []string{
+			"/api/",
+		},
 		AllowCIDR: []string{"1.2.3.4/32"},
 		DenyCIDR:  []string{"10.0.0.0/8"},
 		RequestHeaderAdd: []control.HeaderKV{

@@ -28,6 +28,9 @@ type HTTPTunnelOptions struct {
 	Subdomain            string
 	Domain               string
 	BasicAuth            string
+	AllowMethods         []string
+	AllowPaths           []string
+	AllowPathPrefixes    []string
 	AllowCIDRs           []string
 	DenyCIDRs            []string
 	RequestHeaderAdd     []HeaderKV
@@ -61,6 +64,9 @@ type HTTPTunnel struct {
 	subdomain            string
 	domain               string
 	basicAuth            string
+	allowMethods         []string
+	allowPaths           []string
+	allowPathPrefixes    []string
 	allowCIDRs           []string
 	denyCIDRs            []string
 	requestHeaderAdd     []HeaderKV
@@ -109,6 +115,9 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		Subdomain:            opts.Subdomain,
 		Domain:               opts.Domain,
 		BasicAuth:            opts.BasicAuth,
+		AllowMethod:          opts.AllowMethods,
+		AllowPath:            opts.AllowPaths,
+		AllowPathPrefix:      opts.AllowPathPrefixes,
 		AllowCIDR:            opts.AllowCIDRs,
 		DenyCIDR:             opts.DenyCIDRs,
 		RequestHeaderAdd:     toControlHeaderKVs(opts.RequestHeaderAdd),
@@ -129,6 +138,9 @@ func StartHTTPTunnelWithOptions(ctx context.Context, controlURL, localAddr strin
 		subdomain:             opts.Subdomain,
 		domain:                opts.Domain,
 		basicAuth:             opts.BasicAuth,
+		allowMethods:          append([]string(nil), opts.AllowMethods...),
+		allowPaths:            append([]string(nil), opts.AllowPaths...),
+		allowPathPrefixes:     append([]string(nil), opts.AllowPathPrefixes...),
 		allowCIDRs:            append([]string(nil), opts.AllowCIDRs...),
 		denyCIDRs:             append([]string(nil), opts.DenyCIDRs...),
 		requestHeaderAdd:      append([]HeaderKV(nil), opts.RequestHeaderAdd...),
@@ -380,6 +392,9 @@ func (t *HTTPTunnel) controlRequestForReconnect() control.CreateHTTPTunnelReques
 		Subdomain:            t.subdomain,
 		Domain:               t.domain,
 		BasicAuth:            t.basicAuth,
+		AllowMethod:          append([]string(nil), t.allowMethods...),
+		AllowPath:            append([]string(nil), t.allowPaths...),
+		AllowPathPrefix:      append([]string(nil), t.allowPathPrefixes...),
 		AllowCIDR:            append([]string(nil), t.allowCIDRs...),
 		DenyCIDR:             append([]string(nil), t.denyCIDRs...),
 		RequestHeaderAdd:     toControlHeaderKVs(t.requestHeaderAdd),

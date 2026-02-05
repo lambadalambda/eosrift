@@ -23,6 +23,7 @@ const (
 	maxControlRequestBytes    = 64 * 1024
 	maxCIDREntries            = 64
 	maxHeaderTransformEntries = 64
+	maxAllowlistEntries       = 64
 )
 
 type yamuxSession struct {
@@ -48,6 +49,10 @@ type baseRequest struct {
 	Subdomain  string `json:"subdomain,omitempty"`
 	Domain     string `json:"domain,omitempty"`
 	BasicAuth  string `json:"basic_auth,omitempty"`
+
+	AllowMethod     []string `json:"allow_method,omitempty"`
+	AllowPath       []string `json:"allow_path,omitempty"`
+	AllowPathPrefix []string `json:"allow_path_prefix,omitempty"`
 
 	AllowCIDR []string `json:"allow_cidr,omitempty"`
 	DenyCIDR  []string `json:"deny_cidr,omitempty"`
@@ -256,6 +261,9 @@ func controlHandler(cfg Config, registry *TunnelRegistry, deps Dependencies, lim
 				Subdomain:            req.Subdomain,
 				Domain:               req.Domain,
 				BasicAuth:            req.BasicAuth,
+				AllowMethod:          req.AllowMethod,
+				AllowPath:            req.AllowPath,
+				AllowPathPrefix:      req.AllowPathPrefix,
 				AllowCIDR:            req.AllowCIDR,
 				DenyCIDR:             req.DenyCIDR,
 				RequestHeaderAdd:     req.RequestHeaderAdd,
@@ -444,6 +452,34 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return
 	}
 
+	allowMethods, err := control.ParseHTTPMethodList("allow_method", req.AllowMethod, maxAllowlistEntries)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+	allowPaths, err := control.ParsePathList("allow_path", req.AllowPath, maxAllowlistEntries)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+	allowPathPrefixes, err := control.ParsePathList("allow_path_prefix", req.AllowPathPrefix, maxAllowlistEntries)
+	if err != nil {
+		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+			Type:  "http",
+			Error: err.Error(),
+		})
+		_ = ctrlStream.Close()
+		return
+	}
+
 	requestHeaderRemove, err := parseHeaderNameList("request_header_remove", req.RequestHeaderRemove)
 	if err != nil {
 		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
@@ -486,6 +522,10 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		BasicAuth:  basicAuth,
 		AllowCIDRs: allowCIDRs,
 		DenyCIDRs:  denyCIDRs,
+
+		AllowMethods:      allowMethods,
+		AllowPaths:        allowPaths,
+		AllowPathPrefixes: allowPathPrefixes,
 
 		RequestHeaderAdd:     requestHeaderAdd,
 		RequestHeaderRemove:  requestHeaderRemove,
