@@ -42,6 +42,7 @@ Items captured during periodic review passes. These are not necessarily mileston
 kept in mind as we move toward `v1.0.0`.
 
 - [ ] Improve unit test coverage (esp. glue in `cmd/*`; keep relying on Docker integration for e2e).
+  - [x] `cmd/server`: admin commands (`token`, `reserve`, `tcp-reserve`)
 - [x] Reduce duplication between CLI and server validation (header transforms: shared header name/value validation).
 - [x] Reduce duplication between CLI and server validation (CIDR parsing).
 - [x] Deduplicate defaults/precedence logic across `http`, `tcp`, and `start` commands.
