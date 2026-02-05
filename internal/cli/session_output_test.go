@@ -39,3 +39,28 @@ func TestPrintSession_TCP_Golden(t *testing.T) {
 		t.Fatalf("output mismatch\n--- want ---\n%s\n--- got ---\n%s", want, got)
 	}
 }
+
+func TestDisplayHostPort(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{"127.0.0.1:4040", "localhost:4040"},
+		{"[::1]:4040", "localhost:4040"},
+		{"0.0.0.0:4040", "0.0.0.0:4040"},
+		{"bad", "bad"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.in, func(t *testing.T) {
+			t.Parallel()
+
+			if got := displayHostPort(tc.in); got != tc.want {
+				t.Fatalf("displayHostPort(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
