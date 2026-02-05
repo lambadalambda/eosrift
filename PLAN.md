@@ -26,7 +26,11 @@ Last updated: **2026-02-05**
 - [x] Milestone 14 — Reserved TCP ports
 - [x] Milestone 15 — HTTP header transforms
 
-Current focus: **Milestone 18**, then **Milestone 17** (deferring Milestone 16 for now).
+- [ ] Milestone 16 — OAuth/OIDC edge auth (optional)
+- [ ] Milestone 17 — TLS tunnels (optional)
+- [x] Milestone 18 — HTTP request allow/deny (traffic policy lite)
+
+Current focus: **Milestone 17** (deferring Milestone 16 for now).
 
 ## Guiding principles
 
@@ -344,11 +348,13 @@ websockets, streaming, and the local inspector working.
 
 **Goal:** support a small subset of ngrok-style “only expose these endpoints” behavior for HTTP tunnels.
 
-- [ ] Per-tunnel method allowlist: `--allow-method GET` (repeatable) and config under `tunnels.*`.
-- [ ] Per-tunnel path allowlist: `--allow-path /healthz` (repeatable) and config under `tunnels.*`.
-- [ ] (Optional) Simple prefix matching: `--allow-path-prefix /api/`.
+**Status:** done (2026-02-05)
+
+- [x] Per-tunnel method allowlist: `--allow-method GET` (repeatable) and config under `tunnels.*`.
+- [x] Per-tunnel path allowlist: `--allow-path /healthz` (repeatable) and config under `tunnels.*`.
+- [x] (Optional) Simple prefix matching: `--allow-path-prefix /api/`.
 
 **Acceptance tests**
 
-- Unit tests for parsing/validation and enforcement.
-- Integration test proving disallowed requests are rejected on the edge.
+- [x] Unit tests for parsing/validation and enforcement.
+- [x] Integration test proving disallowed requests are rejected on the edge.
