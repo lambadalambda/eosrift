@@ -2,6 +2,7 @@ package server
 
 import (
 	"net"
+	"strings"
 	"testing"
 )
 
@@ -54,4 +55,56 @@ func TestTunnelRegistry_AllocateID(t *testing.T) {
 	if len(id) != 8 {
 		t.Fatalf("id len = %d, want %d", len(id), 8)
 	}
+}
+
+func TestTunnelRegistry_RegisterHTTPTunnel_RejectsEmptyID(t *testing.T) {
+	t.Parallel()
+
+	r := NewTunnelRegistry()
+	if err := r.RegisterHTTPTunnel("", fakeSession{}, httpTunnelOptions{}); err == nil {
+		t.Fatalf("err = nil, want non-nil")
+	}
+}
+
+func TestTunnelRegistry_RegisterHTTPTunnel_RejectsNilSession(t *testing.T) {
+	t.Parallel()
+
+	r := NewTunnelRegistry()
+	if err := r.RegisterHTTPTunnel("abc123", nil, httpTunnelOptions{}); err == nil {
+		t.Fatalf("err = nil, want non-nil")
+	}
+}
+
+func TestRandomBase32Lower(t *testing.T) {
+	t.Parallel()
+
+	t.Run("rejects invalid length", func(t *testing.T) {
+		t.Parallel()
+
+		if _, err := randomBase32Lower(0); err == nil {
+			t.Fatalf("err = nil, want non-nil")
+		}
+	})
+
+	t.Run("returns lowercase base32", func(t *testing.T) {
+		t.Parallel()
+
+		id, err := randomBase32Lower(16)
+		if err != nil {
+			t.Fatalf("err = %v, want nil", err)
+		}
+		if len(id) != 16 {
+			t.Fatalf("len = %d, want %d", len(id), 16)
+		}
+		if strings.ToLower(id) != id {
+			t.Fatalf("id not lowercase: %q", id)
+		}
+		for i := 0; i < len(id); i++ {
+			c := id[i]
+			if (c >= 'a' && c <= 'z') || (c >= '2' && c <= '7') {
+				continue
+			}
+			t.Fatalf("unexpected character %q in id %q", c, id)
+		}
+	})
 }
