@@ -54,6 +54,8 @@ func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 		return runHTTP(ctx, rest[1:], *configPath, stdout, stderr)
 	case "tcp":
 		return runTCP(ctx, rest[1:], *configPath, stdout, stderr)
+	case "tls":
+		return runTLS(ctx, rest[1:], *configPath, stdout, stderr)
 	case "start":
 		return runStart(ctx, rest[1:], *configPath, stdout, stderr)
 	default:
@@ -69,6 +71,7 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "commands:")
 	fmt.Fprintln(w, "  http      start an HTTP tunnel")
 	fmt.Fprintln(w, "  tcp       start a TCP tunnel")
+	fmt.Fprintln(w, "  tls       start a TLS tunnel")
 	fmt.Fprintln(w, "  start     start tunnels from config")
 	fmt.Fprintln(w, "  config    manage client config")
 	fmt.Fprintln(w, "  version   print version information")
@@ -90,6 +93,7 @@ func usage(w io.Writer) {
 	fmt.Fprintln(w, "  eosrift http 3000 --domain demo.tunnel.eosrift.com")
 	fmt.Fprintln(w, "  eosrift http 3000 --subdomain demo")
 	fmt.Fprintln(w, "  eosrift tcp  5432 --server https://eosrift.com")
+	fmt.Fprintln(w, "  eosrift tls  443  --server https://eosrift.com")
 }
 
 func getenv(key, fallback string) string {

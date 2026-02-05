@@ -173,6 +173,28 @@ func TestRun_TCPHelp_PrintsToStdout(t *testing.T) {
 	}
 }
 
+func TestRun_TLSHelp_PrintsToStdout(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{"--config", path, "tls", "--help"}, &stdout, &stderr)
+	if code != 0 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 0, stderr.String())
+	}
+	if stderr.Len() != 0 {
+		t.Fatalf("stderr not empty: %q", stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "usage: eosrift tls") {
+		t.Fatalf("stdout missing usage: %q", stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "remote-port") {
+		t.Fatalf("stdout missing remote-port flag: %q", stdout.String())
+	}
+}
+
 func TestRun_ConfigHelp_PrintsToStdout(t *testing.T) {
 	t.Parallel()
 

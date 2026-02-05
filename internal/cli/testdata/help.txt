@@ -3,6 +3,7 @@ usage: eosrift [--config <path>] <command> [args]
 commands:
   http      start an HTTP tunnel
   tcp       start a TCP tunnel
+  tls       start a TLS tunnel
   start     start tunnels from config
   config    manage client config
   version   print version information
@@ -24,3 +25,4 @@ examples:
   eosrift http 3000 --domain demo.tunnel.eosrift.com
   eosrift http 3000 --subdomain demo
   eosrift tcp  5432 --server https://eosrift.com
+  eosrift tls  443  --server https://eosrift.com
