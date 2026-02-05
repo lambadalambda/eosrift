@@ -22,6 +22,10 @@ type httpTunnelEntry struct {
 	allowCIDRs []netip.Prefix
 	denyCIDRs  []netip.Prefix
 
+	allowMethods      []string
+	allowPaths        []string
+	allowPathPrefixes []string
+
 	requestHeaderAdd     []headerKV
 	requestHeaderRemove  []string
 	responseHeaderAdd    []headerKV
@@ -43,6 +47,10 @@ type httpTunnelOptions struct {
 
 	AllowCIDRs []netip.Prefix
 	DenyCIDRs  []netip.Prefix
+
+	AllowMethods      []string
+	AllowPaths        []string
+	AllowPathPrefixes []string
 
 	RequestHeaderAdd     []headerKV
 	RequestHeaderRemove  []string
@@ -84,6 +92,10 @@ func (r *TunnelRegistry) RegisterHTTPTunnel(id string, session streamSession, op
 		basicAuth:  opts.BasicAuth,
 		allowCIDRs: opts.AllowCIDRs,
 		denyCIDRs:  opts.DenyCIDRs,
+
+		allowMethods:      opts.AllowMethods,
+		allowPaths:        opts.AllowPaths,
+		allowPathPrefixes: opts.AllowPathPrefixes,
 
 		requestHeaderAdd:     opts.RequestHeaderAdd,
 		requestHeaderRemove:  opts.RequestHeaderRemove,

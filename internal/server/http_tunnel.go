@@ -81,6 +81,45 @@ func httpTunnelProxyHandler(cfg Config, registry *TunnelRegistry) http.HandlerFu
 			return
 		}
 
+		if len(entry.allowMethods) > 0 {
+			method := strings.ToUpper(strings.TrimSpace(r.Method))
+			allowed := false
+			for _, m := range entry.allowMethods {
+				if method == strings.ToUpper(strings.TrimSpace(m)) {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				http.NotFound(w, r)
+				return
+			}
+		}
+
+		if len(entry.allowPaths) > 0 || len(entry.allowPathPrefixes) > 0 {
+			path := r.URL.Path
+			allowed := false
+			for _, p := range entry.allowPaths {
+				if path == strings.TrimSpace(p) {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				for _, p := range entry.allowPathPrefixes {
+					p = strings.TrimSpace(p)
+					if p != "" && strings.HasPrefix(path, p) {
+						allowed = true
+						break
+					}
+				}
+			}
+			if !allowed {
+				http.NotFound(w, r)
+				return
+			}
+		}
+
 		if len(entry.allowCIDRs) > 0 || len(entry.denyCIDRs) > 0 {
 			ip, ok := requestClientIP(r, cfg.TrustProxyHeaders)
 			if !ok {

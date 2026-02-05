@@ -26,7 +26,7 @@ Last updated: **2026-02-05**
 - [x] Milestone 14 — Reserved TCP ports
 - [x] Milestone 15 — HTTP header transforms
 
-Current focus: **Milestone 16**.
+Current focus: **Milestone 18**, then **Milestone 17** (deferring Milestone 16 for now).
 
 ## Guiding principles
 
