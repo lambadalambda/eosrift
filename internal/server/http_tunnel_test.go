@@ -34,3 +34,28 @@ func TestTunnelIDFromHost(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeDomain(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		in   string
+		want string
+	}{
+		{" EXAMPLE.COM. ", "example.com"},
+		{"example.com:443", "example.com"},
+		{"[::1]:443", "::1"},
+		{"2001:db8::1", "2001:db8::1"},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run(tc.in, func(t *testing.T) {
+			t.Parallel()
+
+			if got := normalizeDomain(tc.in); got != tc.want {
+				t.Fatalf("normalizeDomain(%q) = %q, want %q", tc.in, got, tc.want)
+			}
+		})
+	}
+}
