@@ -35,6 +35,9 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 				Addr:                 "127.0.0.1:3000",
 				Domain:               "demo.tunnel.example.com",
 				BasicAuth:            "user:pass",
+				AllowMethod:          []string{"GET"},
+				AllowPath:            []string{"/healthz"},
+				AllowPathPrefix:      []string{"/api/"},
 				AllowCIDR:            []string{"1.2.3.0/24"},
 				DenyCIDR:             []string{"1.2.3.4/32"},
 				RequestHeaderAdd:     HeaderAddList{"X-Req: yes"},
@@ -90,6 +93,15 @@ func TestSaveLoad_RoundTrip(t *testing.T) {
 	if web.BasicAuth != "user:pass" {
 		t.Fatalf("web basic_auth = %q, want %q", web.BasicAuth, "user:pass")
 	}
+	if len(web.AllowMethod) != 1 || web.AllowMethod[0] != "GET" {
+		t.Fatalf("web allow_method = %#v, want %q", web.AllowMethod, "GET")
+	}
+	if len(web.AllowPath) != 1 || web.AllowPath[0] != "/healthz" {
+		t.Fatalf("web allow_path = %#v, want %q", web.AllowPath, "/healthz")
+	}
+	if len(web.AllowPathPrefix) != 1 || web.AllowPathPrefix[0] != "/api/" {
+		t.Fatalf("web allow_path_prefix = %#v, want %q", web.AllowPathPrefix, "/api/")
+	}
 	if len(web.AllowCIDR) != 1 || web.AllowCIDR[0] != "1.2.3.0/24" {
 		t.Fatalf("web allow_cidr = %#v, want %q", web.AllowCIDR, "1.2.3.0/24")
 	}
@@ -128,6 +140,12 @@ tunnels:
     addr: 127.0.0.1:3000
     domain: demo.tunnel.example.com
     basic_auth: user:pass
+    allow_method:
+      - GET
+    allow_path:
+      - /healthz
+    allow_path_prefix:
+      - /api/
     allow_cidr:
       - 1.2.3.0/24
     request_header_add:
@@ -168,6 +186,15 @@ tunnels:
 	web := cfg.Tunnels["web"]
 	if web.Proto != "http" || web.Addr != "127.0.0.1:3000" || web.Domain != "demo.tunnel.example.com" || web.BasicAuth != "user:pass" {
 		t.Fatalf("web tunnel = %+v, want http tunnel fields set", web)
+	}
+	if len(web.AllowMethod) != 1 || web.AllowMethod[0] != "GET" {
+		t.Fatalf("web allow_method = %#v, want %q", web.AllowMethod, "GET")
+	}
+	if len(web.AllowPath) != 1 || web.AllowPath[0] != "/healthz" {
+		t.Fatalf("web allow_path = %#v, want %q", web.AllowPath, "/healthz")
+	}
+	if len(web.AllowPathPrefix) != 1 || web.AllowPathPrefix[0] != "/api/" {
+		t.Fatalf("web allow_path_prefix = %#v, want %q", web.AllowPathPrefix, "/api/")
 	}
 	if len(web.AllowCIDR) != 1 || web.AllowCIDR[0] != "1.2.3.0/24" {
 		t.Fatalf("web allow_cidr = %#v, want %q", web.AllowCIDR, "1.2.3.0/24")

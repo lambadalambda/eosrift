@@ -33,6 +33,9 @@ type Tunnel struct {
 	Domain               string        `yaml:"domain,omitempty"`
 	Subdomain            string        `yaml:"subdomain,omitempty"`
 	BasicAuth            string        `yaml:"basic_auth,omitempty"`
+	AllowMethod          []string      `yaml:"allow_method,omitempty"`
+	AllowPath            []string      `yaml:"allow_path,omitempty"`
+	AllowPathPrefix      []string      `yaml:"allow_path_prefix,omitempty"`
 	AllowCIDR            []string      `yaml:"allow_cidr,omitempty"`
 	DenyCIDR             []string      `yaml:"deny_cidr,omitempty"`
 	RequestHeaderAdd     HeaderAddList `yaml:"request_header_add,omitempty"`
