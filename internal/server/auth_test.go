@@ -35,7 +35,7 @@ func TestControlAuth_HTTP_Unauthorized(t *testing.T) {
 	}
 	defer stream.Close()
 
-	if err := json.NewEncoder(stream).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: "wrong",
 	}); err != nil {
@@ -74,7 +74,7 @@ func TestControlAuth_HTTP_Authorized(t *testing.T) {
 	}
 	defer stream.Close()
 
-	if err := json.NewEncoder(stream).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: "secret",
 	}); err != nil {

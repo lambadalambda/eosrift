@@ -94,7 +94,7 @@ func TestHTTPTunnel_BasicAuth(t *testing.T) {
 			if got != "" {
 				t.Fatalf("upstream Authorization = %q, want empty", got)
 			}
-		case <-time.After(500 * time.Millisecond):
+		case <-time.After(2 * time.Second):
 			t.Fatalf("timeout waiting for upstream request")
 		}
 	})

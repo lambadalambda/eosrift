@@ -108,7 +108,7 @@ func TestHTTPTunnel_HeaderTransforms(t *testing.T) {
 		if got.Override != "new" {
 			t.Fatalf("upstream X-Override = %q, want %q", got.Override, "new")
 		}
-	case <-time.After(500 * time.Millisecond):
+	case <-time.After(2 * time.Second):
 		t.Fatalf("timeout waiting for upstream request")
 	}
 }

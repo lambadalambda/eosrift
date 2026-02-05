@@ -62,7 +62,7 @@ func TestControlTCP_RequestedPort_AutoReservesAndEnforcesOwnership(t *testing.T)
 		}
 		defer stream.Close()
 
-		if err := json.NewEncoder(stream).Encode(control.CreateTCPTunnelRequest{
+		if err := control.WriteJSON(stream, control.CreateTCPTunnelRequest{
 			Type:       "tcp",
 			Authtoken:  tokenA,
 			RemotePort: port,
@@ -95,7 +95,7 @@ func TestControlTCP_RequestedPort_AutoReservesAndEnforcesOwnership(t *testing.T)
 		}
 		defer stream.Close()
 
-		if err := json.NewEncoder(stream).Encode(control.CreateTCPTunnelRequest{
+		if err := control.WriteJSON(stream, control.CreateTCPTunnelRequest{
 			Type:       "tcp",
 			Authtoken:  tokenB,
 			RemotePort: port,
@@ -125,7 +125,7 @@ func TestControlTCP_RequestedPort_AutoReservesAndEnforcesOwnership(t *testing.T)
 		}
 		defer stream.Close()
 
-		if err := json.NewEncoder(stream).Encode(control.CreateTCPTunnelRequest{
+		if err := control.WriteJSON(stream, control.CreateTCPTunnelRequest{
 			Type:       "tcp",
 			Authtoken:  tokenA,
 			RemotePort: port,

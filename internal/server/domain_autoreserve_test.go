@@ -61,7 +61,7 @@ func TestControlHTTP_Domain_AutoReservesOnFirstUse(t *testing.T) {
 		}
 		defer stream.Close()
 
-		if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+		if err := control.WriteJSON(stream, createHTTPWithDomainRequest{
 			Type:      "http",
 			Authtoken: ownerToken,
 			Domain:    "demo.tunnel.example.com",
@@ -110,7 +110,7 @@ func TestControlHTTP_Domain_AutoReservesOnFirstUse(t *testing.T) {
 		}
 		defer stream.Close()
 
-		if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+		if err := control.WriteJSON(stream, createHTTPWithDomainRequest{
 			Type:      "http",
 			Authtoken: otherToken,
 			Domain:    "demo.tunnel.example.com",
@@ -163,7 +163,7 @@ func TestControlHTTP_Domain_CanReuseAfterDisconnect(t *testing.T) {
 			t.Fatalf("open stream: %v", err)
 		}
 
-		if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+		if err := control.WriteJSON(stream, createHTTPWithDomainRequest{
 			Type:      "http",
 			Authtoken: token,
 			Domain:    "demo.tunnel.example.com",
@@ -208,7 +208,7 @@ func TestControlHTTP_Domain_CanReuseAfterDisconnect(t *testing.T) {
 			t.Fatalf("open stream2: %v", err)
 		}
 
-		if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+		if err := control.WriteJSON(stream, createHTTPWithDomainRequest{
 			Type:      "http",
 			Authtoken: token,
 			Domain:    "demo.tunnel.example.com",
@@ -285,7 +285,7 @@ func TestControlHTTP_Domain_RejectsNonTunnelDomain(t *testing.T) {
 	}
 	defer stream.Close()
 
-	if err := json.NewEncoder(stream).Encode(createHTTPWithDomainRequest{
+	if err := control.WriteJSON(stream, createHTTPWithDomainRequest{
 		Type:      "http",
 		Authtoken: token,
 		Domain:    "demo.example.com",

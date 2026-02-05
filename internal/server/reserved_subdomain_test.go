@@ -51,7 +51,7 @@ func TestControlHTTP_ReservedSubdomain_AllowsOwner(t *testing.T) {
 	}
 	defer stream.Close()
 
-	if err := json.NewEncoder(stream).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: token,
 		Subdomain: "demo",
@@ -120,7 +120,7 @@ func TestControlHTTP_ReservedSubdomain_RejectsOtherToken(t *testing.T) {
 	}
 	defer stream.Close()
 
-	if err := json.NewEncoder(stream).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: otherToken,
 		Subdomain: "demo",
@@ -137,4 +137,3 @@ func TestControlHTTP_ReservedSubdomain_RejectsOtherToken(t *testing.T) {
 		t.Fatalf("error = %q, want non-empty", resp.Error)
 	}
 }
-

@@ -48,7 +48,7 @@ func TestControl_RateLimitExceeded_RejectsSecondTunnelCreate(t *testing.T) {
 		}
 		defer stream.Close()
 
-		if err := json.NewEncoder(stream).Encode(control.CreateHTTPTunnelRequest{
+		if err := control.WriteJSON(stream, control.CreateHTTPTunnelRequest{
 			Type:      "http",
 			Authtoken: token,
 		}); err != nil {
@@ -76,7 +76,7 @@ func TestControl_RateLimitExceeded_RejectsSecondTunnelCreate(t *testing.T) {
 	}
 	defer stream.Close()
 
-	if err := json.NewEncoder(stream).Encode(control.CreateHTTPTunnelRequest{
+	if err := control.WriteJSON(stream, control.CreateHTTPTunnelRequest{
 		Type:      "http",
 		Authtoken: token,
 	}); err != nil {
@@ -92,4 +92,3 @@ func TestControl_RateLimitExceeded_RejectsSecondTunnelCreate(t *testing.T) {
 		t.Fatalf("resp2 error = %q, want %q", resp2.Error, "rate limit exceeded")
 	}
 }
-

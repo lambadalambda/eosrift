@@ -17,6 +17,9 @@ import (
 func TestHTTPTunnel_StreamingResponse_IsNotBuffered(t *testing.T) {
 	t.Parallel()
 
+	chunk1Written := make(chan struct{})
+	sendChunk2 := make(chan struct{})
+
 	upstream := http.NewServeMux()
 	upstream.HandleFunc("/stream", func(w http.ResponseWriter, r *http.Request) {
 		fl, ok := w.(http.Flusher)
@@ -31,7 +34,13 @@ func TestHTTPTunnel_StreamingResponse_IsNotBuffered(t *testing.T) {
 		_, _ = w.Write([]byte("chunk1\n"))
 		fl.Flush()
 
-		time.Sleep(1500 * time.Millisecond)
+		close(chunk1Written)
+
+		select {
+		case <-sendChunk2:
+		case <-r.Context().Done():
+			return
+		}
 
 		_, _ = w.Write([]byte("chunk2\n"))
 		fl.Flush()
@@ -86,7 +95,11 @@ func TestHTTPTunnel_StreamingResponse_IsNotBuffered(t *testing.T) {
 		t.Fatalf("status = %d, want %d (body=%q)", resp.StatusCode, http.StatusOK, string(body))
 	}
 
-	started := time.Now()
+	select {
+	case <-chunk1Written:
+	case <-time.After(2 * time.Second):
+		t.Fatalf("upstream did not write chunk1 before deadline")
+	}
 
 	type readResult struct {
 		buf []byte
@@ -107,12 +120,11 @@ func TestHTTPTunnel_StreamingResponse_IsNotBuffered(t *testing.T) {
 		if got, want := string(r.buf), "chunk1\n"; got != want {
 			t.Fatalf("first chunk = %q, want %q", got, want)
 		}
-		if elapsed := time.Since(started); elapsed > 1*time.Second {
-			t.Fatalf("first chunk took %s, want <= %s (buffered response?)", elapsed, 1*time.Second)
-		}
-	case <-time.After(1 * time.Second):
-		t.Fatalf("did not receive first chunk within 1s (buffered response?)")
+	case <-time.After(2 * time.Second):
+		t.Fatalf("did not receive first chunk before deadline (buffered response?)")
 	}
+
+	close(sendChunk2)
 
 	rest, err := io.ReadAll(resp.Body)
 	if err != nil {
