@@ -14,6 +14,7 @@ import (
 
 	"eosrift.com/eosrift/internal/client"
 	"eosrift.com/eosrift/internal/config"
+	"eosrift.com/eosrift/internal/control"
 	"eosrift.com/eosrift/internal/inspect"
 )
 
@@ -42,6 +43,12 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 	fs.Var(&allowCIDR, "allow-cidr", "Allow client IPs matching CIDR or IP (repeatable)")
 	var denyCIDR stringSliceFlag
 	fs.Var(&denyCIDR, "deny-cidr", "Deny client IPs matching CIDR or IP (repeatable)")
+	var allowMethod stringSliceFlag
+	fs.Var(&allowMethod, "allow-method", "Allow HTTP method(s) (repeatable)")
+	var allowPath stringSliceFlag
+	fs.Var(&allowPath, "allow-path", "Allow exact request path(s) (repeatable, must start with /)")
+	var allowPathPrefix stringSliceFlag
+	fs.Var(&allowPathPrefix, "allow-path-prefix", "Allow request path prefix(es) (repeatable, must start with /)")
 	var requestHeaderAdd stringListFlag
 	fs.Var(&requestHeaderAdd, "request-header-add", "Add/override a request header (repeatable, \"Name: value\")")
 	var requestHeaderRemove stringListFlag
@@ -70,6 +77,7 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		fmt.Fprintln(out, "  eosrift http 3000 --subdomain demo")
 		fmt.Fprintln(out, "  eosrift http 3000 --basic-auth user:pass")
 		fmt.Fprintln(out, "  eosrift http 3000 --allow-cidr 203.0.113.0/24")
+		fmt.Fprintln(out, "  eosrift http 3000 --allow-method GET --allow-path /healthz")
 		fmt.Fprintln(out, "  eosrift http 3000 --request-header-add \"X-API-Key: secret\"")
 		fmt.Fprintln(out, "  eosrift http 3000 --host-header=rewrite")
 		fmt.Fprintln(out, "  eosrift http https://127.0.0.1:8443 --upstream-tls-skip-verify")
@@ -101,6 +109,22 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		return 2
 	}
 	if err := validateCIDRs("deny_cidr", []string(denyCIDR)); err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+
+	parsedAllowMethods, err := control.ParseHTTPMethodList("allow_method", []string(allowMethod), 0)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+	parsedAllowPaths, err := control.ParsePathList("allow_path", []string(allowPath), 0)
+	if err != nil {
+		fmt.Fprintln(stderr, "error:", err)
+		return 2
+	}
+	parsedAllowPathPrefixes, err := control.ParsePathList("allow_path_prefix", []string(allowPathPrefix), 0)
+	if err != nil {
 		fmt.Fprintln(stderr, "error:", err)
 		return 2
 	}
@@ -148,6 +172,9 @@ func runHTTP(ctx context.Context, args []string, configPath string, stdout, stde
 		Subdomain:             *subdomain,
 		Domain:                *domain,
 		BasicAuth:             *basicAuth,
+		AllowMethods:          parsedAllowMethods,
+		AllowPaths:            parsedAllowPaths,
+		AllowPathPrefixes:     parsedAllowPathPrefixes,
 		AllowCIDRs:            []string(allowCIDR),
 		DenyCIDRs:             []string(denyCIDR),
 		RequestHeaderAdd:      parsedRequestHeaderAdd,

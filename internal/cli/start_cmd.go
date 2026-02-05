@@ -16,6 +16,7 @@ import (
 
 	"eosrift.com/eosrift/internal/client"
 	"eosrift.com/eosrift/internal/config"
+	"eosrift.com/eosrift/internal/control"
 	"eosrift.com/eosrift/internal/inspect"
 )
 
@@ -221,6 +222,15 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			if basicAuth := strings.TrimSpace(t.Tunnel.BasicAuth); basicAuth != "" && !strings.Contains(basicAuth, ":") {
 				return fmt.Errorf("tunnel %q: basic_auth must be in the form user:pass", t.Name)
 			}
+			if _, err := control.ParseHTTPMethodList("allow_method", t.Tunnel.AllowMethod, 0); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			if _, err := control.ParsePathList("allow_path", t.Tunnel.AllowPath, 0); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			if _, err := control.ParsePathList("allow_path_prefix", t.Tunnel.AllowPathPrefix, 0); err != nil {
+				return fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
 			if err := validateCIDRs("allow_cidr", t.Tunnel.AllowCIDR); err != nil {
 				return fmt.Errorf("tunnel %q: %w", t.Name, err)
 			}
@@ -257,6 +267,15 @@ func validateNamedTunnels(tunnels []namedTunnel) error {
 			}
 			if strings.TrimSpace(t.Tunnel.BasicAuth) != "" {
 				return fmt.Errorf("tunnel %q: basic_auth is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.AllowMethod) != 0 {
+				return fmt.Errorf("tunnel %q: allow_method is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.AllowPath) != 0 {
+				return fmt.Errorf("tunnel %q: allow_path is only valid for http tunnels", t.Name)
+			}
+			if len(t.Tunnel.AllowPathPrefix) != 0 {
+				return fmt.Errorf("tunnel %q: allow_path_prefix is only valid for http tunnels", t.Name)
 			}
 			if len(t.Tunnel.AllowCIDR) != 0 {
 				return fmt.Errorf("tunnel %q: allow_cidr is only valid for http tunnels", t.Name)
@@ -444,11 +463,27 @@ func startNamedTunnels(ctx context.Context, controlURL, authtoken, defaultHostHe
 				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
 			}
 
+			allowMethods, err := control.ParseHTTPMethodList("allow_method", t.Tunnel.AllowMethod, 0)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			allowPaths, err := control.ParsePathList("allow_path", t.Tunnel.AllowPath, 0)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+			allowPathPrefixes, err := control.ParsePathList("allow_path_prefix", t.Tunnel.AllowPathPrefix, 0)
+			if err != nil {
+				return nil, fmt.Errorf("tunnel %q: %w", t.Name, err)
+			}
+
 			tun, err := client.StartHTTPTunnelWithOptions(ctx, controlURL, localAddr, client.HTTPTunnelOptions{
 				Authtoken:             authtoken,
 				Domain:                strings.TrimSpace(t.Tunnel.Domain),
 				Subdomain:             strings.TrimSpace(t.Tunnel.Subdomain),
 				BasicAuth:             strings.TrimSpace(t.Tunnel.BasicAuth),
+				AllowMethods:          allowMethods,
+				AllowPaths:            allowPaths,
+				AllowPathPrefixes:     allowPathPrefixes,
 				AllowCIDRs:            t.Tunnel.AllowCIDR,
 				DenyCIDRs:             t.Tunnel.DenyCIDR,
 				RequestHeaderAdd:      requestHeaderAdd,

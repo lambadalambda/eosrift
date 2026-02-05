@@ -223,3 +223,65 @@ func TestRun_Start_InvalidAddr_IsError(t *testing.T) {
 		t.Fatalf("stderr missing invalid addr error: %q", stderr.String())
 	}
 }
+
+func TestRun_Start_HTTPInvalidAllowMethod_IsError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := config.Save(path, config.File{
+		Version: 1,
+		Tunnels: map[string]config.Tunnel{
+			"web": {Proto: "http", Addr: "3000", AllowMethod: []string{"G ET"}},
+		},
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(ctx, []string{"--config", path, "start", "--inspect=false", "web"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 1, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "allow_method") {
+		t.Fatalf("stderr missing allow_method error: %q", stderr.String())
+	}
+}
+
+func TestRun_Start_TCPAllowMethod_IsError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	if err := config.Save(path, config.File{
+		Version: 1,
+		Tunnels: map[string]config.Tunnel{
+			"db": {Proto: "tcp", Addr: "5432", AllowMethod: []string{"GET"}},
+		},
+	}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
+	defer cancel()
+
+	var stdout, stderr bytes.Buffer
+	code := Run(ctx, []string{"--config", path, "start", "--inspect=false", "db"}, &stdout, &stderr)
+	if code != 1 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 1, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(strings.ToLower(stderr.String()), "allow_method") {
+		t.Fatalf("stderr missing allow_method error: %q", stderr.String())
+	}
+}

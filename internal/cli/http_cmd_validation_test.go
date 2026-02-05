@@ -81,6 +81,54 @@ func TestRun_HTTP_InvalidAllowCIDR_IsUsageError(t *testing.T) {
 	}
 }
 
+func TestRun_HTTP_InvalidAllowMethod_IsUsageError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{
+		"--config", path,
+		"http",
+		"3000",
+		"--allow-method", "G ET",
+	}, &stdout, &stderr)
+	if code != 2 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 2, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "invalid allow_method") {
+		t.Fatalf("stderr missing allow_method error: %q", stderr.String())
+	}
+}
+
+func TestRun_HTTP_InvalidAllowPath_IsUsageError(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "eosrift.yml")
+
+	var stdout, stderr bytes.Buffer
+	code := Run(context.Background(), []string{
+		"--config", path,
+		"http",
+		"3000",
+		"--allow-path", "healthz",
+	}, &stdout, &stderr)
+	if code != 2 {
+		t.Fatalf("code = %d, want %d (stderr=%q)", code, 2, stderr.String())
+	}
+	if stdout.Len() != 0 {
+		t.Fatalf("stdout not empty: %q", stdout.String())
+	}
+	if !strings.Contains(stderr.String(), "invalid allow_path") {
+		t.Fatalf("stderr missing allow_path error: %q", stderr.String())
+	}
+}
+
 func TestRun_HTTP_InvalidUpstream_IsUsageError(t *testing.T) {
 	t.Parallel()
 
