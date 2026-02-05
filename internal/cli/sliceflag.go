@@ -15,13 +15,15 @@ func (f *stringSliceFlag) String() string {
 }
 
 func (f *stringSliceFlag) Set(value string) error {
+	var out []string
 	for _, part := range strings.Split(value, ",") {
 		part = strings.TrimSpace(part)
 		if part == "" {
 			return errors.New("empty value")
 		}
-		*f = append(*f, part)
+		out = append(out, part)
 	}
+	*f = append(*f, out...)
 	return nil
 }
 
