@@ -27,10 +27,10 @@ Last updated: **2026-02-05**
 - [x] Milestone 15 — HTTP header transforms
 
 - [ ] Milestone 16 — OAuth/OIDC edge auth (optional)
-- [ ] Milestone 17 — TLS tunnels (optional)
+- [x] Milestone 17 — TLS tunnels (optional)
 - [x] Milestone 18 — HTTP request allow/deny (traffic policy lite)
 
-Current focus: **Milestone 17** (deferring Milestone 16 for now).
+Current focus: ongoing hardening + feature parity gaps (Milestone 16 still deferred).
 
 ## Guiding principles
 
@@ -341,8 +341,10 @@ websockets, streaming, and the local inspector working.
 
 **Goal:** ngrok-like `tls` command convenience for exposing local TLS services.
 
-- [ ] `eosrift tls <local-port|local-addr>` as a thin wrapper around `tcp` (byte proxying).
-- [ ] Docs explaining common use cases (mTLS, custom certs, etc.).
+**Status:** done (2026-02-05)
+
+- [x] `eosrift tls <local-port|local-addr>` as a thin wrapper around `tcp` (byte proxying).
+- [x] Docs explaining common use cases (mTLS, custom certs, etc.).
 
 ## Milestone 18 — HTTP request allow/deny (traffic policy lite)
 

@@ -190,6 +190,13 @@ Notes:
 - If `--remote-port` is unused, the server auto-reserves it to your authtoken on first use.
 - Manage reservations on the server with `eosrift-server tcp-reserve add|list|remove`.
 
+### TLS tunnel (alpha)
+
+Expose a local TLS service through a raw TCP tunnel (EosRift does **not** terminate TLS):
+
+- `./bin/eosrift tls 443 --server https://<yourdomain>`
+- Request a specific remote port: `./bin/eosrift tls 443 --remote-port 20005 --server https://<yourdomain>`
+
 ### HTTP tunnel (alpha)
 
 Expose a local HTTP port through the server:
