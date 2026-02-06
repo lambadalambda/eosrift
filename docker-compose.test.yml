@@ -13,6 +13,7 @@ services:
       EOSRIFT_TCP_PORT_RANGE_END: "20010"
       EOSRIFT_DB_PATH: "/tmp/eosrift-test.db"
       EOSRIFT_AUTH_TOKEN: "test-token"
+      EOSRIFT_ADMIN_TOKEN: "test-admin-token"
     expose:
       - "8080"
 
@@ -24,6 +25,7 @@ services:
     environment:
       EOSRIFT_SERVER_URL: "http://server:8080"
       EOSRIFT_AUTHTOKEN: "test-token"
+      EOSRIFT_ADMIN_TOKEN: "test-admin-token"
       EOSRIFT_DB_PATH: "/tmp/eosrift-test.db"
       EOSRIFT_TEST_CIDR: "10.231.0.0/24"
     depends_on:
