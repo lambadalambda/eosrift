@@ -37,6 +37,12 @@ func TestNewHandler_AdminUI_BaseDomainOnly(t *testing.T) {
 	if !strings.Contains(rec.Body.String(), "Eosrift Admin") {
 		t.Fatalf("missing admin page marker")
 	}
+	if !strings.Contains(rec.Body.String(), "Admin Login") {
+		t.Fatalf("missing admin login marker")
+	}
+	if !strings.Contains(rec.Body.String(), `id="loginForm"`) {
+		t.Fatalf("missing login form")
+	}
 
 	req2 := httptest.NewRequest(http.MethodGet, "http://abcd1234.tunnel.eosrift.com/admin", nil)
 	req2.Host = "abcd1234.tunnel.eosrift.com"

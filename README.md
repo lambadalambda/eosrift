@@ -234,7 +234,8 @@ A token-gated admin frontend is available on the base domain:
 
 - Enable it by setting `EOSRIFT_ADMIN_TOKEN=<your-strong-random-token>` on the server.
 - Open `https://<your-base-domain>/admin`.
-- Paste the token in the UI once; it is stored in local browser storage.
+- Log in with the token in the UI; it is stored in local browser storage for the current browser profile.
+- Use the built-in `Log Out` action to clear the local session token.
 
 Admin API endpoints (same token required via `Authorization: Bearer <token>`):
 

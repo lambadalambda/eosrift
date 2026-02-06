@@ -382,63 +382,75 @@ const adminIndexHTML = `<!doctype html>
       <p>Manage tokens and reservations for your server.</p>
     </header>
 
-    <section class="panel auth">
-      <h2>Admin Token</h2>
-      <div class="row">
-        <input id="adminToken" type="password" placeholder="Paste EOSRIFT_ADMIN_TOKEN">
-        <button id="saveTokenBtn" type="button">Save Token</button>
-        <button id="refreshBtn" type="button">Refresh</button>
-      </div>
+    <section id="loginView" class="panel login-card">
+      <h2>Admin Login</h2>
+      <form id="loginForm" class="row">
+        <input id="adminToken" type="password" autocomplete="current-password" placeholder="Enter EOSRIFT_ADMIN_TOKEN">
+        <button id="saveTokenBtn" type="submit">Log In</button>
+      </form>
       <p class="hint">Token is stored in this browser only (localStorage).</p>
-      <p id="statusLine" class="status"></p>
+      <p id="loginStatus" class="status"></p>
     </section>
 
-    <section class="stats" id="summaryGrid">
-      <article class="stat"><h3>Active Tokens</h3><p id="activeTokens">-</p></article>
-      <article class="stat"><h3>Revoked Tokens</h3><p id="revokedTokens">-</p></article>
-      <article class="stat"><h3>Subdomain Reservations</h3><p id="subdomainCount">-</p></article>
-      <article class="stat"><h3>TCP Port Reservations</h3><p id="tcpCount">-</p></article>
-    </section>
+    <section id="dashboardView" class="hidden">
+      <section class="panel authbar">
+        <div class="row row-between">
+          <h2>Admin Session</h2>
+          <div class="row">
+            <button id="refreshBtn" type="button">Refresh</button>
+            <button id="logoutBtn" class="danger" type="button">Log Out</button>
+          </div>
+        </div>
+        <p id="dashboardStatus" class="status"></p>
+      </section>
 
-    <section class="grid">
-      <article class="panel">
-        <h2>Authtokens</h2>
-        <form id="createTokenForm" class="row">
-          <input id="tokenLabel" type="text" placeholder="Label (optional)">
-          <button type="submit">Create Token</button>
-        </form>
-        <pre id="createTokenOut" class="mono hidden"></pre>
-        <table>
-          <thead><tr><th>ID</th><th>Prefix</th><th>Label</th><th>Status</th><th></th></tr></thead>
-          <tbody id="tokensBody"></tbody>
-        </table>
-      </article>
+      <section class="stats" id="summaryGrid">
+        <article class="stat"><h3>Active Tokens</h3><p id="activeTokens">-</p></article>
+        <article class="stat"><h3>Revoked Tokens</h3><p id="revokedTokens">-</p></article>
+        <article class="stat"><h3>Subdomain Reservations</h3><p id="subdomainCount">-</p></article>
+        <article class="stat"><h3>TCP Port Reservations</h3><p id="tcpCount">-</p></article>
+      </section>
 
-      <article class="panel">
-        <h2>Reserved Subdomains</h2>
-        <form id="reserveSubdomainForm" class="row">
-          <input id="subdomainTokenId" type="number" min="1" placeholder="Token ID">
-          <input id="subdomainName" type="text" placeholder="subdomain">
-          <button type="submit">Reserve</button>
-        </form>
-        <table>
-          <thead><tr><th>Subdomain</th><th>Token ID</th><th>Prefix</th><th></th></tr></thead>
-          <tbody id="subdomainsBody"></tbody>
-        </table>
-      </article>
+      <section class="grid">
+        <article class="panel">
+          <h2>Authtokens</h2>
+          <form id="createTokenForm" class="row">
+            <input id="tokenLabel" type="text" placeholder="Label (optional)">
+            <button type="submit">Create Token</button>
+          </form>
+          <pre id="createTokenOut" class="mono hidden"></pre>
+          <table>
+            <thead><tr><th>ID</th><th>Prefix</th><th>Label</th><th>Status</th><th></th></tr></thead>
+            <tbody id="tokensBody"></tbody>
+          </table>
+        </article>
 
-      <article class="panel">
-        <h2>Reserved TCP Ports</h2>
-        <form id="reservePortForm" class="row">
-          <input id="portTokenId" type="number" min="1" placeholder="Token ID">
-          <input id="portNumber" type="number" min="1" max="65535" placeholder="Port">
-          <button type="submit">Reserve</button>
-        </form>
-        <table>
-          <thead><tr><th>Port</th><th>Token ID</th><th>Prefix</th><th></th></tr></thead>
-          <tbody id="portsBody"></tbody>
-        </table>
-      </article>
+        <article class="panel">
+          <h2>Reserved Subdomains</h2>
+          <form id="reserveSubdomainForm" class="row">
+            <input id="subdomainTokenId" type="number" min="1" placeholder="Token ID">
+            <input id="subdomainName" type="text" placeholder="subdomain">
+            <button type="submit">Reserve</button>
+          </form>
+          <table>
+            <thead><tr><th>Subdomain</th><th>Token ID</th><th>Prefix</th><th></th></tr></thead>
+            <tbody id="subdomainsBody"></tbody>
+          </table>
+        </article>
+
+        <article class="panel">
+          <h2>Reserved TCP Ports</h2>
+          <form id="reservePortForm" class="row">
+            <input id="portTokenId" type="number" min="1" placeholder="Token ID">
+            <input id="portNumber" type="number" min="1" max="65535" placeholder="Port">
+            <button type="submit">Reserve</button>
+          </form>
+          <table>
+            <thead><tr><th>Port</th><th>Token ID</th><th>Prefix</th><th></th></tr></thead>
+            <tbody id="portsBody"></tbody>
+          </table>
+        </article>
+      </section>
     </section>
   </main>
   <script src="/admin/app.js"></script>
@@ -493,14 +505,28 @@ body {
   padding: 14px;
 }
 
-.auth {
+.authbar {
   margin-bottom: 16px;
+}
+
+.authbar h2 {
+  margin: 0;
+}
+
+.login-card {
+  max-width: 560px;
+  margin: 44px auto 0;
 }
 
 .row {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+.row-between {
+  justify-content: space-between;
+  align-items: center;
 }
 
 .stats {
@@ -616,8 +642,14 @@ th { color: var(--muted); font-weight: 600; }
 
 const adminAppJS = `(() => {
   const storageKey = "eosrift_admin_token";
+  const loginView = document.getElementById("loginView");
+  const dashboardView = document.getElementById("dashboardView");
+  const loginForm = document.getElementById("loginForm");
   const tokenInput = document.getElementById("adminToken");
-  const statusLine = document.getElementById("statusLine");
+  const loginStatus = document.getElementById("loginStatus");
+  const dashboardStatus = document.getElementById("dashboardStatus");
+  const refreshBtn = document.getElementById("refreshBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
   const createTokenOut = document.getElementById("createTokenOut");
 
   const activeTokens = document.getElementById("activeTokens");
@@ -632,9 +664,35 @@ const adminAppJS = `(() => {
   let adminToken = localStorage.getItem(storageKey) || "";
   tokenInput.value = adminToken;
 
-  function setStatus(msg, ok) {
-    statusLine.textContent = msg;
-    statusLine.className = "status " + (ok ? "ok" : "err");
+  function setStatus(el, msg, ok) {
+    el.textContent = msg;
+    el.className = "status " + (ok ? "ok" : "err");
+  }
+
+  function setLoggedIn(loggedIn) {
+    if (loggedIn) {
+      loginView.classList.add("hidden");
+      dashboardView.classList.remove("hidden");
+      return;
+    }
+    dashboardView.classList.add("hidden");
+    loginView.classList.remove("hidden");
+  }
+
+  function clearSession() {
+    adminToken = "";
+    localStorage.removeItem(storageKey);
+    tokenInput.value = "";
+  }
+
+  function handleDashboardError(err) {
+    if (err && err.status === 401) {
+      clearSession();
+      setLoggedIn(false);
+      setStatus(loginStatus, "Session expired. Log in again.", false);
+      return;
+    }
+    setStatus(dashboardStatus, err.message, false);
   }
 
   async function api(path, opts = {}) {
@@ -654,7 +712,9 @@ const adminAppJS = `(() => {
     }
     if (!res.ok) {
       const message = body && body.error ? body.error : ("request failed: " + res.status);
-      throw new Error(message);
+      const err = new Error(message);
+      err.status = res.status;
+      throw err;
     }
     return body;
   }
@@ -748,25 +808,49 @@ const adminAppJS = `(() => {
 
   async function refreshAll() {
     if (!adminToken) {
-      setStatus("Set the admin token to start.", false);
-      return;
+      setLoggedIn(false);
+      setStatus(loginStatus, "Enter admin token to continue.", false);
+      return false;
     }
+
     try {
       await Promise.all([loadSummary(), loadTokens(), loadSubdomains(), loadPorts()]);
-      setStatus("Connected.", true);
+      setLoggedIn(true);
+      setStatus(dashboardStatus, "Connected.", true);
+      return true;
     } catch (err) {
-      setStatus(err.message, false);
+      if (err && err.status === 401) {
+        clearSession();
+        setLoggedIn(false);
+        setStatus(loginStatus, "Invalid token. Try again.", false);
+        return false;
+      }
+      setLoggedIn(false);
+      setStatus(loginStatus, err.message, false);
+      return false;
     }
   }
 
-  document.getElementById("saveTokenBtn").addEventListener("click", async () => {
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
     adminToken = tokenInput.value.trim();
+    if (!adminToken) {
+      setStatus(loginStatus, "Token is required.", false);
+      return;
+    }
     localStorage.setItem(storageKey, adminToken);
     await refreshAll();
   });
 
-  document.getElementById("refreshBtn").addEventListener("click", async () => {
+  refreshBtn.addEventListener("click", async () => {
     await refreshAll();
+  });
+
+  logoutBtn.addEventListener("click", () => {
+    clearSession();
+    createTokenOut.classList.add("hidden");
+    setLoggedIn(false);
+    setStatus(loginStatus, "Logged out.", true);
   });
 
   document.getElementById("createTokenForm").addEventListener("submit", async (event) => {
@@ -779,7 +863,7 @@ const adminAppJS = `(() => {
       document.getElementById("tokenLabel").value = "";
       await refreshAll();
     } catch (err) {
-      setStatus(err.message, false);
+      handleDashboardError(err);
     }
   });
 
@@ -795,7 +879,7 @@ const adminAppJS = `(() => {
       document.getElementById("subdomainName").value = "";
       await refreshAll();
     } catch (err) {
-      setStatus(err.message, false);
+      handleDashboardError(err);
     }
   });
 
@@ -811,10 +895,15 @@ const adminAppJS = `(() => {
       document.getElementById("portNumber").value = "";
       await refreshAll();
     } catch (err) {
-      setStatus(err.message, false);
+      handleDashboardError(err);
     }
   });
 
-  refreshAll();
+  if (!adminToken) {
+    setLoggedIn(false);
+    setStatus(loginStatus, "Enter admin token to continue.", false);
+  } else {
+    refreshAll();
+  }
 })();
 `
