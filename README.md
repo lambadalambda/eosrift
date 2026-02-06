@@ -232,7 +232,6 @@ Server token management (Docker):
 
 A token-gated admin frontend is available on the base domain:
 
-- Enable it by setting `EOSRIFT_ADMIN_TOKEN=<strong-random-token>` on the server.
 - Enable it by setting `EOSRIFT_ADMIN_TOKEN=<your-strong-random-token>` on the server.
 - Open `https://<your-base-domain>/admin`.
 - Paste the token in the UI once; it is stored in local browser storage.
