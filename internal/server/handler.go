@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"net"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"eosrift.com/eosrift/internal/auth"
 	"eosrift.com/eosrift/internal/logging"
 )
 
@@ -29,6 +31,10 @@ type Config struct {
 
 	// MetricsToken enables /metrics when set (requires Authorization: Bearer <token>).
 	MetricsToken string
+
+	// AdminToken enables /admin and /api/admin/... when set
+	// (requires Authorization: Bearer <token> for API requests).
+	AdminToken string
 
 	// MaxTunnelsPerToken caps concurrent tunnels per authtoken.
 	// Zero means unlimited.
@@ -57,6 +63,7 @@ func ConfigFromEnv() Config {
 		TCPPortRangeEnd:   getenvInt("EOSRIFT_TCP_PORT_RANGE_END", 40000),
 
 		MetricsToken: strings.TrimSpace(os.Getenv("EOSRIFT_METRICS_TOKEN")),
+		AdminToken:   strings.TrimSpace(os.Getenv("EOSRIFT_ADMIN_TOKEN")),
 
 		MaxTunnelsPerToken: getenvInt("EOSRIFT_MAX_TUNNELS_PER_TOKEN", 0),
 
@@ -88,6 +95,7 @@ type Dependencies struct {
 	TokenValidator TokenValidator
 	TokenResolver  TokenResolver
 	Reservations   ReservationStore
+	AdminStore     AdminStore
 	Logger         logging.Logger
 }
 
@@ -156,6 +164,39 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 		mux.HandleFunc("/metrics", metricsHandler(cfg.BaseDomain, cfg.MetricsToken, metrics))
 	}
 
+	if strings.TrimSpace(cfg.AdminToken) != "" && deps.AdminStore != nil {
+		mux.HandleFunc("/admin", func(w http.ResponseWriter, r *http.Request) {
+			if !isBaseDomainHost(r.Host, cfg.BaseDomain) {
+				http.NotFound(w, r)
+				return
+			}
+			serveAdminIndex(w, r)
+		})
+		mux.HandleFunc("/admin/", func(w http.ResponseWriter, r *http.Request) {
+			if !isBaseDomainHost(r.Host, cfg.BaseDomain) {
+				http.NotFound(w, r)
+				return
+			}
+			switch r.URL.Path {
+			case "/admin/", "/admin":
+				serveAdminIndex(w, r)
+			case "/admin/style.css":
+				serveAdminStyle(w, r)
+			case "/admin/app.js":
+				serveAdminApp(w, r)
+			default:
+				http.NotFound(w, r)
+			}
+		})
+		mux.HandleFunc("/api/admin/", requireAdminAuth(cfg.AdminToken, func(w http.ResponseWriter, r *http.Request) {
+			if !isBaseDomainHost(r.Host, cfg.BaseDomain) {
+				http.NotFound(w, r)
+				return
+			}
+			serveAdminAPI(w, r, deps.AdminStore)
+		}))
+	}
+
 	mux.HandleFunc("/control", controlHandler(cfg, registry, deps, limiter, rateLimiter, metrics))
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/style.css" {
@@ -207,6 +248,43 @@ func isBaseDomainHost(host, baseDomain string) bool {
 		return false
 	}
 	return normalizeDomain(host) == base
+}
+
+type AdminStore interface {
+	CreateToken(ctx context.Context, label string) (auth.Token, string, error)
+	ListTokens(ctx context.Context) ([]auth.Token, error)
+	RevokeToken(ctx context.Context, id int64) error
+
+	ListReservedSubdomains(ctx context.Context) ([]auth.ReservedSubdomain, error)
+	ReserveSubdomain(ctx context.Context, tokenID int64, subdomain string) error
+	UnreserveSubdomain(ctx context.Context, subdomain string) error
+
+	ListReservedTCPPorts(ctx context.Context) ([]auth.ReservedTCPPort, error)
+	ReserveTCPPort(ctx context.Context, tokenID int64, port int) error
+	UnreserveTCPPort(ctx context.Context, port int) error
+}
+
+func requireAdminAuth(token string, next http.HandlerFunc) http.HandlerFunc {
+	token = strings.TrimSpace(token)
+	return func(w http.ResponseWriter, r *http.Request) {
+		if token == "" {
+			http.NotFound(w, r)
+			return
+		}
+		authz := strings.TrimSpace(r.Header.Get("Authorization"))
+		if !strings.HasPrefix(strings.ToLower(authz), "bearer ") {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="EosRift Admin"`)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		got := strings.TrimSpace(authz[len("Bearer "):])
+		if subtle.ConstantTimeCompare([]byte(got), []byte(token)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="EosRift Admin"`)
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		next(w, r)
+	}
 }
 
 func isAllowedDomain(domain string, cfg Config) bool {

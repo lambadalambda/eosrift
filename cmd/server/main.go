@@ -59,7 +59,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:              addr,
-		Handler:           server.NewHandler(cfg, server.Dependencies{TokenValidator: store, TokenResolver: store, Reservations: store, Logger: logger}),
+		Handler:           server.NewHandler(cfg, server.Dependencies{TokenValidator: store, TokenResolver: store, Reservations: store, AdminStore: store, Logger: logger}),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 
