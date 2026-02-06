@@ -58,6 +58,7 @@ kept in mind as we move toward `v1.0.0`.
 - [x] Deduplicate defaults/precedence logic across `http`, `tcp`, and `start` commands.
 - [x] HTTP edge proxy perf: avoid per-request `Transport`/`ReverseProxy` construction; reuse shared proxy/transport.
 - [x] Control-plane hardening: limit initial JSON request bytes; cap list lengths (CIDRs/headers); validate header values.
+- [x] Add a token-gated base-domain admin frontend/API for token + reservation management.
 - [ ] Decide policy for allowing transforms on `Forwarded` / `X-Forwarded-*` (currently allowed).
 
 ## Milestone 0 — Repository + delivery scaffolding

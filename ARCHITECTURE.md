@@ -23,8 +23,9 @@ Examples use `eosrift.com` as the base domain; self-hosters can substitute their
 - Reverse-proxies:
   - `https://<id>.tunnel.<base-domain>` → server’s HTTP edge handler
   - `https://<base-domain>/` → server’s embedded landing page
+  - `https://<base-domain>/admin` → server’s embedded admin frontend (optional)
   - `https://<base-domain>/control` (websocket upgrade) → server control handler
-  - Optional: `https://<base-domain>/api/...` → server management API
+  - Optional: `https://<base-domain>/api/admin/...` → server management API
 
 ### 2) Server (Go, Linux target)
 
@@ -137,7 +138,7 @@ clients reconnect.
 - Agents authenticate with authtokens; tokens are stored/validated server-side.
 - Server enforces per-token limits (max active tunnels, basic create rate limiting); more in later milestones.
 - Host header routing is validated to prevent confusion/poisoning attacks.
-- Default stance: no public admin UI; admin happens via CLI/API behind auth.
+- Default stance: admin UI/API is disabled unless `EOSRIFT_ADMIN_TOKEN` is set; all admin API requests require bearer auth.
 
 ## Scaling (future)
 

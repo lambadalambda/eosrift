@@ -59,6 +59,7 @@ service yet:
 
 - `cp .env.example .env` (edit for your domain)
 - (Optional) Set `EOSRIFT_AUTH_TOKEN` in `.env` to bootstrap the first authtoken
+- (Optional) Set `EOSRIFT_ADMIN_TOKEN` in `.env` to enable the server admin frontend/API
 - (Optional) Set `EOSRIFT_MAX_TUNNELS_PER_TOKEN` to cap active tunnels per authtoken (0 = unlimited)
 - (Optional) Set `EOSRIFT_MAX_TUNNEL_CREATES_PER_MIN` to rate limit tunnel creations per authtoken (0 = unlimited)
 - (Optional) Set `EOSRIFT_LOG_FORMAT=json` for structured logs
@@ -72,6 +73,7 @@ Notes:
 - `/control` requires an authtoken (stored in SQLite). If you didn’t bootstrap one via `EOSRIFT_AUTH_TOKEN`, create one with `docker compose exec server /eosrift-server token create`.
 - `docker-compose.yml` defaults `EOSRIFT_TRUST_PROXY_HEADERS=1` (safe with the default localhost-only server bind + Caddy in front). If you expose the server directly to untrusted clients, set it to `0` to prevent `X-Forwarded-*` spoofing.
 - Once deployed with DNS + Caddy, `https://<EOSRIFT_BASE_DOMAIN>/` serves a small landing page (the tunnel subdomains still route to tunnels).
+- If `EOSRIFT_ADMIN_TOKEN` is set, `https://<EOSRIFT_BASE_DOMAIN>/admin` serves the admin frontend.
 
 ### Client (build, recommended for now)
 
@@ -225,6 +227,21 @@ Server token management (Docker):
 - Create: `docker compose exec server /eosrift-server token create --label laptop`
 - List: `docker compose exec server /eosrift-server token list`
 - Revoke: `docker compose exec server /eosrift-server token revoke <id>`
+
+### Server admin frontend (alpha)
+
+A token-gated admin frontend is available on the base domain:
+
+- Enable it by setting `EOSRIFT_ADMIN_TOKEN=<strong-random-token>` on the server.
+- Enable it by setting `EOSRIFT_ADMIN_TOKEN=<your-strong-random-token>` on the server.
+- Open `https://<your-base-domain>/admin`.
+- Paste the token in the UI once; it is stored in local browser storage.
+
+Admin API endpoints (same token required via `Authorization: Bearer <token>`):
+
+- `GET|POST /api/admin/tokens`, `DELETE /api/admin/tokens/<id>`
+- `GET|POST /api/admin/subdomains`, `DELETE /api/admin/subdomains/<subdomain>`
+- `GET|POST /api/admin/tcp-ports`, `DELETE /api/admin/tcp-ports/<port>`
 
 ### Reserved subdomains (alpha)
 
