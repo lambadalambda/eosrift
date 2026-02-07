@@ -61,6 +61,7 @@ const landingIndexHTML = `<!DOCTYPE html>
             <nav class="nav">
                 <a href="#features">Features</a>
                 <a href="#quickstart">Quick Start</a>
+                <a href="/docs/">Docs</a>
                 <a href="https://github.com/lambadalambda/eosrift" class="nav-github">GitHub</a>
             </nav>
         </div>
@@ -254,7 +255,7 @@ const landingIndexHTML = `<!DOCTYPE html>
             </p>
             <div class="footer-links">
                 <a href="https://github.com/lambadalambda/eosrift">GitHub</a>
-                <a href="#quickstart">Docs</a>
+                <a href="/docs/">Docs</a>
             </div>
         </div>
     </footer>

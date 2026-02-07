@@ -28,6 +28,8 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Control-plane requests now enforce basic size limits and validate header transform values (defense in depth).
 - Admin UI now starts on a login screen and only shows the dashboard after a valid admin token is entered (with logout/session-expiry handling).
 - Expanded `/docs/` with a full client CLI reference (commands, flags, config paths/schema, precedence, named tunnels, inspector behavior).
+- Deploy webhook health checks now default to `http://server:8080/healthz` (container network-safe default).
+- Landing page now links directly to `/docs/` from the header and footer.
 
 ### Fixed
 

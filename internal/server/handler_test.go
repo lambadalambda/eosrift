@@ -50,6 +50,9 @@ func TestNewHandler_landingPage_baseDomainIndex(t *testing.T) {
 	if got := rec.Body.String(); !strings.Contains(got, "Self-Hosted Tunnel Service") {
 		t.Fatalf("body missing marker (len=%d)", len(got))
 	}
+	if got := rec.Body.String(); !strings.Contains(got, `href="/docs/"`) {
+		t.Fatalf("body missing docs link (len=%d)", len(got))
+	}
 }
 
 func TestNewHandler_landingPage_baseDomainStyle(t *testing.T) {
