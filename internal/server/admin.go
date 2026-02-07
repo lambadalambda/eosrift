@@ -13,7 +13,7 @@ import (
 
 const maxAdminBodyBytes = 64 * 1024
 
-func serveAdminAPI(w http.ResponseWriter, r *http.Request, store AdminStore) {
+func serveAdminAPI(w http.ResponseWriter, r *http.Request, cfg Config, store AdminStore) {
 	if store == nil {
 		http.NotFound(w, r)
 		return
@@ -27,6 +27,12 @@ func serveAdminAPI(w http.ResponseWriter, r *http.Request, store AdminStore) {
 	}
 
 	switch {
+	case resource == "deploy":
+		if r.Method != http.MethodGet {
+			methodNotAllowed(w)
+			return
+		}
+		serveAdminDeployStatus(w, cfg)
 	case resource == "summary":
 		if r.Method != http.MethodGet {
 			methodNotAllowed(w)
@@ -81,6 +87,15 @@ func serveAdminAPI(w http.ResponseWriter, r *http.Request, store AdminStore) {
 	default:
 		http.NotFound(w, r)
 	}
+}
+
+func serveAdminDeployStatus(w http.ResponseWriter, cfg Config) {
+	status, err := readDeployStatus(cfg.DeployStatusPath)
+	if err != nil {
+		writeAdminError(w, http.StatusInternalServerError, "failed to read deploy status")
+		return
+	}
+	writeAdminJSON(w, http.StatusOK, status)
 }
 
 func serveAdminSummary(w http.ResponseWriter, r *http.Request, store AdminStore) {
@@ -413,6 +428,18 @@ const adminIndexHTML = `<!doctype html>
 
       <section class="grid">
         <article class="panel">
+          <h2>Deploy Status</h2>
+          <p id="deployState" class="status"></p>
+          <div class="deploy-meta">
+            <p><strong>SHA:</strong> <span id="deploySHA">-</span></p>
+            <p><strong>Updated:</strong> <span id="deployUpdatedAt">-</span></p>
+            <p><strong>Message:</strong> <span id="deployMessage">-</span></p>
+            <p><strong>Status file:</strong> <span id="deployPath">-</span></p>
+            <p><a id="deployRunURL" href="#" target="_blank" rel="noopener noreferrer" class="hidden">Workflow Run</a></p>
+          </div>
+        </article>
+
+        <article class="panel">
           <h2>Authtokens</h2>
           <form id="createTokenForm" class="row">
             <input id="tokenLabel" type="text" placeholder="Label (optional)">
@@ -634,6 +661,15 @@ th { color: var(--muted); font-weight: 600; }
 
 .hidden { display: none; }
 
+.deploy-meta p {
+  margin: 6px 0;
+  color: var(--muted);
+}
+
+.deploy-meta strong {
+  color: var(--text);
+}
+
 @media (max-width: 720px) {
   .layout { padding: 14px; }
   .grid { grid-template-columns: 1fr; }
@@ -656,6 +692,12 @@ const adminAppJS = `(() => {
   const revokedTokens = document.getElementById("revokedTokens");
   const subdomainCount = document.getElementById("subdomainCount");
   const tcpCount = document.getElementById("tcpCount");
+  const deployState = document.getElementById("deployState");
+  const deploySHA = document.getElementById("deploySHA");
+  const deployUpdatedAt = document.getElementById("deployUpdatedAt");
+  const deployMessage = document.getElementById("deployMessage");
+  const deployPath = document.getElementById("deployPath");
+  const deployRunURL = document.getElementById("deployRunURL");
 
   const tokensBody = document.getElementById("tokensBody");
   const subdomainsBody = document.getElementById("subdomainsBody");
@@ -764,6 +806,27 @@ const adminAppJS = `(() => {
     });
   }
 
+  async function loadDeployStatus() {
+    const data = await api("deploy");
+
+    const state = String(data.state || "unknown");
+    const ok = state === "success" || state === "running";
+    setStatus(deployState, "State: " + state, ok);
+
+    deploySHA.textContent = data.sha ? String(data.sha) : "-";
+    deployUpdatedAt.textContent = data.updated_at ? String(data.updated_at) : "-";
+    deployMessage.textContent = data.message ? String(data.message) : "-";
+    deployPath.textContent = data.configured_path ? String(data.configured_path) : "-";
+
+    if (data.run_url) {
+      deployRunURL.classList.remove("hidden");
+      deployRunURL.href = String(data.run_url);
+    } else {
+      deployRunURL.classList.add("hidden");
+      deployRunURL.removeAttribute("href");
+    }
+  }
+
   async function loadSubdomains() {
     const data = await api("subdomains");
     clearChildren(subdomainsBody);
@@ -814,7 +877,7 @@ const adminAppJS = `(() => {
     }
 
     try {
-      await Promise.all([loadSummary(), loadTokens(), loadSubdomains(), loadPorts()]);
+      await Promise.all([loadSummary(), loadDeployStatus(), loadTokens(), loadSubdomains(), loadPorts()]);
       setLoggedIn(true);
       setStatus(dashboardStatus, "Connected.", true);
       return true;

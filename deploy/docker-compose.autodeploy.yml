@@ -19,8 +19,14 @@ services:
       EOSRIFT_DEPLOY_HEALTH_URL: "${EOSRIFT_DEPLOY_HEALTH_URL:-http://server:8080/healthz}"
       EOSRIFT_DEPLOY_HEALTH_ATTEMPTS: "${EOSRIFT_DEPLOY_HEALTH_ATTEMPTS:-30}"
       EOSRIFT_DEPLOY_HEALTH_SLEEP_SECONDS: "${EOSRIFT_DEPLOY_HEALTH_SLEEP_SECONDS:-2}"
+      EOSRIFT_DEPLOY_STATUS_PATH: "${EOSRIFT_DEPLOY_STATUS_PATH:-/data/deploy-status.json}"
     expose:
       - "8091"
     volumes:
       - .:/workspace
       - /var/run/docker.sock:/var/run/docker.sock
+      - eosrift-data:/data
+
+  server:
+    environment:
+      EOSRIFT_DEPLOY_STATUS_PATH: "${EOSRIFT_DEPLOY_STATUS_PATH:-/data/deploy-status.json}"

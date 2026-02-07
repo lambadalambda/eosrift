@@ -92,6 +92,7 @@ This avoids putting SSH/deploy credentials into GitHub Actions. GitHub only send
   - Secret: same as `EOSRIFT_DEPLOY_WEBHOOK_SECRET`
   - Event: `Workflow runs`
 - On each successful `Docker Image` workflow run on `main`, the receiver runs `deploy/webhook/eosrift-deploy.sh` and recreates the `server` service.
+- Deploy status is written to `EOSRIFT_DEPLOY_STATUS_PATH` (default `/data/deploy-status.json`) and shown in `/admin`.
 
 ### Client (build, recommended for now)
 

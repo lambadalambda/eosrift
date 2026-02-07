@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -153,6 +155,78 @@ func TestNewHandler_AdminAPI_Mutations(t *testing.T) {
 	delPort := doJSON(http.MethodDelete, "/api/admin/tcp-ports/20005", nil)
 	if delPort.Code != http.StatusNoContent {
 		t.Fatalf("delete port status = %d, want %d (body=%q)", delPort.Code, http.StatusNoContent, delPort.Body.String())
+	}
+}
+
+func TestNewHandler_AdminAPI_DeployStatus(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	statusPath := filepath.Join(dir, "deploy-status.json")
+	if err := os.WriteFile(statusPath, []byte(`{
+  "state":"success",
+  "run_id":12345,
+  "sha":"abc123",
+  "updated_at":"2026-02-07T06:10:00Z"
+}`), 0o600); err != nil {
+		t.Fatalf("write status file: %v", err)
+	}
+
+	h := NewHandler(Config{
+		BaseDomain:       "eosrift.com",
+		TunnelDomain:     "tunnel.eosrift.com",
+		AdminToken:       "admin-secret",
+		DeployStatusPath: statusPath,
+	}, Dependencies{
+		AdminStore: newStubAdminStore(),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "http://eosrift.com/api/admin/deploy", nil)
+	req.Host = "eosrift.com"
+	req.Header.Set("Authorization", "Bearer admin-secret")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d (body=%q)", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"state":"success"`) {
+		t.Fatalf("missing deploy state: %q", rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"run_id":12345`) {
+		t.Fatalf("missing run id: %q", rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"enabled":true`) {
+		t.Fatalf("missing enabled marker: %q", rec.Body.String())
+	}
+}
+
+func TestNewHandler_AdminAPI_DeployStatusMissingFile(t *testing.T) {
+	t.Parallel()
+
+	h := NewHandler(Config{
+		BaseDomain:       "eosrift.com",
+		TunnelDomain:     "tunnel.eosrift.com",
+		AdminToken:       "admin-secret",
+		DeployStatusPath: filepath.Join(t.TempDir(), "missing.json"),
+	}, Dependencies{
+		AdminStore: newStubAdminStore(),
+	})
+
+	req := httptest.NewRequest(http.MethodGet, "http://eosrift.com/api/admin/deploy", nil)
+	req.Host = "eosrift.com"
+	req.Header.Set("Authorization", "Bearer admin-secret")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d (body=%q)", rec.Code, http.StatusOK, rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"state":"unknown"`) {
+		t.Fatalf("missing unknown state: %q", rec.Body.String())
+	}
+	if !strings.Contains(rec.Body.String(), `"enabled":true`) {
+		t.Fatalf("missing enabled marker: %q", rec.Body.String())
 	}
 }
 

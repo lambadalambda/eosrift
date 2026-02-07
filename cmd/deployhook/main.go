@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -35,7 +36,17 @@ func main() {
 
 	trigger := func(ctx context.Context, run deployhook.Run) error {
 		cmd := exec.CommandContext(ctx, command, commandArgs...)
-		cmd.Env = os.Environ()
+		env := append([]string{}, os.Environ()...)
+		env = append(env,
+			"EOSRIFT_DEPLOY_RUN_ID="+strconv.FormatInt(run.RunID, 10),
+			"EOSRIFT_DEPLOY_REPOSITORY="+run.Repository,
+			"EOSRIFT_DEPLOY_WORKFLOW="+run.Workflow,
+			"EOSRIFT_DEPLOY_BRANCH="+run.Branch,
+			"EOSRIFT_DEPLOY_SHA="+run.SHA,
+			"EOSRIFT_DEPLOY_RUN_URL="+run.URL,
+			"EOSRIFT_DEPLOY_STARTED_AT="+time.Now().UTC().Format(time.RFC3339),
+		)
+		cmd.Env = env
 
 		var output bytes.Buffer
 		cmd.Stdout = &output

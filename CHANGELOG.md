@@ -15,6 +15,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Token-gated server admin frontend and API: `/admin` and `/api/admin/*` (enable with `EOSRIFT_ADMIN_TOKEN`).
 - Embedded documentation site at `/docs/` (VitePress source in `docs-site/`, served from Go on the base domain).
 - Optional GitHub-webhook auto-deploy receiver (`cmd/deployhook`) with signature verification and workflow/branch filtering, plus compose wiring (`deploy/docker-compose.autodeploy.yml`).
+- Admin deploy status API/UI (`GET /api/admin/deploy` and `/admin` panel) backed by deployhook status file updates.
 - Reserved TCP ports (SQLite-backed): `eosrift-server tcp-reserve ...` and auto-reserve on first `--remote-port` use.
 - HTTP tunnels can now forward to local HTTPS upstreams (pass a `https://...` local URL).
 - HTTP tunnel basic auth (per tunnel): `eosrift http --basic-auth user:pass` and `tunnels.*.basic_auth`.

@@ -131,6 +131,7 @@ This model uses a signed GitHub webhook callback instead of SSH from GitHub Acti
   - `docker compose pull server`
   - `docker compose up -d --no-deps --force-recreate server`
   - health check (`/healthz`)
+  - writes deploy metadata/status to `EOSRIFT_DEPLOY_STATUS_PATH` (default: `/data/deploy-status.json`)
 
 ### Server setup
 
@@ -157,3 +158,8 @@ In the repository:
 - The `deployhook` service mounts `/var/run/docker.sock`; treat it as privileged.
 - Keep the webhook secret strong and rotate it if leaked.
 - Keep `EOSRIFT_DEPLOY_WEBHOOK_REPOSITORY` set to avoid cross-repo trigger abuse.
+
+### Admin visibility
+
+If `EOSRIFT_ADMIN_TOKEN` is set, `/admin` shows the latest deploy state (`running` / `success` / `error`),
+SHA, workflow link, and status message from the status file.

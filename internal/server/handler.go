@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"crypto/subtle"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -50,6 +51,10 @@ type Config struct {
 	// AuthToken, if set, is ensured to exist in the SQLite DB on startup.
 	// (Bootstrap convenience; not required when tokens already exist.)
 	AuthToken string
+
+	// DeployStatusPath is an optional JSON file containing the latest deployhook status.
+	// If empty, deploy status is disabled in the admin API/UI.
+	DeployStatusPath string
 }
 
 func ConfigFromEnv() Config {
@@ -72,6 +77,8 @@ func ConfigFromEnv() Config {
 		DBPath: strings.TrimSpace(os.Getenv("EOSRIFT_DB_PATH")),
 
 		AuthToken: strings.TrimSpace(os.Getenv("EOSRIFT_AUTH_TOKEN")),
+
+		DeployStatusPath: strings.TrimSpace(os.Getenv("EOSRIFT_DEPLOY_STATUS_PATH")),
 	}
 }
 
@@ -193,7 +200,7 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 				http.NotFound(w, r)
 				return
 			}
-			serveAdminAPI(w, r, deps.AdminStore)
+			serveAdminAPI(w, r, cfg, deps.AdminStore)
 		}))
 	}
 
@@ -277,6 +284,38 @@ type AdminStore interface {
 	ListReservedTCPPorts(ctx context.Context) ([]auth.ReservedTCPPort, error)
 	ReserveTCPPort(ctx context.Context, tokenID int64, port int) error
 	UnreserveTCPPort(ctx context.Context, port int) error
+}
+
+func readDeployStatus(path string) (map[string]any, error) {
+	filePath := strings.TrimSpace(path)
+	if filePath == "" {
+		return map[string]any{
+			"enabled": false,
+			"state":   "disabled",
+		}, nil
+	}
+
+	payload, err := os.ReadFile(filePath)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return map[string]any{
+				"enabled":         true,
+				"configured_path": filePath,
+				"state":           "unknown",
+				"message":         "no deploy status yet",
+			}, nil
+		}
+		return nil, err
+	}
+
+	var status map[string]any
+	if err := json.Unmarshal(payload, &status); err != nil {
+		return nil, err
+	}
+
+	status["enabled"] = true
+	status["configured_path"] = filePath
+	return status, nil
 }
 
 func requireAdminAuth(token string, next http.HandlerFunc) http.HandlerFunc {

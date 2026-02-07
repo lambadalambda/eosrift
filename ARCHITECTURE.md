@@ -58,6 +58,7 @@ Responsibilities:
 - Verify `X-Hub-Signature-256` with a shared webhook secret
 - Filter to successful runs for the expected workflow/branch/repository
 - Trigger a local deploy script (`docker compose pull/up`) and report status via logs
+- Persist deploy status metadata to a shared JSON file for the admin API/UI
 
 ## Planes and protocols
 
