@@ -2,12 +2,15 @@
 set -euo pipefail
 
 image="${EOSRIFT_NODE_IMAGE:-node:20-alpine}"
+host_uid="$(id -u)"
+host_gid="$(id -g)"
 
 exec docker run --rm \
-  --user "$(id -u):$(id -g)" \
+  -e HOST_UID="${host_uid}" \
+  -e HOST_GID="${host_gid}" \
   -e HOME="/tmp" \
   -e NPM_CONFIG_CACHE="/tmp/.npm" \
   -v "${PWD}:/src" \
   -w /src/docs-site \
   "${image}" \
-  sh -lc "rm -rf node_modules && npm ci --no-audit && npm run docs:build && rm -rf node_modules"
+  sh -lc 'rm -rf node_modules .vitepress/.temp .vitepress/cache && npm ci --no-audit && npm run docs:build && rm -rf node_modules .vitepress/.temp .vitepress/cache && chown -R "${HOST_UID}:${HOST_GID}" /src/docs-site /src/internal/server/docs_static'

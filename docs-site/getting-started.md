@@ -38,3 +38,33 @@ docker compose exec server /eosrift-server token create --label laptop
 ```
 
 The CLI prints a public forwarding URL and local inspector URL.
+
+## 6) Optional: define named tunnels
+
+```yaml
+# eosrift.yml
+version: 1
+server_addr: https://<your-base-domain>
+authtoken: <token>
+
+tunnels:
+  web:
+    proto: http
+    addr: 3000
+  db:
+    proto: tcp
+    addr: 5432
+```
+
+Run:
+
+```bash
+./bin/eosrift start --all
+```
+
+## Next
+
+- [Client CLI](/client-cli)
+- [Configuration](/configuration)
+- [Named Tunnels](/named-tunnels)
+- [HTTP Command Reference](/command-http)

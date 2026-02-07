@@ -10,6 +10,8 @@ export default defineConfig({
     nav: [
       { text: "Getting Started", link: "/getting-started" },
       { text: "Client CLI", link: "/client-cli" },
+      { text: "Configuration", link: "/configuration" },
+      { text: "Named Tunnels", link: "/named-tunnels" },
       { text: "Server Admin", link: "/server-admin" }
     ],
     sidebar: [
@@ -19,6 +21,24 @@ export default defineConfig({
           { text: "Overview", link: "/" },
           { text: "Getting Started", link: "/getting-started" },
           { text: "Client CLI", link: "/client-cli" },
+          { text: "Configuration", link: "/configuration" },
+          { text: "Named Tunnels", link: "/named-tunnels" },
+          { text: "Inspector", link: "/inspector" }
+        ]
+      },
+      {
+        text: "Command Reference",
+        items: [
+          { text: "eosrift http", link: "/command-http" },
+          { text: "eosrift tcp", link: "/command-tcp" },
+          { text: "eosrift tls", link: "/command-tls" },
+          { text: "eosrift start", link: "/command-start" },
+          { text: "eosrift config", link: "/command-config" }
+        ]
+      },
+      {
+        text: "Operations",
+        items: [
           { text: "Server Admin", link: "/server-admin" }
         ]
       }

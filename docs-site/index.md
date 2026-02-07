@@ -12,8 +12,19 @@ Eosrift is a self-hosted tunnel service with an ngrok-like CLI and workflow.
 ## Read This First
 
 - [Getting Started](/getting-started)
-- [Client CLI](/client-cli)
+- [Client CLI Overview](/client-cli)
+- [Configuration](/configuration)
+- [Named Tunnels](/named-tunnels)
+- [Inspector](/inspector)
 - [Server Admin](/server-admin)
+
+## Command Reference
+
+- [eosrift http](/command-http)
+- [eosrift tcp](/command-tcp)
+- [eosrift tls](/command-tls)
+- [eosrift start](/command-start)
+- [eosrift config](/command-config)
 
 ## Compatibility
 

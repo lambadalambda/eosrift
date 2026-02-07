@@ -26,6 +26,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `eosrift start` now validates `tunnels:` config and fails fast on common mistakes (invalid `addr`, invalid option combinations).
 - Control-plane requests now enforce basic size limits and validate header transform values (defense in depth).
 - Admin UI now starts on a login screen and only shows the dashboard after a valid admin token is entered (with logout/session-expiry handling).
+- Expanded `/docs/` with a full client CLI reference (commands, flags, config paths/schema, precedence, named tunnels, inspector behavior).
 
 ### Fixed
 
