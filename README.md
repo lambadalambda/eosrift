@@ -52,6 +52,7 @@ service yet:
 - `RELEASING.md` — release checklist and “v1.0-ready” definition
 - `deploy/PRODUCTION.md` — deployment notes (DNS, Caddy, firewall)
 - `SECURITY.md` — threat model and security checklist
+- `docs-site/` — VitePress source docs, embedded and served at `/docs/`
 
 ## Quickstart
 
@@ -74,6 +75,7 @@ Notes:
 - `docker-compose.yml` defaults `EOSRIFT_TRUST_PROXY_HEADERS=1` (safe with the default localhost-only server bind + Caddy in front). If you expose the server directly to untrusted clients, set it to `0` to prevent `X-Forwarded-*` spoofing.
 - Once deployed with DNS + Caddy, `https://<EOSRIFT_BASE_DOMAIN>/` serves a small landing page (the tunnel subdomains still route to tunnels).
 - If `EOSRIFT_ADMIN_TOKEN` is set, `https://<EOSRIFT_BASE_DOMAIN>/admin` serves the admin frontend.
+- `https://<EOSRIFT_BASE_DOMAIN>/docs/` serves the embedded docs site.
 
 ### Client (build, recommended for now)
 
@@ -295,6 +297,12 @@ ngrok is a trademark of its respective owners. This project is not affiliated wi
 - Unit tests: `./scripts/go test ./...`
 - Integration tests (Docker): `docker compose -f docker-compose.test.yml up --build --exit-code-from test --abort-on-container-exit`
 - Caddy-in-the-loop smoke (Docker): `docker compose -f docker-compose.caddytest.yml up --build --exit-code-from test --abort-on-container-exit`
+
+### Docs site (`/docs`)
+
+- Build embedded docs (Dockerized Node): `./scripts/docs-build`
+- Local docs dev server (host Node): `cd docs-site && npm install && npm run docs:dev`
+- Local docs dev server (Docker via mise): `mise docs:dev`
 
 ### Load testing (Docker)
 

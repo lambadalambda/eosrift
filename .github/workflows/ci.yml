@@ -14,6 +14,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Build docs bundle
+        run: ./scripts/docs-build
+
+      - name: Verify docs bundle is up to date
+        run: git diff --exit-code -- internal/server/docs_static
+
       - name: Unit tests (Dockerized Go)
         run: ./scripts/go test ./...
 

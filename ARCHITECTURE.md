@@ -23,6 +23,7 @@ Examples use `eosrift.com` as the base domain; self-hosters can substitute their
 - Reverse-proxies:
   - `https://<id>.tunnel.<base-domain>` → server’s HTTP edge handler
   - `https://<base-domain>/` → server’s embedded landing page
+  - `https://<base-domain>/docs/` → server’s embedded docs site
   - `https://<base-domain>/admin` → server’s embedded admin frontend (optional)
   - `https://<base-domain>/control` (websocket upgrade) → server control handler
   - Optional: `https://<base-domain>/api/admin/...` → server management API
@@ -36,6 +37,7 @@ Responsibilities:
   - HTTP tunnels: allocate subdomains
   - TCP tunnels: allocate ports from a configured range
 - Route inbound traffic to the correct tunnel
+- Serve embedded base-domain UX pages (`/`, `/docs/`, optional `/admin`)
 - Persist durable config in SQLite (tokens, reservations, users)
 
 ### 3) Client (Go, macOS/Linux)

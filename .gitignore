@@ -14,3 +14,6 @@ build/
 *.db-shm
 *.db-wal
 
+# Docs tooling
+docs-site/node_modules/
+docs-site/.vitepress/cache/

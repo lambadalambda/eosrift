@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+image="${EOSRIFT_NODE_IMAGE:-node:20-alpine}"
+
+exec docker run --rm \
+  --user "$(id -u):$(id -g)" \
+  -e HOME="/tmp" \
+  -e NPM_CONFIG_CACHE="/tmp/.npm" \
+  -v "${PWD}:/src" \
+  -w /src/docs-site \
+  "${image}" \
+  sh -lc "rm -rf node_modules && npm ci --no-audit && npm run docs:build && rm -rf node_modules"

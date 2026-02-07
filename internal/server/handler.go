@@ -197,6 +197,21 @@ func NewHandler(cfg Config, deps Dependencies) http.Handler {
 		}))
 	}
 
+	mux.HandleFunc("/docs", func(w http.ResponseWriter, r *http.Request) {
+		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/docs" {
+			http.Redirect(w, r, "/docs/", http.StatusMovedPermanently)
+			return
+		}
+		tunnelProxy(w, r)
+	})
+	mux.HandleFunc("/docs/", func(w http.ResponseWriter, r *http.Request) {
+		if isBaseDomainHost(r.Host, cfg.BaseDomain) {
+			serveDocs(w, r)
+			return
+		}
+		tunnelProxy(w, r)
+	})
+
 	mux.HandleFunc("/control", controlHandler(cfg, registry, deps, limiter, rateLimiter, metrics))
 	mux.HandleFunc("/style.css", func(w http.ResponseWriter, r *http.Request) {
 		if isBaseDomainHost(r.Host, cfg.BaseDomain) && r.URL.Path == "/style.css" {

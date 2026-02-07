@@ -1,0 +1,3 @@
+[tasks."docs:dev"]
+description = "Run docs-site VitePress dev server in Docker"
+run = "docker run --rm -it -p 5173:5173 -e HOME=/tmp -e NPM_CONFIG_CACHE=/tmp/.npm -v \"$PWD:/src\" -v eosrift-docs-node-modules:/src/docs-site/node_modules -w /src/docs-site node:20-alpine sh -lc 'npm ci --no-audit && npm run docs:dev'"

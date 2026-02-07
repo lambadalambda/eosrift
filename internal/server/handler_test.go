@@ -98,6 +98,75 @@ func TestNewHandler_landingPage_notServedOnTunnelHost(t *testing.T) {
 	}
 }
 
+func TestNewHandler_docs_baseDomainRedirect(t *testing.T) {
+	t.Parallel()
+
+	h := NewHandler(Config{
+		BaseDomain:   "eosrift.com",
+		TunnelDomain: "tunnel.eosrift.com",
+	}, Dependencies{})
+
+	req := httptest.NewRequest(http.MethodGet, "http://eosrift.com/docs", nil)
+	req.Host = "eosrift.com"
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusMovedPermanently {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusMovedPermanently)
+	}
+
+	if got, want := rec.Header().Get("Location"), "/docs/"; got != want {
+		t.Fatalf("location = %q, want %q", got, want)
+	}
+}
+
+func TestNewHandler_docs_baseDomainIndex(t *testing.T) {
+	t.Parallel()
+
+	h := NewHandler(Config{
+		BaseDomain:   "eosrift.com",
+		TunnelDomain: "tunnel.eosrift.com",
+	}, Dependencies{})
+
+	req := httptest.NewRequest(http.MethodGet, "http://eosrift.com/docs/", nil)
+	req.Host = "eosrift.com"
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	if got := rec.Header().Get("Content-Type"); !strings.HasPrefix(got, "text/html") {
+		t.Fatalf("content-type = %q, want text/html", got)
+	}
+
+	if got := rec.Body.String(); !strings.Contains(got, "Eosrift Documentation") {
+		t.Fatalf("body missing docs marker (len=%d)", len(got))
+	}
+}
+
+func TestNewHandler_docs_notServedOnTunnelHost(t *testing.T) {
+	t.Parallel()
+
+	h := NewHandler(Config{
+		BaseDomain:   "eosrift.com",
+		TunnelDomain: "tunnel.eosrift.com",
+	}, Dependencies{})
+
+	req := httptest.NewRequest(http.MethodGet, "http://abcd1234.tunnel.eosrift.com/docs/", nil)
+	req.Host = "abcd1234.tunnel.eosrift.com"
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNotFound)
+	}
+}
+
 func TestNewHandler_caddyAsk_allowsBaseAndTunnelDomains(t *testing.T) {
 	t.Parallel()
 
