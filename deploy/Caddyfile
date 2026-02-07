@@ -19,5 +19,13 @@
 		on_demand
 	}
 
+	# Optional webhook receiver for image-build-triggered deploys.
+	@deploy_hook {
+		path /hooks/deploy /hooks/deploy/*
+	}
+	handle @deploy_hook {
+		reverse_proxy deployhook:8091
+	}
+
 	reverse_proxy server:8080
 }

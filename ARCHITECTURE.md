@@ -26,6 +26,7 @@ Examples use `eosrift.com` as the base domain; self-hosters can substitute their
   - `https://<base-domain>/docs/` → server’s embedded docs site
   - `https://<base-domain>/admin` → server’s embedded admin frontend (optional)
   - `https://<base-domain>/control` (websocket upgrade) → server control handler
+  - Optional: `https://<base-domain>/hooks/deploy` → deploy webhook receiver
   - Optional: `https://<base-domain>/api/admin/...` → server management API
 
 ### 2) Server (Go, Linux target)
@@ -48,6 +49,15 @@ Responsibilities:
 - Maintain a single outbound session to the server
 - Proxy streams to local upstreams
 - Local inspector service on `127.0.0.1:4040` (HTTP tunnels)
+
+### 4) Optional deploy webhook receiver (Go)
+
+Responsibilities:
+
+- Accept signed GitHub webhooks (`workflow_run`) on `/hooks/deploy`
+- Verify `X-Hub-Signature-256` with a shared webhook secret
+- Filter to successful runs for the expected workflow/branch/repository
+- Trigger a local deploy script (`docker compose pull/up`) and report status via logs
 
 ## Planes and protocols
 

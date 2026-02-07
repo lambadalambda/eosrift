@@ -117,3 +117,43 @@ Set your authtoken and server:
 Start a tunnel:
 
 - `eosrift http 3000`
+
+## 8) Optional: auto-deploy from GitHub webhook (no deploy secrets in Actions)
+
+This model uses a signed GitHub webhook callback instead of SSH from GitHub Actions.
+
+### What happens
+
+- `Docker Image` workflow succeeds on `main`
+- GitHub sends a signed `workflow_run` webhook to `https://<base-domain>/hooks/deploy`
+- `deployhook` verifies signature + workflow/branch/repo
+- `deploy/webhook/eosrift-deploy.sh` runs:
+  - `docker compose pull server`
+  - `docker compose up -d --no-deps --force-recreate server`
+  - health check (`/healthz`)
+
+### Server setup
+
+1. In `.env`, set:
+   - `EOSRIFT_DEPLOY_WEBHOOK_SECRET=<strong-random-secret>`
+   - `EOSRIFT_DEPLOY_WEBHOOK_REPOSITORY=<owner>/<repo>`
+2. Start stack with auto-deploy override:
+   - `docker compose -f docker-compose.yml -f deploy/docker-compose.autodeploy.yml up -d --build`
+3. Confirm the receiver is running:
+   - `docker compose -f docker-compose.yml -f deploy/docker-compose.autodeploy.yml logs -f deployhook`
+
+### GitHub webhook setup
+
+In the repository:
+
+- Settings → Webhooks → Add webhook
+- Payload URL: `https://<base-domain>/hooks/deploy`
+- Content type: `application/json`
+- Secret: exactly `EOSRIFT_DEPLOY_WEBHOOK_SECRET`
+- Trigger: **Workflow runs**
+
+### Security notes
+
+- The `deployhook` service mounts `/var/run/docker.sock`; treat it as privileged.
+- Keep the webhook secret strong and rotate it if leaked.
+- Keep `EOSRIFT_DEPLOY_WEBHOOK_REPOSITORY` set to avoid cross-repo trigger abuse.

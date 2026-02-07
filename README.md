@@ -77,6 +77,22 @@ Notes:
 - If `EOSRIFT_ADMIN_TOKEN` is set, `https://<EOSRIFT_BASE_DOMAIN>/admin` serves the admin frontend.
 - `https://<EOSRIFT_BASE_DOMAIN>/docs/` serves the embedded docs site.
 
+### Optional: GitHub webhook auto-deploy
+
+This avoids putting SSH/deploy credentials into GitHub Actions. GitHub only sends a signed webhook.
+
+- Enable the optional deploy hook service:
+  - `docker compose -f docker-compose.yml -f deploy/docker-compose.autodeploy.yml up -d --build`
+- Set these in `.env`:
+  - `EOSRIFT_DEPLOY_WEBHOOK_SECRET=<strong-random-secret>`
+  - `EOSRIFT_DEPLOY_WEBHOOK_REPOSITORY=<owner>/<repo>`
+- Add a GitHub repository webhook:
+  - URL: `https://<EOSRIFT_BASE_DOMAIN>/hooks/deploy`
+  - Content type: `application/json`
+  - Secret: same as `EOSRIFT_DEPLOY_WEBHOOK_SECRET`
+  - Event: `Workflow runs`
+- On each successful `Docker Image` workflow run on `main`, the receiver runs `deploy/webhook/eosrift-deploy.sh` and recreates the `server` service.
+
 ### Client (build, recommended for now)
 
 This repo doesn’t require Go on your host; you can build with Docker:

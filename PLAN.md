@@ -60,6 +60,7 @@ kept in mind as we move toward `v1.0.0`.
 - [x] Control-plane hardening: limit initial JSON request bytes; cap list lengths (CIDRs/headers); validate header values.
 - [x] Add a token-gated base-domain admin frontend/API for token + reservation management.
 - [x] Add embedded VitePress docs served on base domain under `/docs/`.
+- [x] Add optional webhook-based auto-deploy flow (GitHub `workflow_run` callback, signed webhook verification, deploy runner script).
 - [ ] Decide policy for allowing transforms on `Forwarded` / `X-Forwarded-*` (currently allowed).
 
 ## Milestone 0 — Repository + delivery scaffolding
