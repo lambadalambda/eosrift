@@ -306,7 +306,7 @@ func handleTCPControl(ctx context.Context, ws *websocket.Conn, session *yamux.Se
 		defer releaseTunnel()
 	}
 
-	if err := json.NewEncoder(ctrlStream).Encode(control.CreateTCPTunnelResponse{
+	if err := control.WriteJSON(ctrlStream, control.CreateTCPTunnelResponse{
 		Type:       "tcp",
 		RemotePort: port,
 	}); err != nil {
@@ -415,7 +415,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		return desired, nil
 	}()
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -425,7 +425,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 
 	basicAuth, err := parseBasicAuthCredential(req.BasicAuth)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -435,7 +435,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 
 	allowCIDRs, err := control.ParseCIDRList("allow_cidr", req.AllowCIDR, maxCIDREntries)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -444,7 +444,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 	denyCIDRs, err := control.ParseCIDRList("deny_cidr", req.DenyCIDR, maxCIDREntries)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -454,7 +454,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 
 	allowMethods, err := control.ParseHTTPMethodList("allow_method", req.AllowMethod, maxAllowlistEntries)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -463,7 +463,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 	allowPaths, err := control.ParsePathList("allow_path", req.AllowPath, maxAllowlistEntries)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -472,7 +472,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 	allowPathPrefixes, err := control.ParsePathList("allow_path_prefix", req.AllowPathPrefix, maxAllowlistEntries)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -482,7 +482,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 
 	requestHeaderRemove, err := parseHeaderNameList("request_header_remove", req.RequestHeaderRemove)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -491,7 +491,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 	requestHeaderAdd, err := parseHeaderKVList("request_header_add", req.RequestHeaderAdd)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -501,7 +501,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 
 	responseHeaderRemove, err := parseHeaderNameList("response_header_remove", req.ResponseHeaderRemove)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -510,7 +510,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 	responseHeaderAdd, err := parseHeaderKVList("response_header_add", req.ResponseHeaderAdd)
 	if err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: err.Error(),
 		})
@@ -532,7 +532,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 		ResponseHeaderAdd:    responseHeaderAdd,
 		ResponseHeaderRemove: responseHeaderRemove,
 	}); err != nil {
-		_ = json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+		_ = control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 			Type:  "http",
 			Error: "failed to register tunnel",
 		})
@@ -548,7 +548,7 @@ func handleHTTPControl(ctx context.Context, session *yamux.Session, ctrlStream *
 	}
 
 	url := fmt.Sprintf("https://%s.%s", id, strings.TrimSuffix(cfg.TunnelDomain, "."))
-	if err := json.NewEncoder(ctrlStream).Encode(control.CreateHTTPTunnelResponse{
+	if err := control.WriteJSON(ctrlStream, control.CreateHTTPTunnelResponse{
 		Type: "http",
 		ID:   id,
 		URL:  url,
@@ -630,16 +630,14 @@ func parseHeaderKVList(field string, values []control.HeaderKV) ([]headerKV, err
 }
 
 func writeControlTCPError(w io.Writer, msg string) error {
-	enc := json.NewEncoder(w)
-	return enc.Encode(control.CreateTCPTunnelResponse{
+	return control.WriteJSON(w, control.CreateTCPTunnelResponse{
 		Type:  "tcp",
 		Error: msg,
 	})
 }
 
 func writeControlHTTPError(w io.Writer, msg string) error {
-	enc := json.NewEncoder(w)
-	return enc.Encode(control.CreateHTTPTunnelResponse{
+	return control.WriteJSON(w, control.CreateHTTPTunnelResponse{
 		Type:  "http",
 		Error: msg,
 	})

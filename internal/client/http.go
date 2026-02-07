@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"net"
 	"net/url"
@@ -343,13 +342,12 @@ func createHTTPTunnel(ctx context.Context, controlURL string, req control.Create
 		return nil, nil, resp, err
 	}
 
-	if err := json.NewDecoder(ctrlStream).Decode(&resp); err != nil {
-		_ = ctrlStream.Close()
+	resp, err = readJSONControlResponse[control.CreateHTTPTunnelResponse](ctrlStream)
+	if err != nil {
 		_ = session.Close()
 		_ = ws.Close(websocket.StatusInternalError, "control error")
 		return nil, nil, resp, err
 	}
-	_ = ctrlStream.Close()
 
 	if resp.Error != "" {
 		_ = session.Close()
