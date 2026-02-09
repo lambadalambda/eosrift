@@ -51,6 +51,7 @@ service yet:
 - `CHANGELOG.md` — notable changes (Keep a Changelog format)
 - `RELEASING.md` — release checklist and “v1.0-ready” definition
 - `deploy/PRODUCTION.md` — deployment notes (DNS, Caddy, firewall)
+- `deploy/NGINX_SAME_IP.md` — run EosRift alongside an existing nginx edge on the same public IP
 - `SECURITY.md` — threat model and security checklist
 - `docs-site/` — VitePress source docs, embedded and served at `/docs/`
 

@@ -17,6 +17,7 @@ Eosrift is a self-hosted tunnel service with an ngrok-like CLI and workflow.
 - [Named Tunnels](/named-tunnels)
 - [Inspector](/inspector)
 - [Server Admin](/server-admin)
+- [Run on same IP as nginx](/same-ip-nginx)
 
 ## Command Reference
 

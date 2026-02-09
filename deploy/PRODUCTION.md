@@ -163,3 +163,12 @@ In the repository:
 
 If `EOSRIFT_ADMIN_TOKEN` is set, `/admin` shows the latest deploy state (`running` / `success` / `error`),
 SHA, workflow link, and status message from the status file.
+
+## Optional: run on the same IP as existing nginx
+
+If nginx already owns public `:80`/`:443` on this host, you can still run EosRift on the same IP
+by keeping nginx at the edge and routing EosRift hostnames to Caddy on loopback high ports.
+
+See the full guide in:
+
+- `deploy/NGINX_SAME_IP.md`

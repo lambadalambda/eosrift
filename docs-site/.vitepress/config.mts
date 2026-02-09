@@ -12,7 +12,8 @@ export default defineConfig({
       { text: "Client CLI", link: "/client-cli" },
       { text: "Configuration", link: "/configuration" },
       { text: "Named Tunnels", link: "/named-tunnels" },
-      { text: "Server Admin", link: "/server-admin" }
+      { text: "Server Admin", link: "/server-admin" },
+      { text: "Same-IP Nginx", link: "/same-ip-nginx" }
     ],
     sidebar: [
       {
@@ -39,7 +40,8 @@ export default defineConfig({
       {
         text: "Operations",
         items: [
-          { text: "Server Admin", link: "/server-admin" }
+          { text: "Server Admin", link: "/server-admin" },
+          { text: "Same-IP with nginx", link: "/same-ip-nginx" }
         ]
       }
     ],
