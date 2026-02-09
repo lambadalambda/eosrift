@@ -37,6 +37,7 @@ and [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - HTTP tunnel reconnect now preserves per-tunnel access control settings (basic auth and CIDR rules).
 - Control responses now decode reliably when the server closes the stream immediately after sending JSON (fixes flaky `requested port out of range` errors in integration/CI).
+- Embedded docs deep links now resolve correctly for clean URLs (for example `/docs/command-http`).
 
 ## [0.1.1] - 2026-02-04
 

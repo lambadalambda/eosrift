@@ -151,6 +151,33 @@ func TestNewHandler_docs_baseDomainIndex(t *testing.T) {
 	}
 }
 
+func TestNewHandler_docs_baseDomainDeepLink(t *testing.T) {
+	t.Parallel()
+
+	h := NewHandler(Config{
+		BaseDomain:   "eosrift.com",
+		TunnelDomain: "tunnel.eosrift.com",
+	}, Dependencies{})
+
+	req := httptest.NewRequest(http.MethodGet, "http://eosrift.com/docs/command-http", nil)
+	req.Host = "eosrift.com"
+	rec := httptest.NewRecorder()
+
+	h.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusOK)
+	}
+
+	if got := rec.Header().Get("Content-Type"); !strings.HasPrefix(got, "text/html") {
+		t.Fatalf("content-type = %q, want text/html", got)
+	}
+
+	if got := rec.Body.String(); !strings.Contains(got, "eosrift http") {
+		t.Fatalf("body missing docs marker (len=%d)", len(got))
+	}
+}
+
 func TestNewHandler_docs_notServedOnTunnelHost(t *testing.T) {
 	t.Parallel()
 
